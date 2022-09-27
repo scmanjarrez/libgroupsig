@@ -159,7 +159,7 @@ ffibuilder.set_source("_groupsig",
                           c_misc_path,
                           c_mcl384_256_path,                          
                           c_mcl_path,
-                      ],
+                      ], extra_link_args=["-Wl,--allow-multiple-definition"]
 )
 
 if __name__ == "__main__":

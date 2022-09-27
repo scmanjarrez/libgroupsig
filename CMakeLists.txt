@@ -17,6 +17,7 @@ set (CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 # Global compiler flags
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+add_link_options("LINKER:--allow-multiple-definition")
 
 # Add the binary tree to the search path for include files
 include_directories("${CMAKE_SOURCE_DIR}/src")
