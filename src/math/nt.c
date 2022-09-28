@@ -693,12 +693,8 @@ int nt_genprime_random(uint64_t primesize, bigz_t *p) {
 }
 
 int nt_genprime_random_interval(bigz_t low, bigz_t up, bigz_t p) {
-  printf("*** starting nt_genprime_random_interval\n");
   bigz_t /* n_primes,*/ r, lower, p1, interval_size;
   int rc;
-
-  printf_bn("nt_genprime_random_interval low: ", low);
-  printf_bn("nt_genprime_random_interval up: ", up);
 
   if(!low || !up || !p) {
     LOG_EINVAL(&logger, __FILE__, "nt_genprime_random_interval", __LINE__, LOGERROR);
@@ -770,7 +766,6 @@ int nt_genprime_random_interval(bigz_t low, bigz_t up, bigz_t p) {
       rc = IERROR;
       goto nt_genprime_random_interval_error;
     }
-    printf_bn("nt_genprime_random_interval (bigz_urandomm) r: ", r);
 
     /* Get the next prime bigger than low+r */
     if(bigz_add(lower, low, r) == IERROR) {
@@ -800,7 +795,6 @@ int nt_genprime_random_interval(bigz_t low, bigz_t up, bigz_t p) {
   if(p1) bigz_free(p1);
   /* if(n_primes) bigz_free(n_primes); */
 
-  printf("--- leaving nt_genprime_random_interval\n");
   return rc;
 
 }
@@ -1687,7 +1681,6 @@ int nt_get_elem_order(bigz_t n, bigz_t a, factor_list_t *factors, bigz_t *order)
 }
 
 int nt_get_safe_prime(uint64_t k, bigz_t p, bigz_t *a) {
-  printf("** starting nt_get_safe_prime\n");
   bigz_t q, low, up, candidate;
   factor_list_t factors;
 
@@ -1733,49 +1726,37 @@ int nt_get_safe_prime(uint64_t k, bigz_t p, bigz_t *a) {
     return IERROR;
   }
 
-  printf("nt_get_safe_prime block 1\n");
-
   errno = 0;
   do {
 
     if(errno) {
       bigz_free(candidate); bigz_free(q);
       bigz_free(low); bigz_free(up);
-      printf("nt_get_safe_prime check 1\n");
     }
 
     /* This generates a random prime of k-1 bits of length */
     if(nt_genprime_random_interval(low, up, q) == IERROR) {
       bigz_free(candidate); bigz_free(q);
       bigz_free(low); bigz_free(up);
-      printf("nt_get_safe_prime check 2\n");
       return IERROR;
     }
-
-    printf_bn("nt_get_safe_prime (nt_genprime_random_interval): q: ", q);
 
     if(bigz_mul_ui(candidate, q, 2) == IERROR) {
       bigz_free(candidate); bigz_free(q);
       bigz_free(low); bigz_free(up);
-      printf("nt_get_safe_prime check 3\n");
     }
 
     if(bigz_add_ui(candidate, candidate, 1) == IERROR) {
       bigz_free(candidate); bigz_free(q);
       bigz_free(low); bigz_free(up);
-      printf("nt_get_safe_prime check 4\n");
     }
 
     errno = 0;
-
-    printf("IERROR: %d\n", IERROR);
 
   } while(bigz_probab_prime_p(candidate) != 1);
 
   bigz_free(low);
   bigz_free(up);
-  printf("nt_get_safe_prime block 2\n");
-
   /* If a is not NULL, calculate a generator of Z_p**/
   if(a) {
 
@@ -1825,8 +1806,6 @@ int nt_get_safe_prime(uint64_t k, bigz_t p, bigz_t *a) {
     bigz_free(q);
     bigz_free(candidate);
   }
-  printf("nt_get_safe_prime block 3\n");
-  printf("-- leaving nt_get_safe_prime\n");
   return IOK;
 
 }

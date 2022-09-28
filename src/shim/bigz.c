@@ -632,17 +632,21 @@ int bigz_probab_prime_p(bigz_t n) {
 
 }
 
+void print_bn(bigz_t num) {
+  char *ptr;
+  long val = strtol(BN_bn2hex(num), &ptr, 16);
+  printf("val: %ld\n", val);
+}
+
 void printf_bn(char *text, bigz_t num) {
   char *ptr;
-  /* char *val = BN_bn2hex(num); */
-  /* printf("%s%s\n", text, val); */
   long val = strtol(BN_bn2hex(num), &ptr, 16);
   printf("%s%ld\n", text, val);
 
 }
 
 int bigz_nextprime(bigz_t rop, bigz_t lower) {
-  size_t bits;
+  /* size_t bits; */
   int cmp, rc;
   BN_CTX *ctx;
 
@@ -660,9 +664,9 @@ int bigz_nextprime(bigz_t rop, bigz_t lower) {
     return IERROR;
   }
 
-  if (bits > INT_MAX) {
-    return IERROR;
-  }
+  /* if (bits > INT_MAX) { */
+  /*   return IERROR; */
+  /* } */
 
   do {
 
@@ -674,19 +678,20 @@ int bigz_nextprime(bigz_t rop, bigz_t lower) {
 
     if((rc = BN_check_prime(lower, ctx, NULL)) == -1) {
       errno = EINVAL;
+      BN_CTX_free(ctx);
       return IERROR;
     } else if (rc == 1) {
       bigz_set(rop, lower);
       BN_CTX_free(ctx);
       return IOK;
     }
+    BN_CTX_free(ctx);
     /* if(BN_check_prime(lower, NULL, NULL)) { */
     /*   bigz_set(rop, lower); */
     /*   return IOK; */
     /* } */
 
     bigz_add_ui(lower, lower, 2);
-
     // errno = 0;
     // cmp = bigz_cmp(rop, lower);
     // if (errno) {

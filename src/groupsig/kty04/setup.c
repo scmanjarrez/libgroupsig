@@ -153,7 +153,6 @@ int kty04_clear() {
 // }
 
 int kty04_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
-  printf("* starting kty04_setup\n");
   // kty04_config_t *cfg;
   kty04_grp_key_t *gkey;
   kty04_mgr_key_t *mkey;
@@ -178,7 +177,6 @@ int kty04_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
   epsilon = KTY04_DEFAULT_EPSILON;
 
   if(_setup_parameters_check(k, primesize, epsilon) == IERROR) {
-    printf("kty04_setup check 1\n");
     return IERROR;
   }
 
@@ -194,11 +192,8 @@ int kty04_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
   }
 
   if(nt_get_safe_prime(primesize*2, p, NULL) == IERROR) {
-    printf("kty04_setup check 2\n");
     GOTOENDRC(IERROR, kty04_setup);
   }
-
-  printf("kty04_setup block 1\n");
 
   /* p = 2*p1+1: p1 is p's  associated Sophie Germain prime */
   if(!(p1 = bigz_init())) GOTOENDRC(IERROR, kty04_setup);
@@ -214,7 +209,6 @@ int kty04_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
   errno = 0;
   nu = bigz_sizeinbits(p1q1);
   if(errno) GOTOENDRC(IERROR, kty04_setup);
-  printf("kty04_setup block 2\n");
 #ifdef DEBUG
   fprintf(stderr, "%s@%d: nu: %lu\n", __FILE__, __LINE__, nu);
 #endif
@@ -262,7 +256,6 @@ int kty04_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
      nt_get_random_group_element(r, n, gkey->g) == IERROR ||
      nt_get_random_group_element(r, n, gkey->h) == IERROR)
     GOTOENDRC(IERROR, kty04_setup);
-  printf("kty04_setup block 3\n");
   gkey->k = k;
   gkey->epsilon = epsilon;
   gkey->nu = nu;
@@ -276,10 +269,8 @@ int kty04_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
   /* Fill the private key elements */
   if(bigz_set(mkey->p, p) == IERROR) GOTOENDRC(IERROR, kty04_setup);
   if(bigz_set(mkey->q, q) == IERROR) GOTOENDRC(IERROR, kty04_setup);
-  printf("kty04_setup block 4\n");
   mkey->nu = nu;
  kty04_setup_end:
-  printf("kty04_setup block end\n");
   /* Free resources and return */
   if(p) bigz_free(p);
   if(q) bigz_free(q);
@@ -290,7 +281,6 @@ int kty04_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
   if(r) bigz_free(r);
   if(x) bigz_free(x);
   if(y) bigz_free(y);
-  printf("- leaving kty04_setup\n");
   return rc;
 
 }

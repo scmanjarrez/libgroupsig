@@ -189,7 +189,6 @@ namespace groupsig {
     int rc;
 
     rc = groupsig_setup(GROUPSIG_KTY04_CODE, grpkey, mgrkey, gml);
-    printf("rc: %d\n", rc);
     EXPECT_EQ(rc, IOK);
 
     addMembers(1);

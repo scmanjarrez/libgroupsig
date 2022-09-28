@@ -153,14 +153,10 @@ int kty04_gml_export(byte_t **bytes, uint32_t *size, gml_t *gml) {
     GOTOENDRC(IERROR, kty04_gml_export);
   memcpy(_bytes, &gml->n, sizeof(uint64_t));
   total_size = sizeof(uint64_t);
-  printf("exporting gml\n");
   /* Export the entries one by one */
   for (i=0; i<gml->n; i++) {
-    printf("printing entry: %d\n", i);
-    printf("entry scheme code: %d\n", gml->entries[i]->scheme);
     if (gml_entry_export(&bentry, &entry_size, gml->entries[i]) == IERROR)
       GOTOENDRC(IERROR, kty04_gml_export);
-    printf("increasing total_size: %d\n", entry_size);
     total_size += entry_size;
     if (!(_bytes = mem_realloc(_bytes, total_size)))
       GOTOENDRC(IERROR, kty04_gml_export);
@@ -176,7 +172,6 @@ int kty04_gml_export(byte_t **bytes, uint32_t *size, gml_t *gml) {
   }
 
   *size = total_size;
-  printf("exporting size: %d\n", total_size);
 
  kty04_gml_export_end:
 
@@ -219,7 +214,6 @@ gml_t* kty04_gml_import(byte_t *bytes, uint32_t size) {
 
   /* Import the entries one by one */
   for (i=0; i<gml->n; i++) {
-    printf("size-read: %d\n", size-read);
     if (!(gml->entries[i] = kty04_gml_entry_import(&bytes[read], size-read)))
       GOTOENDRC(IERROR, kty04_gml_import);
 
@@ -315,7 +309,6 @@ int kty04_gml_entry_get_size(gml_entry_t *entry) {
   byte_t *bytes = (byte_t *) kty04_gml_entry_to_string(entry);
 
   uint32_t size = strlen(bytes);
-  printf("kty04_gml_entry_get_size %d\n", size);
   return size;
 
 }
@@ -330,8 +323,6 @@ int kty04_gml_entry_export(byte_t **bytes,
   }
 
   *bytes = (byte_t *) kty04_gml_entry_to_string(entry);
-
-  printf("kty04_gml_entry_export %s\n", *bytes);
 
   *size = strlen(*bytes);
 
