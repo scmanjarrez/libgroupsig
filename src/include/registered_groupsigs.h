@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,7 +22,7 @@
 
 /* Registered groupsigs */
 #include "groupsig.h"
-/* #include "kty04.h" */
+#include "kty04.h"
 #include "bbs04.h"
 /* #include "cpy06.h" */
 #include "gl19.h"
@@ -42,7 +42,7 @@ extern "C" {
 #ifdef __cplusplus
 /* Write any cplusplus specific code here */
 #endif
-  
+
 #endif /* _REGISTERED_GROUPSIGS_H */
 
 /* registered_groupsigs.h ends here */

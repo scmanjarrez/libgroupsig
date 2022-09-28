@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -54,7 +54,7 @@ typedef struct {
 		  but will save us some computing... */
 } kty04_mgr_key_t;
 
-/** 
+/**
  * @fn groupsig_key_t* kty04_mgr_key_init()
  * @brief Creates a new KTY04 manager key
  *
@@ -62,24 +62,24 @@ typedef struct {
  */
 groupsig_key_t* kty04_mgr_key_init();
 
-/** 
+/**
  * @fn int kty04_mgr_key_free(groupsig_key_t *key)
  * @brief Frees the variables of the given manager key.
  *
  * @param[in,out] key The manager key to initialize.
- * 
+ *
  * @return IOK or IERROR
  */
 int kty04_mgr_key_free(groupsig_key_t *key);
 
-/** 
+/**
  * @fn int kty04_mgr_key_copy(groupsig_key_t *dst, groupsig_key_t *src)
- * @brief Copies the source key into the destination key (which must be initialized by 
+ * @brief Copies the source key into the destination key (which must be initialized by
  * the caller).
  *
  * @param[in,out] dst The destination key.
  * @param[in] src The source key.
- * 
+ *
  * @return IOK or IERROR.
  */
 int kty04_mgr_key_copy(groupsig_key_t *dst, groupsig_key_t *src);
@@ -95,52 +95,46 @@ int kty04_mgr_key_copy(groupsig_key_t *dst, groupsig_key_t *src);
  *  represented using the specified format.
  *
  * @param[in] key The key.
- * @param[in] format The format. The list of supported key formats in the KTY04
- *  scheme are defined in @ref kty04.h.
  *
  * @return The required number of bytes, or -1 if error.
  */
-int kty04_mgr_key_get_size_in_format(groupsig_key_t *key, groupsig_key_format_t format);
+int kty04_mgr_key_get_size(groupsig_key_t *key);
 
-/** 
- * @fn int kty04_mgr_key_export(groupsig_key_t *key, groupsig_key_format_t format, 
- *                              void *dst)
+/**
+ * @fn int kty04_mgr_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key)
  * @brief Exports the given manager key to the specified destination, using the
  *  specified format.
  *
- * @param[in] key The key to export.
- * @param[in] format The format to use. The supported formats for KTY04 keys are
- *  specified in @ref kty04.h.
- * @param[in] dst The destination information.
- * 
+ * @param[in] bytes Bytes that represent the exported key.
+ * @param[in] size Size of the key (in bytes).
+ * @param[in] key Key to be exported.
+ *
  * @return IOK or IERROR.
  */
-int kty04_mgr_key_export(groupsig_key_t *key, groupsig_key_format_t format, void *dst);
+int kty04_mgr_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key);
 /* int kty04_mgr_key_export_pub(groupsig_key_t *key, groupsig_key_format_t format, void *dst); */
 /* int kty04_mgr_key_export_prv(groupsig_key_t *key, groupsig_key_format_t format, void *dst); */
 
-/** 
- * @fn groupsig_key_t* kty04_mgr_key_import(groupsig_key_format_t format, 
- *                                          void *source)
+/**
+ * @fn groupsig_key_t* kty04_mgr_key_import(byte_t *source, uint32_t size)
  * @brief Imports a KTY04 manager key from the specified source, of the specified
  *  format.
 
- * @param[in] format The format of <i>source</i>. The supported formats for KTY04
- *  keys are defined in @ref kty04.h.
- * @param[in] source The source information.
- * 
+ * @param[in] source Bytes representing a KTY04 manager key.
+ * @param[in] size Size of the key (in bytes).
+ *
  * @return A pointer to the imported manager key, or NULL if error.
  */
-groupsig_key_t* kty04_mgr_key_import(groupsig_key_format_t format, void *source);
+groupsig_key_t* kty04_mgr_key_import(byte_t *source, uint32_t size);
 /* groupsig_key_t* kty04_mgr_key_import_prv(groupsig_key_format_t format, void *source); */
 /* groupsig_key_t* kty04_mgr_key_import_pub(groupsig_key_format_t format, void *source); */
 
-/** 
+/**
  * @fn char* kty04_mgr_key_to_string(mgr_key_t *key)
  * @brief Creates a printable string of the given manager key.
  *
  * @param[in] key The manager key.
- * 
+ *
  * @return The created string or NULL if error.
  */
 char* kty04_mgr_key_to_string(groupsig_key_t *key);
@@ -160,7 +154,7 @@ static const mgr_key_handle_t kty04_mgr_key_handle = {
   &kty04_mgr_key_export, /**< Exports manager keys. */
   &kty04_mgr_key_import, /**< Imports manager keys. */
   &kty04_mgr_key_to_string, /**< Converts manager keys to printable strings. */
-  &kty04_mgr_key_get_size_in_format,
+  &kty04_mgr_key_get_size,
 };
 
 #endif

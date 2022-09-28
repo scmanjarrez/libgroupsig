@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,7 +21,7 @@
 #define _SIGNATURE_HANDLES_H
 
 #include "signature.h"
-/* #include "groupsig/kty04/signature.h" */
+#include "groupsig/kty04/signature.h"
 #include "groupsig/bbs04/signature.h"
 /* #include "groupsig/cpy06/signature.h" */
 #include "groupsig/gl19/signature.h"
@@ -38,21 +38,21 @@ extern "C" {
  * @def GROUPSIG_SIGNATURE_HANDLES_N
  * @brief Number of supported set of handles for managing group signatures.
  */
-#define GROUPSIG_SIGNATURE_HANDLES_N 6
+#define GROUPSIG_SIGNATURE_HANDLES_N 7
 
 /**
  * @var GROUPSIG_SIGNATURE_HANDLES
  * @brief List of supported set of handles for managing group signatures.
  */
-static const groupsig_signature_handle_t *GROUPSIG_SIGNATURE_HANDLES[GROUPSIG_SIGNATURE_HANDLES_N] = { 
-  /* &kty04_signature_handle, */
+static const groupsig_signature_handle_t *GROUPSIG_SIGNATURE_HANDLES[GROUPSIG_SIGNATURE_HANDLES_N] = {
+  &kty04_signature_handle,
   &bbs04_signature_handle,
   /* &cpy06_signature_handle, */
   &gl19_signature_handle,
   &ps16_signature_handle,
   &klap20_signature_handle,
   &dl21_signature_handle,
-  &dl21seq_signature_handle,  
+  &dl21seq_signature_handle,
 };
 
 #ifdef __cplusplus
@@ -62,7 +62,7 @@ static const groupsig_signature_handle_t *GROUPSIG_SIGNATURE_HANDLES[GROUPSIG_SI
 #ifdef __cplusplus
 /* Write any cplusplus specific code here */
 #endif
-  
+
 #endif /* _SIGNATURE_HANDLES_H */
 
 /* signature_handles.h ends here */

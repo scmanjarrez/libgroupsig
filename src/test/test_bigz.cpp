@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -28,7 +28,7 @@
 using namespace std;
 
 /*
- * Note: These tests do not evaluate the precission (and not even the 
+ * Note: These tests do not evaluate the precission (and not even the
  * correctness) of operations on very large numbers. They rather test
  * that the shim'ed libraries implement the required functionality.
  * I.e., correctness & precission is assumed (so, be careful on what
@@ -43,12 +43,12 @@ namespace bigz {
     BigzTest() {
       sysenv = sysenv_init(0);
     }
-    
+
     ~BigzTest() override {
       sysenv_free(sysenv);
     }
 
-    
+
     // If the constructor and destructor are not enough for setting up
     // and cleaning up each test, you can define the following methods:
 
@@ -116,7 +116,7 @@ namespace bigz {
     EXPECT_EQ(rc, IOK);
 
     rc = bigz_free(b2);
-    EXPECT_EQ(rc, IOK);    
+    EXPECT_EQ(rc, IOK);
 
   }
 
@@ -136,16 +136,16 @@ namespace bigz {
     EXPECT_EQ(rc, IOK);
 
     rc = bigz_sgn(b);
-    EXPECT_EQ(rc, -1);   
+    EXPECT_EQ(rc, -1);
 
     rc = bigz_set_ui(b, 0);
     EXPECT_EQ(rc, IOK);
 
     rc = bigz_sgn(b);
-    EXPECT_EQ(rc, 0);   
-        
+    EXPECT_EQ(rc, 0);
+
     rc = bigz_free(b);
-    EXPECT_EQ(rc, IOK);  
+    EXPECT_EQ(rc, IOK);
 
   }
 
@@ -172,12 +172,12 @@ namespace bigz {
 
     rc = bigz_cmp_ui(b2, 300);
     EXPECT_EQ(rc, 0);
-        
+
     rc = bigz_free(b1);
     EXPECT_EQ(rc, IOK);
 
     rc = bigz_free(b2);
-    EXPECT_EQ(rc, IOK);    
+    EXPECT_EQ(rc, IOK);
 
   }
 
@@ -212,12 +212,12 @@ namespace bigz {
 
     rc = bigz_cmp_ui(b2, 0);
     EXPECT_EQ(rc, 0);
-        
+
     rc = bigz_free(b1);
     EXPECT_EQ(rc, IOK);
 
     rc = bigz_free(b2);
-    EXPECT_EQ(rc, IOK);    
+    EXPECT_EQ(rc, IOK);
 
   }
 
@@ -244,12 +244,12 @@ namespace bigz {
 
     rc = bigz_cmp_ui(b2, 1000000);
     EXPECT_EQ(rc, 0);
-        
+
     rc = bigz_free(b1);
     EXPECT_EQ(rc, IOK);
 
     rc = bigz_free(b2);
-    EXPECT_EQ(rc, IOK);    
+    EXPECT_EQ(rc, IOK);
 
   }
 
@@ -278,9 +278,9 @@ namespace bigz {
     rc = bigz_cmp_ui(b2, 1);
     EXPECT_EQ(rc, 0);
 
-    /* test tdiv (ui variant) with 100/33 */    
+    /* test tdiv (ui variant) with 100/33 */
     bigz_set_ui(b1, 100);
-    EXPECT_EQ(rc, IOK);    
+    EXPECT_EQ(rc, IOK);
 
     rc = bigz_tdiv_ui(b1, b2, b1, 33);
     EXPECT_EQ(rc, IOK);
@@ -320,7 +320,7 @@ namespace bigz {
 
     rc = bigz_divexact(b1, b1, b2);
     EXPECT_EQ(rc, IOK);
-      
+
     rc = bigz_cmp_ui(b1, 10);
     EXPECT_EQ(rc, IOK);
 
@@ -329,8 +329,8 @@ namespace bigz {
     EXPECT_EQ(rc, IOK);
 
     rc = bigz_divexact_ui(b1, b1, 10);
-    EXPECT_EQ(rc, IOK);    
-      
+    EXPECT_EQ(rc, IOK);
+
     rc = bigz_cmp_ui(b1, 10);
     EXPECT_EQ(rc, IOK);
 
@@ -339,14 +339,14 @@ namespace bigz {
     EXPECT_EQ(rc, IOK);
 
     rc = bigz_set_ui(b2, 33);
-    EXPECT_EQ(rc, IOK);    
-    
+    EXPECT_EQ(rc, IOK);
+
     rc = bigz_mod(b3, b1, b2);
     EXPECT_EQ(rc, 0);
 
     rc = bigz_cmp_ui(b3, 1);
-    EXPECT_EQ(rc, 0); 
-        
+    EXPECT_EQ(rc, 0);
+
     rc = bigz_free(b1);
     EXPECT_EQ(rc, IOK);
 
@@ -354,9 +354,9 @@ namespace bigz {
     EXPECT_EQ(rc, IOK);
 
     rc = bigz_free(b3);
-    EXPECT_EQ(rc, IOK);    
+    EXPECT_EQ(rc, IOK);
 
-  }   
+  }
 
   /* Tests exponentiations. */
   TEST_F(BigzTest, ExpAndCmp) {
@@ -410,7 +410,7 @@ namespace bigz {
     rc = bigz_cmp_ui(b3, 2);
     EXPECT_EQ(rc, 0);
 
-    
+
     /* Free */
     rc = bigz_free(b1);
     EXPECT_EQ(rc, IOK);
@@ -439,10 +439,11 @@ namespace bigz {
     EXPECT_NE(b2, nullptr);
 
     /* Test b1 for primality (it is prime) */
-    rc = bigz_probab_prime_p(b1, 25);
+    /* Removed nreps 25, deprecated BN_is_prime_ex in 3.0 */
+    rc = bigz_probab_prime_p(b1);
     EXPECT_NE(rc, 0);
 
-    rc = bigz_probab_prime_p(b2, 25);
+    rc = bigz_probab_prime_p(b2);
     EXPECT_EQ(rc, 0);
 
     /* Compute next prime */
@@ -451,7 +452,7 @@ namespace bigz {
 
     rc = bigz_cmp_ui(b1, 65521);
     EXPECT_EQ(rc, 0);
-        
+
     /* Free */
     rc = bigz_free(b1);
     EXPECT_EQ(rc, IOK);
@@ -479,7 +480,7 @@ namespace bigz {
 
     rc = bigz_cmp_ui(b1, 111);
     EXPECT_EQ(rc, 0);
-        
+
     /* Free */
     rc = bigz_free(b1);
     EXPECT_EQ(rc, IOK);
@@ -488,7 +489,7 @@ namespace bigz {
     EXPECT_EQ(rc, IOK);
 
   }
-  
+
   /* Tests random number generation functions. */
   TEST_F(BigzTest, Random) {
 
@@ -502,7 +503,7 @@ namespace bigz {
     EXPECT_NE(b2, nullptr);
 
     b3 = bigz_init();
-    EXPECT_NE(b2, nullptr);    
+    EXPECT_NE(b2, nullptr);
 
     /* Random picking in arbitrary range */
     rc = bigz_urandomm(b1, b2);
@@ -511,7 +512,7 @@ namespace bigz {
     /* b1 must be between 0 and b2-1 */
     rc = bigz_sgn(b1);
     EXPECT_NE(rc, -1);
-    
+
     rc = bigz_sub(b3, b1, b2);
     EXPECT_EQ(rc, IOK);
 
@@ -525,14 +526,14 @@ namespace bigz {
     /* b1 must be between 0 and 2^10-1  */
     rc = bigz_sgn(b1);
     EXPECT_NE(rc, -1);
-    
+
     rc = bigz_sub_ui(b3, b1, 1024);
     EXPECT_EQ(rc, IOK);
 
     rc = bigz_sgn(b3);
     EXPECT_EQ(rc, -1);
-    
-    /* Free */    
+
+    /* Free */
     rc = bigz_free(b1);
     EXPECT_EQ(rc, IOK);
 
@@ -540,7 +541,7 @@ namespace bigz {
     EXPECT_EQ(rc, IOK);
 
     rc = bigz_free(b3);
-    EXPECT_EQ(rc, IOK);    
+    EXPECT_EQ(rc, IOK);
 
   }
 
@@ -577,20 +578,20 @@ namespace bigz {
     // /* log2 */
     // bf = bigf_init();
     // EXPECT_NE(bf, nullptr);
-    
+
     // rc = bigz_set_ui(b1, 1024);
     // EXPECT_EQ(rc, IOK);
 
     // rc = bigz_log2(bf, b1, 10);
-    // EXPECT_EQ(rc, IOK);  
-        
+    // EXPECT_EQ(rc, IOK);
+
     /* Free */
     rc = bigz_free(b1);
     EXPECT_EQ(rc, IOK);
 
 
   }
-  
+
 
   /* Tests export-import functionality. */
   TEST_F(BigzTest, ExportImport) {
@@ -631,7 +632,7 @@ namespace bigz {
     EXPECT_NE(str, nullptr);
 
     b2 = bigz_init();
-    EXPECT_NE(b2, nullptr);    
+    EXPECT_NE(b2, nullptr);
 
     /* Import back */
     rc = bigz_set_str10(b2, str);
@@ -656,8 +657,8 @@ namespace bigz {
     EXPECT_EQ(rc, 0);
 
     rc = bigz_free(b2);
-    EXPECT_EQ(rc, IOK);    
-    
+    EXPECT_EQ(rc, IOK);
+
     /* Dump to fd with sign */
     fd = fopen("test", "w");
     EXPECT_NE(fd, nullptr);
@@ -677,7 +678,7 @@ namespace bigz {
 
     rc = fclose(fd);
     EXPECT_EQ(rc, 0);
-    
+
     rc = bigz_cmp(b1, b2);
     EXPECT_EQ(rc, 0);
 
@@ -690,7 +691,7 @@ namespace bigz {
 
     rc = bigz_neg(b1, b1);
     EXPECT_EQ(rc, IOK);
-    
+
     rc = bigz_dump_bigz_fd(b1, fd);
     EXPECT_EQ(rc, IOK);
 
@@ -706,7 +707,7 @@ namespace bigz {
 
     rc = fclose(fd);
     EXPECT_EQ(rc, 0);
-    
+
     rc = bigz_cmp(b1, b2);
     EXPECT_EQ(rc, 0);
 
@@ -720,7 +721,6 @@ namespace bigz {
     if(str) { free(str); str = nullptr; }
     if(bytes) { free(bytes); bytes = nullptr; }
 
-  } 
+  }
 
 }  // namespace bigz
-

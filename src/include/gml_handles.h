@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,7 +21,7 @@
 #define _GML_HANDLES_H
 
 #include "gml.h"
-/* #include "groupsig/kty04/gml.h" */
+#include "groupsig/kty04/gml.h"
 #include "groupsig/bbs04/gml.h"
 /* #include "groupsig/cpy06/gml.h" */
 #include "groupsig/ps16/gml.h"
@@ -35,14 +35,14 @@ extern "C" {
  * @def GML_HANDLES_N
  * @brief Number of known GML implementation handles.
  */
-#define GML_HANDLES_N 3
+#define GML_HANDLES_N 4
 
 /**
  * @var GML_HANDLES
  * @brief Set of handles of known GML implementations.
  */
 const gml_handle_t *GML_HANDLES[GML_HANDLES_N] = {
-  /* &kty04_gml_handle, */
+  &kty04_gml_handle,
   &bbs04_gml_handle,
   /* &cpy06_gml_handle, */
   &ps16_gml_handle,
@@ -56,7 +56,7 @@ const gml_handle_t *GML_HANDLES[GML_HANDLES_N] = {
 #ifdef __cplusplus
 /* Write any cplusplus specific code here */
 #endif
-  
+
 #endif /* _GML_HANDLES_H */
 
 /* gml_handles.h ends here */

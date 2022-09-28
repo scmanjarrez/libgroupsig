@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -27,9 +27,9 @@
 #include "logger.h"
 
 #define PRIMES_1024_SIZE 172
-const uint16_t PRIMES_1024[PRIMES_1024_SIZE] = 
-  {  2,  3,  5,  7, 11, 13, 17, 19, 23, 29, 
-     31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 
+const uint16_t PRIMES_1024[PRIMES_1024_SIZE] =
+  {  2,  3,  5,  7, 11, 13, 17, 19, 23, 29,
+     31, 37, 41, 43, 47, 53, 59, 61, 67, 71,
      73, 79, 83, 89, 97,101,103,107,109,113,
      127,131,137,139,149,151,157,163,167,173,
      179,181,191,193,197,199,211,223,227,229,
@@ -381,7 +381,7 @@ const uint16_t PRIMES_65536[PRIMES_65536_SIZE] = {
   64849,64853,64871,64877,64879,64891,64901,64919,64921,64927,64937,64951,64969,64997,65003,65011,65027,65029,65033,
   65053,65063,65071,65089,65099,65101,65111,65119,65123,65129,65141,65147,65167,65171,65173,65179,65183,65203,65213,
   65239,65257,65267,65269,65287,65293,65309,65323,65327,65353,65357,65371,65381,65393,65407,65413,65419,65423,65437,
-  65447,65449,65479,65497,65519,65521, 
+  65447,65449,65479,65497,65519,65521,
 };
 
 int nt_factor_list_init(factor_list_t *factors) {
@@ -393,7 +393,7 @@ int nt_factor_list_init(factor_list_t *factors) {
 
   factors->n = 0;
   factors->factors = NULL;
- 
+
   if(!(factors->min_factor = bigz_init())) {
     return IERROR;
   }
@@ -423,7 +423,7 @@ int nt_factor_list_free(factor_list_t *factors) {
     factors->factors = NULL;
   }
 
-  bigz_free(factors->min_factor);  
+  bigz_free(factors->min_factor);
   bigz_free(factors->max_factor);
   factors->n = 0;
 
@@ -442,7 +442,7 @@ int nt_factor_list_insert(factor_list_t *factors, bigz_t factor) {
   }
 
   if((!factors->factors && factors->n) || (factors->factors && !factors->n)) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "nt_factor_list_insert", __LINE__, 
+    LOG_EINVAL_MSG(&logger, __FILE__, "nt_factor_list_insert", __LINE__,
 		   "Wrong factors list.", LOGERROR);
     return IERROR;
   }
@@ -457,7 +457,7 @@ int nt_factor_list_insert(factor_list_t *factors, bigz_t factor) {
   /* (Re)Allocate the list of pointers to factors */
   if(!(factors->factors = (bigz_t *)
        realloc((bigz_t *)factors->factors, sizeof(bigz_t)*(factors->n+1)))) {
-    LOG_ERRORCODE(&logger, __FILE__, "nt_factor_list_insert", __LINE__, 
+    LOG_ERRORCODE(&logger, __FILE__, "nt_factor_list_insert", __LINE__,
 		  errno, LOGERROR);
     return IERROR;
   }
@@ -482,8 +482,8 @@ int nt_factor_list_insert(factor_list_t *factors, bigz_t factor) {
   if(bigz_cmp(factors->min_factor, factor) > 0 ||
      !bigz_cmp_ui(factors->min_factor, 0)) {
     bigz_set(factors->min_factor, factor);
-  } 
-  
+  }
+
   return IOK;
 
 }
@@ -497,11 +497,11 @@ int nt_factor_list_insert_ui(factor_list_t *factors, uint64_t factor) {
     LOG_EINVAL(&logger, __FILE__, "nt_factor_list_insert_ui", __LINE__, LOGERROR);
     return IERROR;
   }
-  
+
   if(!(_factor = bigz_init_set_ui(factor))) {
     return IERROR;
   }
-  
+
   rc = nt_factor_list_insert(factors, _factor);
   bigz_free(_factor);
 
@@ -518,7 +518,7 @@ int nt_factor_list_fprintf(FILE *fd, factor_list_t *factors) {
     LOG_EINVAL(&logger, __FILE__, "nt_factor_list_fprintf", __LINE__, LOGERROR);
     return IERROR;
   }
-  
+
   fprintf(fd, " Factor list\n");
   fprintf(fd, " ------------------------------------\n");
 
@@ -529,7 +529,7 @@ int nt_factor_list_fprintf(FILE *fd, factor_list_t *factors) {
     fprintf(fd, "     factor[%u]: %s\n", i, sf);
     free(sf); sf = NULL;
   }
-  
+
   smax = bigz_get_str10(factors->max_factor);
   smin = bigz_get_str10(factors->min_factor);
 
@@ -540,7 +540,7 @@ int nt_factor_list_fprintf(FILE *fd, factor_list_t *factors) {
   free(smin); smin = NULL;
 
   return IOK;
-  
+
 }
 
 int nt_is_factor_list_complete(bigz_t n, factor_list_t *factors, uint8_t *b) {
@@ -592,7 +592,7 @@ int nt_trial_division_65536(bigz_t z, factor_list_t *factors) {
   if(!(r = bigz_init())) {
     return IERROR;
   }
-  
+
   if(!(f = bigz_init())) {
     bigz_free(r);
     return IERROR;
@@ -617,7 +617,7 @@ int nt_trial_division_65536(bigz_t z, factor_list_t *factors) {
 
       if(bigz_set_ui(f, PRIMES_65536[i]) == IERROR) {
 	bigz_free(r); bigz_free(f);
-	return IERROR;	
+	return IERROR;
       }
 
       if(nt_factor_list_insert(factors, f) == IERROR) {
@@ -647,7 +647,7 @@ int nt_genprime_random(uint64_t primesize, bigz_t *p) {
     return IERROR;
   }
 
-  /* 
+  /*
    * For now, in order to generate a prime of approximately primesize bits,
    * we just get a random prime over primesize bits.
    */
@@ -679,12 +679,12 @@ int nt_genprime_random(uint64_t primesize, bigz_t *p) {
     }
 
   }
-  
+
   if(bigz_set(*p, current) == IERROR) {
     bigz_free(previous); bigz_free(current);
     return IERROR;
   }
-  
+
   bigz_free(previous);
   bigz_free(current);
 
@@ -693,9 +693,12 @@ int nt_genprime_random(uint64_t primesize, bigz_t *p) {
 }
 
 int nt_genprime_random_interval(bigz_t low, bigz_t up, bigz_t p) {
-
+  printf("*** starting nt_genprime_random_interval\n");
   bigz_t /* n_primes,*/ r, lower, p1, interval_size;
   int rc;
+
+  printf_bn("nt_genprime_random_interval low: ", low);
+  printf_bn("nt_genprime_random_interval up: ", up);
 
   if(!low || !up || !p) {
     LOG_EINVAL(&logger, __FILE__, "nt_genprime_random_interval", __LINE__, LOGERROR);
@@ -715,12 +718,12 @@ int nt_genprime_random_interval(bigz_t low, bigz_t up, bigz_t p) {
   /*   return IERROR; */
   /* } */
 
-  /* We'll generate a random number in [low,up], and get the next prime bigger 
+  /* We'll generate a random number in [low,up], and get the next prime bigger
      than it, until we find a prime in [low,up]. */
   if(!(interval_size = bigz_init())) {
     return IERROR;
   }
-  
+
   if(bigz_sub(interval_size, up, low) == IERROR) {
     rc = IERROR;
     goto nt_genprime_random_interval_error;
@@ -748,7 +751,7 @@ int nt_genprime_random_interval(bigz_t low, bigz_t up, bigz_t p) {
     /* /\* Get a random r in [1,n_primes] *\/ */
     /* mpz_urandomm(r, sysenv->gmp_rand, n_primes); */
     /* mpz_add_ui(r, r, 1); */
- 
+
     /* /\* Assuming uniform distribution of the primes in [low,up], the r-th */
     /*    prime bigger than low, will be "approximately bigger" than */
     /*    low+(up-low)*r/n_primes *\/ */
@@ -765,13 +768,14 @@ int nt_genprime_random_interval(bigz_t low, bigz_t up, bigz_t p) {
     /* Get a random r in [low,up] */
     if(bigz_urandomm(r, interval_size) == IERROR) {
       rc = IERROR;
-      goto nt_genprime_random_interval_error;    
+      goto nt_genprime_random_interval_error;
     }
+    printf_bn("nt_genprime_random_interval (bigz_urandomm) r: ", r);
 
     /* Get the next prime bigger than low+r */
     if(bigz_add(lower, low, r) == IERROR) {
       rc = IERROR;
-      goto nt_genprime_random_interval_error;      
+      goto nt_genprime_random_interval_error;
     }
 
     /* Get the next prime bigger than lower */
@@ -789,21 +793,22 @@ int nt_genprime_random_interval(bigz_t low, bigz_t up, bigz_t p) {
   }
 
  nt_genprime_random_interval_error:
-  
-  if(interval_size) bigz_free(interval_size); 
+
+  if(interval_size) bigz_free(interval_size);
   if(r) bigz_free(r);
   if(lower) bigz_free(lower);
   if(p1) bigz_free(p1);
   /* if(n_primes) bigz_free(n_primes); */
 
+  printf("--- leaving nt_genprime_random_interval\n");
   return rc;
 
 }
 
 int nt_mov97_alg462(uint64_t k, bigz_t *p, factor_list_t *factors) {
-  
+
   /* To ease the readability of the code, we do not apply the typical C variable
-     naming convention rules. Instead, we use the same names given in the original 
+     naming convention rules. Instead, we use the same names given in the original
      Menezes et al.'s algorithm. Auxiliar variables not specified in the algorithm
      will be named aux_<variable_name>. */
   bigz_t q, I, aux_2q, R, aux_2I_I, aux_I1, n, a, aux_n_3, b;
@@ -824,8 +829,8 @@ int nt_mov97_alg462(uint64_t k, bigz_t *p, factor_list_t *factors) {
 
   rc = IOK;
 
-  /** 1. If k is small, then test random integers by trial division. A table of 
-      small primes may be precomputed for this purpose: If k <= 20 then repeatedly 
+  /** 1. If k is small, then test random integers by trial division. A table of
+      small primes may be precomputed for this purpose: If k <= 20 then repeatedly
       do the following:
       1.1 Select a random k-bit odd integer n.
       1.2 Use trial division by all primes less than sqrt(n) to determine whether
@@ -842,12 +847,12 @@ int nt_mov97_alg462(uint64_t k, bigz_t *p, factor_list_t *factors) {
   /** 2. Set c=0.1 and m=20 (see Note 4.60). */
   c = 0.1; /** @todo Empirically determine the best c to improve performance! */
   m = 20;
-  
+
   /** 3. (Trial division bound) Set B=c*k^2 (see Note 4.60). */
   B = c*k*k;
 
   /** 4. (Generate r, the size of q relative to n - see Note 4.61) If k > 2m then
-      repeatedly do the following: select a random number s in the interval 
+      repeatedly do the following: select a random number s in the interval
       [0, 1], set r=2^(s-1) , until (k-rk) > m. Otherwise (i.e. k <= 2m), set
       r=0.5. */
   if(k > 2*m) {
@@ -864,7 +869,7 @@ int nt_mov97_alg462(uint64_t k, bigz_t *p, factor_list_t *factors) {
   /** 5. Compute q = PROVABLE PRIME(floor(r*k) + 1). */
   /** @todo Remove recursion here to improve performance! */
   if(!(q = bigz_init())) {
-    rc = IERROR; 
+    rc = IERROR;
     goto nt_mov97_alg462_error;
   }
 
@@ -906,7 +911,7 @@ int nt_mov97_alg462(uint64_t k, bigz_t *p, factor_list_t *factors) {
     rc = IERROR;
     goto nt_mov97_alg462_error;
   }
-  
+
   /* aux_2I_I = 2*I - I */
   if(!(aux_2I_I = bigz_init())) {
     rc = IERROR;
@@ -940,7 +945,7 @@ int nt_mov97_alg462(uint64_t k, bigz_t *p, factor_list_t *factors) {
   /** 8. While (success = 0) do the following: */
   if(!(R = bigz_init())) {
     rc = IERROR;
-    goto nt_mov97_alg462_error;    
+    goto nt_mov97_alg462_error;
   }
 
   if(!(n = bigz_init())) {
@@ -972,7 +977,7 @@ int nt_mov97_alg462(uint64_t k, bigz_t *p, factor_list_t *factors) {
     rc = IERROR;
     goto nt_mov97_alg462_error;
   }
-  
+
   if(!(d = bigz_init())) {
     rc = IERROR;
     goto nt_mov97_alg462_error;
@@ -998,13 +1003,13 @@ int nt_mov97_alg462(uint64_t k, bigz_t *p, factor_list_t *factors) {
       rc = IERROR;
       goto nt_mov97_alg462_error;
     }
-    
+
     /* Add I+1 to obtain a random number in [I+1,2*I] */
     if(bigz_add(R, R, aux_I1) == IERROR) {
       rc = IERROR;
       goto nt_mov97_alg462_error;
     }
-    
+
     if(bigz_set(n, aux_2R) == IERROR) {
       rc = IERROR;
       goto nt_mov97_alg462_error;
@@ -1019,7 +1024,7 @@ int nt_mov97_alg462(uint64_t k, bigz_t *p, factor_list_t *factors) {
       rc = IERROR;
       goto nt_mov97_alg462_error;
     }
-    
+
     if(bigz_sub_ui(aux_n_3, n, 3) == IERROR) {
       rc = IERROR;
       goto nt_mov97_alg462_error;
@@ -1029,29 +1034,29 @@ int nt_mov97_alg462(uint64_t k, bigz_t *p, factor_list_t *factors) {
       rc = IERROR;
       goto nt_mov97_alg462_error;
     }
-    
-    /** 8.2 Use trial division to determine whether n is divisible by any prime 
+
+    /** 8.2 Use trial division to determine whether n is divisible by any prime
 	number < B. If it is not then do the following: */
 
     /** @todo Trial division in 8.2! */
-      
+
     /** Select a random integer a in the interval [2, n-2]. */
     if(bigz_urandomm(a, aux_n_3) == IERROR) {
       rc = IERROR;
-      goto nt_mov97_alg462_error;      
+      goto nt_mov97_alg462_error;
     }
 
     if(bigz_add_ui(a, a, 2) == IERROR) {
       rc = IERROR;
       goto nt_mov97_alg462_error;
     }
-		 
+
     /** Compute b=a^(n-1) mod n. */
     if(bigz_powm(b, a, aux_n_1, n) == IERROR) {
       rc = IERROR;
-      goto nt_mov97_alg462_error;      
+      goto nt_mov97_alg462_error;
     }
-    
+
     /** If b = 1 then do the following: */
     errno = 0;
     if(!bigz_cmp_ui(b, 1)) {
@@ -1064,14 +1069,14 @@ int nt_mov97_alg462(uint64_t k, bigz_t *p, factor_list_t *factors) {
       /** Compute b=a^(2R) mod n and d=gcd(b-1,n). */
       if(bigz_powm(b, a, aux_2R, n) == IERROR) {
 	rc = IERROR;
-	goto nt_mov97_alg462_error;	
+	goto nt_mov97_alg462_error;
       }
 
       if(bigz_sub_ui(aux_b_1, b, 1) == IERROR) {
 	rc = IERROR;
 	goto nt_mov97_alg462_error;
       }
-      
+
       if(bigz_gcd(d, aux_b_1, n) == IERROR) {
 	rc = IERROR;
 	goto nt_mov97_alg462_error;
@@ -1086,9 +1091,9 @@ int nt_mov97_alg462(uint64_t k, bigz_t *p, factor_list_t *factors) {
 	}
 	success = 1;
       }
-      
+
     }
-    
+
   }
 
  nt_mov97_alg462_error:
@@ -1097,7 +1102,7 @@ int nt_mov97_alg462(uint64_t k, bigz_t *p, factor_list_t *factors) {
     /** 9. Return(n). */
     bigz_set(*p, n);
   }
-  
+
   /* Free auxiliar variables */
   if(q) bigz_free(q);
   if(I) bigz_free(I);
@@ -1118,7 +1123,7 @@ int nt_mov97_alg462(uint64_t k, bigz_t *p, factor_list_t *factors) {
 }
 
 int nt_mov97_alg462_mod(bigz_t p1, bigz_t p2, bigz_t *p, factor_list_t *factors) {
-  
+
   /* To ease the readability of the code, we do not apply the typical C variable
      naming convention rules. Instead, we use the same names given in the original
      Menezes et al.'s algorithm. Auxiliar variables not specified in the algorithm
@@ -1136,10 +1141,10 @@ int nt_mov97_alg462_mod(bigz_t p1, bigz_t p2, bigz_t *p, factor_list_t *factors)
   }
 
   q = NULL; I = NULL; aux_2I_I = NULL; aux_I1 = NULL; aux_I2 = NULL, n = NULL;
-  a = NULL, aux_n_3 = NULL; b = NULL; aux_r = NULL; aux_bigz2 = NULL; 
+  a = NULL, aux_n_3 = NULL; b = NULL; aux_r = NULL; aux_bigz2 = NULL;
   aux_n_1 = NULL; aux_2R = NULL; d = NULL; aux_b_1 = NULL;
   rc = IOK;
- 
+
   m = 20; r_max = 0.96f;
 
   errno = 0;
@@ -1168,12 +1173,12 @@ int nt_mov97_alg462_mod(bigz_t p1, bigz_t p2, bigz_t *p, factor_list_t *factors)
   }
 
   uk = (uint64_t) 1+floor(r*k); /** @todo control range! */
-  
+
   if(!(q = bigz_init())) {
     rc = IERROR;
     goto nt_mov97_alg462_mod_error;
   }
-  
+
   if(nt_mov97_alg462(uk, &q, NULL) == IERROR) {
     rc = IERROR;
     goto nt_mov97_alg462_mod_error;
@@ -1192,7 +1197,7 @@ int nt_mov97_alg462_mod(bigz_t p1, bigz_t p2, bigz_t *p, factor_list_t *factors)
     rc = IERROR;
     goto nt_mov97_alg462_mod_error;
   }
-  
+
   if(!(aux_I2 = bigz_init())) {
     rc = IERROR;
     goto nt_mov97_alg462_mod_error;
@@ -1202,28 +1207,28 @@ int nt_mov97_alg462_mod(bigz_t p1, bigz_t p2, bigz_t *p, factor_list_t *factors)
     rc = IERROR;
     goto nt_mov97_alg462_mod_error;
   }
-  
+
   if(bigz_tdiv(I, NULL, I, q) == IERROR) {
     rc = IERROR;
-    goto nt_mov97_alg462_mod_error;    
+    goto nt_mov97_alg462_mod_error;
   }
 
   if(bigz_set(aux_I2, I) == IERROR) {
     rc = IERROR;
     goto nt_mov97_alg462_mod_error;
   }
-  
+
   if(bigz_tdiv_ui(I, NULL, I, 2) == IERROR) {
     rc = IERROR;
     goto nt_mov97_alg462_mod_error;
   }
-   
+
   /** 7. success = 0. */
   success = 0;
 
   if(!(aux_r = bigz_init())) {
     rc = IERROR;
-    goto nt_mov97_alg462_mod_error;    
+    goto nt_mov97_alg462_mod_error;
   }
 
   if(!(R = bigz_init())) {
@@ -1235,7 +1240,7 @@ int nt_mov97_alg462_mod(bigz_t p1, bigz_t p2, bigz_t *p, factor_list_t *factors)
     rc = IERROR;
     goto nt_mov97_alg462_mod_error;
   }
-  
+
   if(!(a = bigz_init())) {
     rc = IERROR;
     goto nt_mov97_alg462_mod_error;
@@ -1282,7 +1287,7 @@ int nt_mov97_alg462_mod(bigz_t p1, bigz_t p2, bigz_t *p, factor_list_t *factors)
       rc = IERROR;
       goto nt_mov97_alg462_mod_error;
     }
-    
+
     /* Generate a random number in [I+1, 2I] */
     /* mpz_urandomm(aux_r , sysenv->gmp_rand, I); */
     /* mpz_add(aux_r, aux_r, I); */
@@ -1318,12 +1323,12 @@ int nt_mov97_alg462_mod(bigz_t p1, bigz_t p2, bigz_t *p, factor_list_t *factors)
       rc = IERROR;
       goto nt_mov97_alg462_mod_error;
     }
-    
+
     if(bigz_sub_ui(aux_n_3, n, 3) == IERROR) {
       rc = IERROR;
       goto nt_mov97_alg462_mod_error;
     }
-    
+
     if(bigz_sub_ui(aux_n_1, n, 1) == IERROR) {
       rc = IERROR;
       goto nt_mov97_alg462_mod_error;
@@ -1333,7 +1338,7 @@ int nt_mov97_alg462_mod(bigz_t p1, bigz_t p2, bigz_t *p, factor_list_t *factors)
 	number < B. If it is not then do the following: */
 
     /** @todo Trial division in 8.2! */
-      
+
     /** Select a random integer a in the interval [2, n-2]. */
     if(bigz_urandomm(a, aux_n_3) == IERROR) {
       rc = IERROR;
@@ -1344,13 +1349,13 @@ int nt_mov97_alg462_mod(bigz_t p1, bigz_t p2, bigz_t *p, factor_list_t *factors)
       rc = IERROR;
       goto nt_mov97_alg462_mod_error;
     }
-		 
+
     /** Compute b=a^(n-1) mod n. */
     if(bigz_powm(b, a, aux_n_1, n) == IERROR) {
       rc = IERROR;
       goto nt_mov97_alg462_mod_error;
     }
-    
+
     /** If b = 1 then do the following: */
     errno = 0;
     if(!bigz_cmp_ui(b, 1)) {
@@ -1370,7 +1375,7 @@ int nt_mov97_alg462_mod(bigz_t p1, bigz_t p2, bigz_t *p, factor_list_t *factors)
 	rc = IERROR;
 	goto nt_mov97_alg462_mod_error;
       }
-      
+
       if(bigz_gcd(d, aux_b_1, n) == IERROR) {
 	rc = IERROR;
 	goto nt_mov97_alg462_mod_error;
@@ -1385,22 +1390,22 @@ int nt_mov97_alg462_mod(bigz_t p1, bigz_t p2, bigz_t *p, factor_list_t *factors)
 	}
 	success = 1;
       }
-      
+
     }
-    
+
   }
-  
+
   /** 9. Return(n). */
   if(bigz_set(*p, n) == IERROR) {
     rc = IERROR;
     goto nt_mov97_alg462_mod_error;
   }
-  
+
   if(factors) {
 
     if(bigz_divexact_ui(aux_n_1, aux_n_1, 2) == IERROR) {
       rc = IERROR;
-      goto nt_mov97_alg462_mod_error;    
+      goto nt_mov97_alg462_mod_error;
     }
 
     /* Insert 2, p1 and p2 in the factor list of n-1 */
@@ -1418,7 +1423,7 @@ int nt_mov97_alg462_mod(bigz_t p1, bigz_t p2, bigz_t *p, factor_list_t *factors)
       rc = IERROR;
       goto nt_mov97_alg462_mod_error;
     }
-    
+
     if(nt_factor_list_insert(factors, p2) == IERROR) {
       rc = IERROR;
       goto nt_mov97_alg462_mod_error;
@@ -1428,20 +1433,20 @@ int nt_mov97_alg462_mod(bigz_t p1, bigz_t p2, bigz_t *p, factor_list_t *factors)
       rc = IERROR;
       goto nt_mov97_alg462_mod_error;
     }
-    
+
     /* /\* Look for divisors of up to 65536: *\/ */
     /* if(nt_trial_division_65536(aux_n_1, factors) == IERROR) { */
     /*   mpz_clear(n); */
     /*   return IERROR; */
     /* } */
-    
+
     /* Check if we have all prime divisors */
     aux_b = 0;
     if(nt_is_factor_list_complete(aux_n_1, factors, &aux_b) == IERROR) {
       rc = IERROR;
       goto nt_mov97_alg462_mod_error;
     }
-    
+
     if(!aux_b) {
       fprintf(stderr, "@todo Warning! factor list is not complete! The group generation "
 	      "algorithm won't work!\n");
@@ -1451,7 +1456,7 @@ int nt_mov97_alg462_mod(bigz_t p1, bigz_t p2, bigz_t *p, factor_list_t *factors)
 
  nt_mov97_alg462_mod_error:
 
-  /* Free auxiliar variables */ 
+  /* Free auxiliar variables */
   if(q) bigz_free(q);
   if(I) bigz_free(I);
   if(aux_2I_I) bigz_free(aux_2I_I);
@@ -1467,7 +1472,7 @@ int nt_mov97_alg462_mod(bigz_t p1, bigz_t p2, bigz_t *p, factor_list_t *factors)
   if(aux_2R) bigz_free(aux_2R);
   if(d) bigz_free(d);
   if(aux_b_1) bigz_free(aux_b_1);
-  
+
   return rc;
 
 }
@@ -1496,7 +1501,7 @@ int nt_get_generator(bigz_t p, factor_list_t *factors, bigz_t *g) {
     bigz_free(phip);
     return IERROR;
   }
-  
+
   if(!(b = bigz_init())) {
     bigz_free(phip); bigz_free(a);
     return IERROR;
@@ -1512,7 +1517,7 @@ int nt_get_generator(bigz_t p, factor_list_t *factors, bigz_t *g) {
 
   do {
 
-    /* 1. Choose a random element a in Z_p (i.e., in [1,n-1] */    
+    /* 1. Choose a random element a in Z_p (i.e., in [1,n-1] */
     if(bigz_urandomm(a, phip) == IERROR) {
       bigz_free(phip); bigz_free(a);
       bigz_free(b); bigz_free(exp);
@@ -1524,11 +1529,11 @@ int nt_get_generator(bigz_t p, factor_list_t *factors, bigz_t *g) {
       bigz_free(b); bigz_free(exp);
       return IERROR;
     }
-        
+
     /* 2. For i from 1 to #factors do the following: */
     i = 0;
     for(i=0; i<factors->n; i++) {
-      
+
       /* 2.1 Compute b = a^(n/factors[i]). */
       if(bigz_tdiv(exp, NULL, phip, factors->factors[i]) == IERROR) {
 	bigz_free(phip); bigz_free(a);
@@ -1544,7 +1549,7 @@ int nt_get_generator(bigz_t p, factor_list_t *factors, bigz_t *g) {
 
       /* mpz_mul(b, b, phip); */
       /* mpz_tdiv_q(b, b, factors->factors[i]); */
-      
+
       /* 2.2 If b = 1 then go to step 1. */
       errno = 0;
       cmp = bigz_cmp_ui(b, 1);
@@ -1558,7 +1563,7 @@ int nt_get_generator(bigz_t p, factor_list_t *factors, bigz_t *g) {
     }
 
   } while(!cmp);
-  
+
   /* 3. Return(a). */
   if(bigz_set(*g, a) == IERROR) {
     bigz_free(phip); bigz_free(a);
@@ -1570,7 +1575,7 @@ int nt_get_generator(bigz_t p, factor_list_t *factors, bigz_t *g) {
   bigz_free(b);
   bigz_free(phip);
   bigz_free(exp);
-  
+
   return IOK;
 
 }
@@ -1630,11 +1635,11 @@ int nt_get_elem_order(bigz_t n, bigz_t a, factor_list_t *factors, bigz_t *order)
       bigz_free(phin); bigz_free(t); bigz_free(a1);
       return IERROR;
     }
-    
+
     /* 2.2 Compute a_1=a^t */
     if(bigz_powm(a1, a, t, n) == IERROR) {
       bigz_free(phin); bigz_free(t); bigz_free(a1);
-      return IERROR;      
+      return IERROR;
     }
 
     /* 2.3 While a_1 != 1 do the following: compute a_1 = a_1^(p_i) and set t=t*p_i */
@@ -1648,7 +1653,7 @@ int nt_get_elem_order(bigz_t n, bigz_t a, factor_list_t *factors, bigz_t *order)
 
       if(bigz_powm(a1, a1, factors->factors[i], n) == IERROR) {
 	bigz_free(phin); bigz_free(t); bigz_free(a1);
-	return IERROR;	
+	return IERROR;
       }
 
       if(bigz_mul(t, t, factors->factors[i]) == IERROR) {
@@ -1670,7 +1675,7 @@ int nt_get_elem_order(bigz_t n, bigz_t a, factor_list_t *factors, bigz_t *order)
   /* 3. Return(t) */
   if(bigz_set(*order, t) == IERROR) {
     bigz_free(phin); bigz_free(t); bigz_free(a1);
-    return IERROR;    
+    return IERROR;
   }
 
   bigz_free(t);
@@ -1682,7 +1687,7 @@ int nt_get_elem_order(bigz_t n, bigz_t a, factor_list_t *factors, bigz_t *order)
 }
 
 int nt_get_safe_prime(uint64_t k, bigz_t p, bigz_t *a) {
-
+  printf("** starting nt_get_safe_prime\n");
   bigz_t q, low, up, candidate;
   factor_list_t factors;
 
@@ -1711,54 +1716,65 @@ int nt_get_safe_prime(uint64_t k, bigz_t p, bigz_t *a) {
   }
 
   if(bigz_ui_pow_ui(low, 2, k-1) == IERROR) {
-    bigz_free(candidate); bigz_free(q); 
-    bigz_free(low); bigz_free(up);
-    return IERROR;  
-  }
-  
-  if(bigz_ui_pow_ui(up, 2, k) == IERROR) {
-    bigz_free(candidate); bigz_free(q); 
-    bigz_free(low); bigz_free(up);
-    return IERROR;    
-  }
-
-  if(bigz_sub_ui(up, up, 1) == IERROR) {
-    bigz_free(candidate); bigz_free(q); 
+    bigz_free(candidate); bigz_free(q);
     bigz_free(low); bigz_free(up);
     return IERROR;
   }
+
+  if(bigz_ui_pow_ui(up, 2, k) == IERROR) {
+    bigz_free(candidate); bigz_free(q);
+    bigz_free(low); bigz_free(up);
+    return IERROR;
+  }
+
+  if(bigz_sub_ui(up, up, 1) == IERROR) {
+    bigz_free(candidate); bigz_free(q);
+    bigz_free(low); bigz_free(up);
+    return IERROR;
+  }
+
+  printf("nt_get_safe_prime block 1\n");
 
   errno = 0;
   do {
 
     if(errno) {
-      bigz_free(candidate); bigz_free(q); 
+      bigz_free(candidate); bigz_free(q);
       bigz_free(low); bigz_free(up);
+      printf("nt_get_safe_prime check 1\n");
     }
 
     /* This generates a random prime of k-1 bits of length */
     if(nt_genprime_random_interval(low, up, q) == IERROR) {
-      bigz_free(candidate); bigz_free(q); 
+      bigz_free(candidate); bigz_free(q);
       bigz_free(low); bigz_free(up);
-      return IERROR;          
+      printf("nt_get_safe_prime check 2\n");
+      return IERROR;
     }
 
+    printf_bn("nt_get_safe_prime (nt_genprime_random_interval): q: ", q);
+
     if(bigz_mul_ui(candidate, q, 2) == IERROR) {
-      bigz_free(candidate); bigz_free(q); 
+      bigz_free(candidate); bigz_free(q);
       bigz_free(low); bigz_free(up);
+      printf("nt_get_safe_prime check 3\n");
     }
 
     if(bigz_add_ui(candidate, candidate, 1) == IERROR) {
-      bigz_free(candidate); bigz_free(q); 
+      bigz_free(candidate); bigz_free(q);
       bigz_free(low); bigz_free(up);
+      printf("nt_get_safe_prime check 4\n");
     }
 
     errno = 0;
-    
-  } while(!bigz_probab_prime_p(candidate, PRIMALITY_TEST_SEC));
+
+    printf("IERROR: %d\n", IERROR);
+
+  } while(bigz_probab_prime_p(candidate) != 1);
 
   bigz_free(low);
   bigz_free(up);
+  printf("nt_get_safe_prime block 2\n");
 
   /* If a is not NULL, calculate a generator of Z_p**/
   if(a) {
@@ -1775,7 +1791,7 @@ int nt_get_safe_prime(uint64_t k, bigz_t p, bigz_t *a) {
       bigz_free(candidate);
       return IERROR;
     }
-    
+
     if(nt_factor_list_insert(&factors, q) == IERROR) {
       bigz_free(q);
       bigz_free(candidate);
@@ -1805,11 +1821,12 @@ int nt_get_safe_prime(uint64_t k, bigz_t p, bigz_t *a) {
   } else { /* If a is NULL, just return the generated safe prime */
     if(bigz_set(p, candidate) == IERROR) {
       bigz_free(candidate); bigz_free(q);
-    }    
+    }
     bigz_free(q);
     bigz_free(candidate);
   }
-
+  printf("nt_get_safe_prime block 3\n");
+  printf("-- leaving nt_get_safe_prime\n");
   return IOK;
 
 }
@@ -1836,7 +1853,7 @@ int nt_get_germain_associate(bigz_t p, bigz_t g) {
     bigz_free(aux_g);
     return IERROR;
   }
-  
+
   if(bigz_set(g, aux_g) == IERROR) {
     bigz_free(aux_g);
     return IERROR;
@@ -1866,7 +1883,7 @@ int nt_get_random_group_element(bigz_t g, bigz_t n, bigz_t r) {
   }
 
   if(bigz_urandomm(e, n) == IERROR) {
-    bigz_free(e);    
+    bigz_free(e);
     return IERROR;
   }
 
@@ -1877,13 +1894,13 @@ int nt_get_random_group_element(bigz_t g, bigz_t n, bigz_t r) {
   }
 
   bigz_free(e);
-  
+
   return IOK;
 
 }
 
 /* int nt_PNT(bigz_t n, bigz_t pin) { */
-  
+
 /*   bigf_t log2n, f_n; */
 
 /*   /\** @todo I don't like at all using mpf_t for log2n and mpf_n: the precission  */
@@ -1904,7 +1921,7 @@ int nt_get_random_group_element(bigz_t g, bigz_t n, bigz_t r) {
 /*     bigf_free(log2n); */
 /*     return IERROR; */
 /*   } */
-  
+
 /*   if(bigz_log2(log2n, n, NT_LOG_PRECISSION) == IERROR) { */
 /*     bigf_free(log2n); */
 /*     return IERROR; */
@@ -1916,7 +1933,7 @@ int nt_get_random_group_element(bigz_t g, bigz_t n, bigz_t r) {
 /*     bigf_free(log2n); */
 /*     return IERROR; */
 /*   } */
-  
+
 /*   if(bigf_set_prec(f_n, NT_LOG_PRECISSION) == IERROR) { */
 /*     bigf_free(log2n); bigf_free(f_n); */
 /*     return IERROR; */
@@ -1926,12 +1943,12 @@ int nt_get_random_group_element(bigz_t g, bigz_t n, bigz_t r) {
 /*     bigf_free(log2n); bigf_free(f_n); */
 /*     return IERROR; */
 /*   } */
-  
+
 /*   if(bigf_div(f_n, f_n, log2n) == IERROR) { */
 /*     bigf_free(log2n); bigf_free(f_n); */
 /*     return IERROR; */
 /*   } */
-  
+
 /*   /\* Round to the nearest integer *\/ */
 /*   if(bigz_set_f(pin, f_n) == IERROR) { */
 /*     bigf_free(log2n); bigf_free(f_n); */
@@ -1958,7 +1975,7 @@ int nt_get_random_group_element(bigz_t g, bigz_t n, bigz_t r) {
 /*   if(!(n_up = bigz_init())) { */
 /*     return IERROR; */
 /*   } */
-  
+
 /*   if(nt_PNT(up, n_up) == IERROR) { */
 /*     bigz_free(n_up); */
 /*     return IERROR; */
@@ -1969,7 +1986,7 @@ int nt_get_random_group_element(bigz_t g, bigz_t n, bigz_t r) {
 /*     bigz_free(n_up); */
 /*     return IERROR; */
 /*   } */
-  
+
 /*   if(nt_PNT(low, n_low) == IERROR) { */
 /*     bigz_free(n_up); bigz_free(n_low); */
 /*     return IERROR; */
@@ -2009,12 +2026,12 @@ int nt_get_nearest_power2(bigz_t n, bigz_t nearest2pow) {
   if(!(upper = bigz_init())) {
     return IERROR;
   }
-  
+
   if(bigz_ui_pow_ui(upper, 2, size2) == IERROR) {
     bigz_free(upper);
     return IERROR;
   }
-  
+
   if(!(lower = bigz_init())) {
     bigz_free(upper);
     return IERROR;
@@ -2022,9 +2039,9 @@ int nt_get_nearest_power2(bigz_t n, bigz_t nearest2pow) {
 
   if(bigz_ui_pow_ui(lower, 2, size2-1) == IERROR) {
     bigz_free(upper); bigz_free(lower);
-    return IERROR;    
+    return IERROR;
   }
-  
+
   /* dist_upper = |upper-n| */
   if(!(dist_upper = bigz_init())) {
     bigz_free(upper); bigz_free(lower);
@@ -2043,7 +2060,7 @@ int nt_get_nearest_power2(bigz_t n, bigz_t nearest2pow) {
     bigz_free(dist_upper);
     return IERROR;
   }
-  
+
   if(bigz_sub(dist_lower, n, lower) == IERROR) {
     bigz_free(upper); bigz_free(lower);
     bigz_free(dist_upper); bigz_free(dist_lower);
@@ -2076,7 +2093,7 @@ int nt_get_greatest_power2_smaller_n(bigz_t n,
   size_t size2;
 
   if(!n || !greatest2powsmallern) {
-    LOG_EINVAL(&logger, __FILE__, "nt_get_greatest_power_smaller_n", __LINE__, 
+    LOG_EINVAL(&logger, __FILE__, "nt_get_greatest_power_smaller_n", __LINE__,
 	       LOGERROR);
     return IERROR;
   }
@@ -2087,11 +2104,11 @@ int nt_get_greatest_power2_smaller_n(bigz_t n,
   if(errno) {
     return IERROR;
   }
-  
+
   if(bigz_ui_pow_ui(greatest2powsmallern, 2, size2-1) == IERROR) {
     return IERROR;
   }
-  
+
   return IOK;
 
 }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -31,14 +31,15 @@
 #include "groupsig/kty04/gml.h"
 #include "groupsig/kty04/identity.h"
 
-int kty04_open(identity_t *id, groupsig_proof_t *proof, 
-	       crl_t *crl, groupsig_signature_t *sig, 
+int kty04_open(uint64_t *id, groupsig_proof_t *proof,
+	       crl_t *crl, groupsig_signature_t *sig,
 	       groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
 
   kty04_signature_t *kty04_sig;
+	gml_entry_t *aux_entry;
   kty04_mgr_key_t *mkey;
   kty04_grp_key_t *gkey;
-  bigz_t Ai, T1;  
+  bigz_t Ai, T1;
   uint64_t i;
   uint8_t match;
 
@@ -56,8 +57,8 @@ int kty04_open(identity_t *id, groupsig_proof_t *proof,
 
   /* Get T2^(-x)*T1. Note that sig->A[2] = T2^(-1) and sig->A[6] = T1^(-1) */
   if(!(T1 = bigz_init())) return IERROR;
-  if(bigz_invert(T1, kty04_sig->A[6], gkey->n) == IERROR) { 
-    bigz_free(T1); 
+  if(bigz_invert(T1, kty04_sig->A[6], gkey->n) == IERROR) {
+    bigz_free(T1);
     return IERROR;
   }
 
@@ -70,10 +71,10 @@ int kty04_open(identity_t *id, groupsig_proof_t *proof,
     bigz_free(T1); bigz_free(Ai);
     return IERROR;
   }
-  
+
   if(bigz_mul(Ai, Ai, T1) == IERROR) {
     bigz_free(T1); bigz_free(Ai);
-    return IERROR;    
+    return IERROR;
   }
 
   if(bigz_mod(Ai, Ai, gkey->n) == IERROR) {
@@ -85,11 +86,11 @@ int kty04_open(identity_t *id, groupsig_proof_t *proof,
 
   /* Go through all the member keys in gml looking for a match memkey->A == Ai */
   match = 0;
-  for(i=0; i<gml->n; i++) {  
+  for(i=0; i<gml->n; i++) {
 
     errno = 0;
 
-    if(!bigz_cmp(((kty04_gml_entry_t *) gml_get(gml, i))->A, Ai)) {
+    if(!bigz_cmp(((kty04_gml_entry_data_t *)((gml_entry_t *) gml_get(gml, i))->data)->A, Ai)) {
 
       if(errno) {
 	bigz_free(Ai);
@@ -97,10 +98,13 @@ int kty04_open(identity_t *id, groupsig_proof_t *proof,
       }
 
       /* Get the identity from the matched entry. */
-      if(kty04_identity_copy(id, ((kty04_gml_entry_t *) gml_get(gml, i))->id) == IERROR) {
-	bigz_free(Ai);
-	return IERROR;
-      }
+			aux_entry = gml_get(gml, i);
+  //     if(kty04_identity_copy((identity_t)id, aux_entry->data->id) == IERROR) {
+	// bigz_free(Ai);
+	// return IERROR;
+  //     }
+
+			*id = *(uint64_t *)(aux_entry->id);
 
       match = 1;
       break;
@@ -127,12 +131,12 @@ int kty04_open(identity_t *id, groupsig_proof_t *proof,
   /*   if(!(crl_entry = kty04_crl_entry_init())) { */
   /*     return IERROR; */
   /*   } */
-    
+
   /*   if(kty04_identity_copy(crl_entry->id, gml_entry->id) == IERROR) { */
   /*     kty04_crl_entry_free(crl_entry); */
   /*     return IERROR; */
   /*   } */
-    
+
   /*   crl_entry->trapdoor = trap; */
 
   /*   if(kty04_crl_insert(crl, crl_entry) == IERROR) { */

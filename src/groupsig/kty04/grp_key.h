@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -31,7 +31,7 @@
  * @struct kty04_grp_key_t
  * @brief Structure for KTY04 group keys.
  *
- * Defines the "group" keys of the KTY04 scheme. The p and q components of the 
+ * Defines the "group" keys of the KTY04 scheme. The p and q components of the
  * associated manager key must satisfy n = p*q. The spheres are not really
  * necessary, since we have nu and epsilon, but it will reduce the amount of
  * computations required for the procedures.
@@ -67,7 +67,7 @@ typedef struct {
  */
 #define KTY04_GRP_KEY_END_MSG "END KTY04 GROUPKEY"
 
-/** 
+/**
  * @fn groupsig_key_t* kty04_grp_key_init()
  * @brief Creates a new group key.
  *
@@ -75,26 +75,26 @@ typedef struct {
  */
 groupsig_key_t* kty04_grp_key_init();
 
-/** 
+/**
  * @fn int kty04_grp_key_free(groupsig_key_t *key)
  * @brief Frees the variables of the given group key.
  *
  * @param[in,out] key The group key to initialize.
- * 
+ *
  * @return IOK or IERROR
  */
 int kty04_grp_key_free(groupsig_key_t *key);
 
-/** 
+/**
  * @fn int kty04_grp_key_copy(groupsig_key_t *dst, groupsig_key_t *src)
  * @brief Copies a group key.
  *
- * Copies the source key into the destination key (which must be initialized by 
+ * Copies the source key into the destination key (which must be initialized by
  * the caller).
  *
  * @param[in,out] dst The destination key.
  * @param[in] src The source key.
- * 
+ *
  * @return IOK or IERROR.
  */
 int kty04_grp_key_copy(groupsig_key_t *dst, groupsig_key_t *src);
@@ -105,55 +105,51 @@ int kty04_grp_key_copy(groupsig_key_t *dst, groupsig_key_t *src);
  *  represented using the specified format.
  *
  * @param[in] key The key.
- * @param[in] format The format. The list of supported key formats in the KTY04
- *  scheme are defined in @ref kty04.h.
  *
  * @return The required number of bytes, or -1 if error.
  */
-int kty04_grp_key_get_size_in_format(groupsig_key_t *key, groupsig_key_format_t format);
+int kty04_grp_key_get_size(groupsig_key_t *key);
 
-/** 
+/**
  * @fn int kty04_grp_key_export(groupsig_key_t *key, groupsig_key_format_t format, void *dst)
  * @brief Exports the given group key.
  *
  * Exports the given KTY04 group key, to the specified destination, using the given format.
  *
- * @param[in] key The group key to export.
- * @param[in] format The format to use for exporting the key. The available key 
- *  formats in KTY04 are defined in @ref kty04.h.
- * @param[in] dst The destination's description.
- * 
+ * @param[in] bytes Bytes of the exported key.
+ * @param[in] size Size of the exported key (in bytes).
+ * @param[in] key Key to be exported.
+ *
  * @return IOK or IERROR.
  */
-int kty04_grp_key_export(groupsig_key_t *key, groupsig_key_format_t format, void *dst);
+int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key);
 
-/** 
+/**
  * @fn groupsig_key_t* kty04_grp_key_import(groupsig_key_format_t format, void *source)
  * @brief Imports a group key.
  *
  * Imports a KTY04 group key from the specified source, of the specified format.
- * 
- * @param[in] format The source format. The available key formats in KTY04 are
- *  defined in @ref kty04.h.
- * @param[in] source The source's description.
- * 
+ *
+ * @param[in] source Bytes representing a kty04 group key
+ * @param[in] source Size of the key (in bytes).
+ *
  * @return A pointer to the imported key, or NULL if error.
  */
-groupsig_key_t* kty04_grp_key_import(groupsig_key_format_t format, void *source);
+groupsig_key_t* kty04_grp_key_import(byte_t *source, uint32_t size);
 
-/** 
+/**
  * @fn char* kty04_grp_key_to_string(groupsig_key_t *key)
  * @brief Converts the key to a printable string.
  *
  * Returns a printable string associated to the given key.
  *
  * @param[in] key The key to convert.
- * 
+ *
  * @return The printable string associated to the key, or NULL if error.
  */
 char* kty04_grp_key_to_string(groupsig_key_t *key);
 
-/** 
+/**
  * @fn int kty04_grp_key_set_spheres_std(kty04_grp_key_t *key)
  * @brief Sets the given key's spheres to the default configuration.
  *
@@ -162,7 +158,7 @@ char* kty04_grp_key_to_string(groupsig_key_t *key);
  *
  * @param[in,out] key An initialized key, with all the fields set but the
  *  spheres.
- * 
+ *
  * @return IOK or IERROR.
  */
 int kty04_grp_key_set_spheres_std(kty04_grp_key_t *key);
@@ -179,7 +175,7 @@ static const grp_key_handle_t kty04_grp_key_handle = {
   &kty04_grp_key_export, /**< Export group keys. */
   &kty04_grp_key_import, /**< Import group keys. */
   &kty04_grp_key_to_string, /**< Convert to printable strings. */
-  &kty04_grp_key_get_size_in_format,
+  &kty04_grp_key_get_size,
 };
 
 #endif

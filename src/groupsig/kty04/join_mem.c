@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -29,9 +29,9 @@
 #include "sys/mem.h"
 
 /**
- * @todo The Join procedure includes a protocol for non-adaptive drawing of 
+ * @todo The Join procedure includes a protocol for non-adaptive drawing of
  * random powers such that the group member gets x, and the group manager gets
- * b^x (mod n). For now, and for testing purposes, we just let the user choose 
+ * b^x (mod n). For now, and for testing purposes, we just let the user choose
  * a random x and send it to the manager, but we must implement it as soon as
  * everything is working correctly.
  */
@@ -40,12 +40,12 @@
 /*   return IERROR; */
 /* } */
 
-/* @TODO This function still follows the old variable structure for join and 
-   I am just changing the interface to remove compiler complaints. But this 
+/* @TODO This function still follows the old variable structure for join and
+   I am just changing the interface to remove compiler complaints. But this
    breaks the functionality! Fix! */
 // groupsig_key_t *memkey, groupsig_key_t *grpkey) {
-int kty04_join_mem(void **mout, groupsig_key_t *memkey,
-		   int seq, void *min, groupsig_key_t *grpkey) {
+int kty04_join_mem(message_t **mout, groupsig_key_t *memkey,
+		   int seq, message_t *min, groupsig_key_t *grpkey) {
 
   kty04_grp_key_t *gkey;
   kty04_mem_key_t *mkey;
@@ -55,7 +55,7 @@ int kty04_join_mem(void **mout, groupsig_key_t *memkey,
     LOG_EINVAL(&logger, __FILE__, "kty04_join_mem", __LINE__, LOGERROR);
     return IERROR;
   }
- 
+
   gkey = (kty04_grp_key_t *) grpkey->key;
   mkey = (kty04_mem_key_t *) memkey->key;
 
@@ -69,7 +69,7 @@ int kty04_join_mem(void **mout, groupsig_key_t *memkey,
   if(sphere_get_random(gkey->inner_lambda, mkey->xx) == IERROR) {
     return IERROR;
   }
-  
+
   /* Set C = b^xx */
   if(bigz_powm(mkey->C, gkey->b, mkey->xx, gkey->n) == IERROR) {
     return IERROR;

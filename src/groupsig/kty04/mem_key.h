@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -51,7 +51,7 @@ typedef struct {
   bigz_t e; /**< The e used to obtain A */
 } kty04_mem_key_t;
 
-/** 
+/**
  * @fn groupsig_key_t* kty04_mem_key_init()
  * @brief Creates a new group key.
  *
@@ -59,42 +59,40 @@ typedef struct {
  */
 groupsig_key_t* kty04_mem_key_init();
 
-/** 
+/**
  * @fn int kty04_mem_key_free(groupsig_key_t *key)
  * @brief Frees the variables of the given member key.
  *
  * @param[in,out] key The member key to initialize.
- * 
+ *
  * @return IOK or IERROR
  */
 int kty04_mem_key_free(groupsig_key_t *key);
 
-/** 
+/**
  * @fn int kty04_mem_key_copy(groupsig_key_t *dst, groupsig_key_t *src)
- * @brief Copies the source key into the destination key (which must be initialized 
+ * @brief Copies the source key into the destination key (which must be initialized
  *  by the caller).
  *
  * @param[in,out] dst The destination key.
  * @param[in] src The source key.
- * 
+ *
  * @return IOK or IERROR.
  */
 int kty04_mem_key_copy(groupsig_key_t *dst, groupsig_key_t *src);
 
-/** 
+/**
  * @fn int kty04_mem_key_get_size_in_format(groupsig_key_t *key, groupsig_key_format_t format)
- * @brief Returns the size that the given key would require in order to be 
+ * @brief Returns the size that the given key would require in order to be
  *  represented using the specified format.
  *
  * @param[in] key The key.
- * @param[in] format The format. The list of supported key formats in the KTY04
- *  scheme are defined in @ref kty04.h.
- * 
+ *
  * @return The required number of bytes, or -1 if error.
  */
-int kty04_mem_key_get_size_in_format(groupsig_key_t *key, groupsig_key_format_t format);
+int kty04_mem_key_get_size(groupsig_key_t *key);
 
-/** 
+/**
  * @fn groupsig_key_t* kty04_mem_key_get_prv(groupsig_key_t *key)
  * @brief Gets a partial member key with only the private part of the
  *  received key.
@@ -104,13 +102,13 @@ int kty04_mem_key_get_size_in_format(groupsig_key_t *key, groupsig_key_format_t 
  * to the x' (xx in the code) field.
  *
  * @param[in] key The member key.
- * 
+ *
  * @return An internally allocated member key with the private part of <i>key</i>
  *  set, and the rest of the fields set to NULL. On error, NULL is returned.
  */
 groupsig_key_t* kty04_mem_key_get_prv(groupsig_key_t *key);
 
-/** 
+/**
  * @fn groupsig_key_t* kty04_mem_key_get_pub(groupsig_key_t *key)
  * @brief Returns a new member key in which only the public part of the
  *  received key is set.
@@ -120,7 +118,7 @@ groupsig_key_t* kty04_mem_key_get_prv(groupsig_key_t *key);
  * For KTY04 member keys, this corresponds to all fields but x' (xx in the code).
  *
  * @param[in] key The member key.
- * 
+ *
  * @return A pointer to the produced "public" member key, or NULL if error.
  */
 groupsig_key_t* kty04_mem_key_get_pub(groupsig_key_t *key);
@@ -128,91 +126,86 @@ groupsig_key_t* kty04_mem_key_get_pub(groupsig_key_t *key);
 /* int kty04_mem_key_set_prv(groupsig_key_t *dst, groupsig_key_t *src); */
 /* int kty04_mem_key_set_pub(groupsig_key_t *dst, groupsig_key_t *src); */
 
-/** 
- * @fn int kty04_mem_key_export(groupsig_key_t *key, groupsig_key_format_t format,
- *                              void *dst)
+/**
+ * @fn int kty04_mem_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key)
  * @brief Exports the given member key, using the specified format, to the
  *  specified destination.
  *
- * @param[in] key The key to export.
- * @param[in] format The format to use. The available key formats in KTY04 are
- *  defined in @ref kty04.h.
- * @param[in] dst The destination's information.
- * 
- * @return IOK or IERROR. 
- */
-int kty04_mem_key_export(groupsig_key_t *key, groupsig_key_format_t format, void *dst);
-
-/** 
- * @fn int kty04_mem_key_export_pub(groupsig_key_t *key, 
- *                                  groupsig_key_format_t format, void *dst)
- * @brief Exports the "public" part of the given member key.
+ * @param[in] bytes Output bytes.
+ * @param[in] size Size of the outputted key (in bytes).
+ * @param[in] key Key to be exported.
  *
- * @param[in] key The key to export.
- * @param[in] format The format to use. The available key formats in KTY04 are
- *  defined in @ref kty04.h.
- * @param[in] dst The destination information.
- * 
  * @return IOK or IERROR.
  */
-int kty04_mem_key_export_pub(groupsig_key_t *key, groupsig_key_format_t format, void *dst);
+int kty04_mem_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key);
 
-/** 
- * @fn int kty04_mem_key_export_prv(groupsig_key_t *key, 
+/**
+ * @fn int kty04_mem_key_export_pub(byte_t **bytes, uint32_t *size, groupsig_key_t *key)
+ * @brief Exports the "public" part of the given member key.
+ *
+ * @param[in] bytes Output bytes.
+ * @param[in] size Size of the outputted key (in bytes).
+ * @param[in] key Key to be exported.
+ *
+ * @return IOK or IERROR.
+ */
+int kty04_mem_key_export_pub(byte_t **bytes, uint32_t *size, groupsig_key_t *key);
+
+/**
+ * @fn int kty04_mem_key_export_prv(groupsig_key_t *key,
  *                                  groupsig_key_format_t format, void *dst)
  * @brief Exports the "private" part of the given member key.
  *
- * @param[in] key The key to export.
- * @param[in] format The format to use. The available key formats in KTY04 are
- *  defined in @ref kty04.h.
- * @param[in] dst The destination.
- * 
- * @return 
+ * @param[in] bytes Output bytes.
+ * @param[in] size Size of the outputted key (in bytes).
+ * @param[in] key Key to be exported.
+ *
+ * @return
  */
-int kty04_mem_key_export_prv(groupsig_key_t *key, groupsig_key_format_t format, void *dst);
+int kty04_mem_key_export_prv(byte_t **bytes, uint32_t *size, groupsig_key_t *key);
 
-/** 
+/**
  * @fn groupsig_key_t* kty04_mem_key_import(groupsig_key_format_t format, void *source)
  * @brief Imports a member key from the specified source, of the specified format.
  *
  * @param[in] format The source format. The available key formats in KTY04 are
  *  defined in @ref kty04.h.
  * @param[in] source The source information.
- * 
+ *
  * @return A pointer to the imported member key, or NULL if error.
  */
-groupsig_key_t* kty04_mem_key_import(groupsig_key_format_t format, void *source);
-groupsig_key_t* kty04_mem_key_import_prv(groupsig_key_format_t format, void *source);
-groupsig_key_t* kty04_mem_key_import_pub(groupsig_key_format_t format, void *source);
+groupsig_key_t* kty04_mem_key_import(byte_t *source, uint32_t size);
+groupsig_key_t* kty04_mem_key_import_prv(byte_t *source, uint32_t size);
+groupsig_key_t* kty04_mem_key_import_pub(byte_t *source, uint32_t size);
 
-/** 
+/**
  * @fn char* kty04_mem_key_to_string(groupsig_key_t *key)
  * @brief Gets a printable representation of the specified member key.
  *
  * @param[in] key The member key.
- * 
+ *
  * @return A pointer to the obtained string, or NULL if error.
  */
 char* kty04_mem_key_to_string(groupsig_key_t *key);
 
-/** 
+/**
  * @fn char* kty04_mem_key_prv_to_string(groupsig_key_t *key)
  * @brief Gets a printable representation of the "private" part of the
  *  specified member key.
  *
  * @param[in] key The member key.
- * 
+ *
  * @return A pointer to the obtained string, or NULL if error.
  */
 char* kty04_mem_key_prv_to_string(groupsig_key_t *key);
 
-/** 
+/**
  * @fn char* kty04_mem_key_pub_to_string(groupsig_key_t *key)
  * @brief Gets a printable representation of the "public" part of the
  *  specified member key.
  *
  * @param[in] key The member key.
- * 
+ *
  * @return A pointer to the obtained string, or NULL if error.
  */
 char* kty04_mem_key_pub_to_string(groupsig_key_t *key);
@@ -226,7 +219,7 @@ static const mem_key_handle_t kty04_mem_key_handle = {
   &kty04_mem_key_init, /**< Initializes member keys. */
   &kty04_mem_key_free, /**< Frees member keys. */
   &kty04_mem_key_copy, /**< Copies member keys. */
-  &kty04_mem_key_get_size_in_format, /**< Gets the size of the key in specific
+  &kty04_mem_key_get_size, /**< Gets the size of the key in specific
 					formats. */
   &kty04_mem_key_export, /**< Exports member keys. */
   &kty04_mem_key_import, /**< Imports member keys. */

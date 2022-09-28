@@ -22,25 +22,25 @@ set_property(TARGET objlib PROPERTY POSITION_INDEPENDENT_CODE 1)
 add_library(groupsig SHARED $<TARGET_OBJECTS:objlib>)
 add_library(groupsig-static STATIC $<TARGET_OBJECTS:objlib>)
 
-target_link_libraries (groupsig 
-  #PUBLIC kty04 
-  PUBLIC bbs04 
+target_link_libraries (groupsig
+  PUBLIC kty04
+  PUBLIC bbs04
   #PUBLIC cpy06
   PUBLIC gl19
   PUBLIC ps16
   PUBLIC klap20
   PUBLIC dl21
-  PUBLIC dl21seq  
-  PUBLIC sys 
+  PUBLIC dl21seq
+  PUBLIC sys
   PUBLIC math
-  PUBLIC base64 
+  PUBLIC base64
   PUBLIC misc
   PUBLIC hash
   PUBLIC gcrypto
-  PUBLIC msg 
+  PUBLIC msg
   PUBLIC pbcext
   PUBLIC logger
-  PUBLIC ${OPENSSL_LIBRARIES} 
+  PUBLIC ${OPENSSL_LIBRARIES}
   PUBLIC ${MCL_LIBRARY}
   PUBLIC ${MCL384_256_LIBRARY})
 
@@ -52,7 +52,7 @@ install (DIRECTORY "${PROJECT_SOURCE_DIR}/src/include/"
 
 # Ignore kty04 and cpy06 until I adapt them to the new pbc and join
 add_subdirectory(bbs04)
-#add_subdirectory(kty04)
+add_subdirectory(kty04)
 #add_subdirectory(cpy06)
 add_subdirectory(gl19)
 add_subdirectory(ps16)

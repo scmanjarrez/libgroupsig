@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -26,9 +26,9 @@
 #include "math/nt.h"
 
 sphere_t* sphere_init() {
-  
+
   sphere_t *sp;
-  
+
   if(!(sp = (sphere_t *) malloc(sizeof(sphere_t)))) {
     LOG_ERRORCODE(&logger, __FILE__, "sphere_init", __LINE__, errno, LOGERROR);
     return NULL;
@@ -44,7 +44,7 @@ sphere_t* sphere_init() {
     free(sp); sp = NULL;
     return NULL;
   }
-  
+
   return sp;
 
 }
@@ -57,13 +57,13 @@ int sphere_free(sphere_t *sp) {
     LOG_EINVAL(&logger, __FILE__, "sphere_free", __LINE__, LOGWARN);
     return IERROR;
   }
-  
+
   rc = bigz_free(sp->center);
   rc += bigz_free(sp->radius);
   free(sp); sp = NULL;
 
   if(rc) return IERROR;
-  
+
   return IOK;
 
 }
@@ -93,7 +93,7 @@ int sphere_get_min(sphere_t *sp, bigz_t min) {
     bigz_free(_min);
     return IERROR;
   }
-  
+
   bigz_free(_min);
 
   return IOK;
@@ -148,11 +148,11 @@ int sphere_get_inner(sphere_t *sp, uint64_t epsilon, uint64_t k, sphere_t *inner
 
   /* Get u from 2^u */
   errno = 0;
-  u = bigz_sizeinbase(sp->radius, 2)-1;
+  u = bigz_sizeinbits(sp->radius)-1;
   if(errno) {
     return IERROR;
   }
-  
+
   /** @todo What happens if u-2 is not divisible by epsilon? */
   u -= 2;
   u /= epsilon;
@@ -195,23 +195,23 @@ int sphere_get_random(sphere_t *sp, bigz_t r) {
   }
 
   /* This sets _r to a random number in [0, 2*sp->radius-2] */
-  if(bigz_urandomm(_r, sysenv->big_rand, upper) == IERROR) {
+  if(bigz_urandomm(_r, upper) == IERROR) {
     bigz_free(_r); bigz_free(upper);
     return IERROR;
   }
 
   bigz_free(upper);
 
-  /* Now add (sp->center-sp->radius+1) to _r to get a random number in 
+  /* Now add (sp->center-sp->radius+1) to _r to get a random number in
      [sp->center-radius+1, sp->center+radius-1] */
   if(bigz_add(_r, _r, sp->center) == IERROR) {
     bigz_free(_r);
     return IERROR;
   }
-  
+
   if(bigz_sub(_r, _r, sp->radius) == IERROR) {
     bigz_free(_r);
-    return IERROR;    
+    return IERROR;
   }
 
   if(bigz_add_ui(_r, _r, 1) == IERROR) {
@@ -223,7 +223,7 @@ int sphere_get_random(sphere_t *sp, bigz_t r) {
     bigz_free(_r);
     return IERROR;
   }
-  
+
   bigz_free(_r);
 
   return IOK;
@@ -256,7 +256,7 @@ int sphere_get_random_prime(sphere_t *sp, bigz_t p) {
     bigz_free(lower);
     return IERROR;
   }
-  
+
   if(bigz_add(upper, upper, sp->radius) == IERROR) {
     bigz_free(lower); bigz_free(upper);
     return IERROR;
@@ -272,7 +272,7 @@ int sphere_get_random_prime(sphere_t *sp, bigz_t p) {
     bigz_free(lower); bigz_free(upper);
     return IERROR;
   }
-   
+
   if(nt_genprime_random_interval(lower, upper, r) == IERROR) {
     bigz_free(lower); bigz_free(upper);
     bigz_free(r);
@@ -282,7 +282,7 @@ int sphere_get_random_prime(sphere_t *sp, bigz_t p) {
   if(bigz_set(p, r) == IERROR) {
     bigz_free(lower); bigz_free(upper);
     bigz_free(r);
-    return IERROR;   
+    return IERROR;
   }
 
   bigz_free(lower);
@@ -303,92 +303,92 @@ int sphere_get_product_spheres(sphere_t *sp1, sphere_t *sp2, sphere_t *sp) {
 	       LOGERROR);
     return IERROR;
   }
-  
+
   min=NULL; max=NULL, sp1_aux=NULL; sp2_aux=NULL; center=NULL; radius=NULL;
   rc = IOK;
 
-  /** @todo Right now, this function only supports product of spheres with all 
+  /** @todo Right now, this function only supports product of spheres with all
       their elements >= 0. */
 
   /* min = sp1->min*sp2->min */
   if(!(sp1_aux = bigz_init())) return IERROR;
 
-  if(sphere_get_min(sp1, sp1_aux) == IERROR) { 
-    rc = IERROR; 
-    goto get_product_spheres_error; 
-  }
-
-  if(!(sp2_aux = bigz_init()))  { 
-    rc = IERROR; 
-    goto get_product_spheres_error; 
-  }
-
-  if(sphere_get_min(sp2, sp2_aux) == IERROR) { 
-    rc = IERROR; 
-    goto get_product_spheres_error; 
-  }
-
-  if(!(min = bigz_init())) { 
-    rc = IERROR; 
+  if(sphere_get_min(sp1, sp1_aux) == IERROR) {
+    rc = IERROR;
     goto get_product_spheres_error;
   }
 
-  if(bigz_mul(min, sp1_aux, sp2_aux) == IERROR) { 
-    rc = IERROR; 
-    goto get_product_spheres_error; 
+  if(!(sp2_aux = bigz_init()))  {
+    rc = IERROR;
+    goto get_product_spheres_error;
+  }
+
+  if(sphere_get_min(sp2, sp2_aux) == IERROR) {
+    rc = IERROR;
+    goto get_product_spheres_error;
+  }
+
+  if(!(min = bigz_init())) {
+    rc = IERROR;
+    goto get_product_spheres_error;
+  }
+
+  if(bigz_mul(min, sp1_aux, sp2_aux) == IERROR) {
+    rc = IERROR;
+    goto get_product_spheres_error;
   }
 
   /* max = sp1->max*sp2->max */
-  if(sphere_get_max(sp1, sp1_aux) == IERROR) { 
-    rc = IERROR; 
-    goto get_product_spheres_error; 
+  if(sphere_get_max(sp1, sp1_aux) == IERROR) {
+    rc = IERROR;
+    goto get_product_spheres_error;
   }
-  
-  if(sphere_get_max(sp2, sp2_aux) == IERROR) { 
-    rc = IERROR; 
-    goto get_product_spheres_error; 
+
+  if(sphere_get_max(sp2, sp2_aux) == IERROR) {
+    rc = IERROR;
+    goto get_product_spheres_error;
   }
-  
-  if(!(max = bigz_init())) { 
-    rc = IERROR; 
-    goto get_product_spheres_error; 
+
+  if(!(max = bigz_init())) {
+    rc = IERROR;
+    goto get_product_spheres_error;
   }
-  
-  if(bigz_mul(max, sp1_aux, sp2_aux) == IERROR) { 
-    rc = IERROR; 
-    goto get_product_spheres_error; 
+
+  if(bigz_mul(max, sp1_aux, sp2_aux) == IERROR) {
+    rc = IERROR;
+    goto get_product_spheres_error;
   }
 
   /* center = min+max/2 */
-  if(bigz_add(sp1_aux, min, max) == IERROR) { 
-    rc = IERROR; 
-    goto get_product_spheres_error; 
+  if(bigz_add(sp1_aux, min, max) == IERROR) {
+    rc = IERROR;
+    goto get_product_spheres_error;
   }
 
-  if(!(center = bigz_init())) { 
-    rc = IERROR; 
-    goto get_product_spheres_error; 
+  if(!(center = bigz_init())) {
+    rc = IERROR;
+    goto get_product_spheres_error;
   }
 
-  if(bigz_tdiv_ui(center, NULL, sp1_aux, 2) == IERROR) { 
-    rc = IERROR; 
-    goto get_product_spheres_error; 
+  if(bigz_tdiv_ui(center, NULL, sp1_aux, 2) == IERROR) {
+    rc = IERROR;
+    goto get_product_spheres_error;
   }
 
   /* radius = max-min/2 */
-  if(bigz_sub(sp1_aux, max, min) == IERROR) { 
-    rc = IERROR; 
-    goto get_product_spheres_error; 
+  if(bigz_sub(sp1_aux, max, min) == IERROR) {
+    rc = IERROR;
+    goto get_product_spheres_error;
   }
 
-  if(!(radius = bigz_init())) { 
-    rc = IERROR; 
-    goto get_product_spheres_error; 
+  if(!(radius = bigz_init())) {
+    rc = IERROR;
+    goto get_product_spheres_error;
   }
 
-  if(bigz_tdiv_ui(radius, NULL, sp1_aux, 2)) { 
-    rc = IERROR; 
-    goto get_product_spheres_error; 
+  if(bigz_tdiv_ui(radius, NULL, sp1_aux, 2)) {
+    rc = IERROR;
+    goto get_product_spheres_error;
   }
 
   /* Now, get the greatest power of two less than radius */
@@ -397,15 +397,15 @@ int sphere_get_product_spheres(sphere_t *sp1, sphere_t *sp2, sphere_t *sp) {
     goto get_product_spheres_error;
   }
 
-  if(bigz_set(sp->center, center) == IERROR) { 
-    goto get_product_spheres_error; 
-    rc = IERROR; 
+  if(bigz_set(sp->center, center) == IERROR) {
+    goto get_product_spheres_error;
+    rc = IERROR;
   }
 
   if(bigz_set(sp->radius, radius)) rc = IERROR;
 
  get_product_spheres_error:
-  
+
   if(sp1_aux) bigz_free(sp1_aux);
   if(sp2_aux) bigz_free(sp2_aux);
   if(min) bigz_free(min);
@@ -427,12 +427,12 @@ char* sphere_to_string(sphere_t *sp) { // was int sphere_fprintf(FILE *fd, spher
     return NULL;
   }
 
-  if(!(scenter = bigz_get_str(10, sp->center))) return NULL;
-  if(!(sradius = bigz_get_str(10, sp->radius))) {
+  if(!(scenter = bigz_get_str10(sp->center))) return NULL;
+  if(!(sradius = bigz_get_str10(sp->radius))) {
     free(scenter); scenter = NULL;
     return NULL;
   }
-  
+
   length = strlen(scenter)+strlen("center: \n")+
     strlen(sradius)+strlen("radius: \n\n");
 
@@ -443,11 +443,11 @@ char* sphere_to_string(sphere_t *sp) { // was int sphere_fprintf(FILE *fd, spher
   }
   memset(ssphere, 0, length+1);
 
-  sprintf(ssphere, 
+  sprintf(ssphere,
 	  "center: %s\n"
-	  "radius: %s\n\n", 
+	  "radius: %s\n\n",
 	  scenter, sradius);
-  
+
   free(scenter); scenter = NULL;
   free(sradius); sradius = NULL;
 
@@ -471,7 +471,7 @@ char* sphere_to_string(sphere_t *sp) { // was int sphere_fprintf(FILE *fd, spher
 /*   } */
 
 /*   rc = IOK; */
-  
+
 /*   /\* Export the variables to binary data *\/ */
 /*   if(!(bcenter = bigz_export(NULL, &scenter, 1, 1, 1, 0, sp->center))) { */
 /*     fprintf(stderr, "Error in sphere_fprintf_b64 (%d): %s\n", */
@@ -497,7 +497,7 @@ char* sphere_to_string(sphere_t *sp) { // was int sphere_fprintf(FILE *fd, spher
 /*   *\/ */
 
 /*   ssphere = 6+scenter+sradius; */
-  
+
 /*   /\* Copy everything into a unique array *\/ */
 /*   if(!(bsphere = (byte_t *) malloc(sizeof(byte_t)*ssphere))) { */
 /*     fprintf(stderr, "Error in sphere_fprintf_b64 (%d): %s\n",  */
@@ -546,7 +546,7 @@ char* sphere_to_string(sphere_t *sp) { // was int sphere_fprintf(FILE *fd, spher
 /*     rc = IERROR; */
 /*     goto error;     */
 /*   } */
-  
+
 /*   /\* We have the associated base64 string in cs97_b64. Print it and we are done. *\/ */
 /*   fprintf(fd, "%s", b64->data); */
 
@@ -559,7 +559,7 @@ char* sphere_to_string(sphere_t *sp) { // was int sphere_fprintf(FILE *fd, spher
 /*   if(bsphere) { free(bsphere); bsphere = NULL; } */
 
 /*   return rc; */
-  
+
 /* } */
 
 /* sphere.c ends here */

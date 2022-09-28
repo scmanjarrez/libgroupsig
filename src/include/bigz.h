@@ -397,7 +397,9 @@ int bigz_invert(bigz_t rop, bigz_t op, bigz_t mod);
  * probabilistic claims (i.e., this function will never return 2 at present.)
  * 
  */
-int bigz_probab_prime_p(bigz_t n, int reps);
+
+/* Removed nreps, deprecated in openssl3 */
+int bigz_probab_prime_p(bigz_t n);
 
 /** 
  * @fn int bigz_nextprime(bigz_t rop, bigz_t lower)

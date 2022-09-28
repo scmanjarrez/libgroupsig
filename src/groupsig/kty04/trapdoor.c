@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -40,10 +40,10 @@ trapdoor_t* kty04_trapdoor_init() {
     return NULL;
   }
 
-  /* A KTY04 identity is the index pointing to an entry in the GML, we initialize 
+  /* A KTY04 identity is the index pointing to an entry in the GML, we initialize
      it to UINT64_MAX */
   *kty04_trap = bigz_init();
-  
+
   trap->scheme = GROUPSIG_KTY04_CODE;
   trap->trap = kty04_trap;
 
@@ -66,7 +66,7 @@ int kty04_trapdoor_free(trapdoor_t *trap) {
 
   /* Currently, it is just an uint64_t* */
   bigz_free(*((kty04_trapdoor_t *) trap->trap));
-  mem_free((kty04_trapdoor_t *) trap->trap); trap->trap = NULL;  
+  mem_free((kty04_trapdoor_t *) trap->trap); trap->trap = NULL;
   mem_free(trap);
 
   return IOK;
@@ -95,7 +95,7 @@ char* kty04_trapdoor_to_string(trapdoor_t *trap) {
   }
 
   /* Currently, the KTY04 trapdoors are bigz_t's */
-  return bigz_get_str(10, *((kty04_trapdoor_t *)trap->trap));
+  return bigz_get_str10(*((kty04_trapdoor_t *)trap->trap));
 
 }
 
@@ -113,7 +113,7 @@ trapdoor_t* kty04_trapdoor_from_string(char *strap) {
   }
 
   /* Currently, KTY04 identities are bigz_t's */
-  if(bigz_set_str(*(kty04_trapdoor_t *) trap->trap, strap, 10) == IERROR) {
+  if(bigz_set_str10(*(kty04_trapdoor_t *) trap->trap, strap) == IERROR) {
     kty04_trapdoor_free(trap);
     return NULL;
   }

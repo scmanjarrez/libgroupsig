@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,7 +21,7 @@
 #define _MEM_KEY_HANDLES_H
 
 #include "mem_key.h"
-/* #include "groupsig/kty04/mem_key.h" */
+#include "groupsig/kty04/mem_key.h"
 #include "groupsig/bbs04/mem_key.h"
 /* #include "groupsig/cpy06/mem_key.h" */
 #include "groupsig/gl19/mem_key.h"
@@ -38,21 +38,21 @@ extern "C" {
  * @def GROUPSIG_MEM_KEY_HANDLES_N
  * @brief Number of known handles of member key schemes.
  */
-#define GROUPSIG_MEM_KEY_HANDLES_N 6
+#define GROUPSIG_MEM_KEY_HANDLES_N 7
 
 /**
  * @var GROUPSIG_MEM_KEY_HANDLES
  * @brief List of handles of supported member key schemes.
  */
-static const mem_key_handle_t *GROUPSIG_MEM_KEY_HANDLES[GROUPSIG_MEM_KEY_HANDLES_N] = { 
-  /* &kty04_mem_key_handle, */
+static const mem_key_handle_t *GROUPSIG_MEM_KEY_HANDLES[GROUPSIG_MEM_KEY_HANDLES_N] = {
+  &kty04_mem_key_handle,
   &bbs04_mem_key_handle,
   /* &cpy06_mem_key_handle, */
   &gl19_mem_key_handle,
   &ps16_mem_key_handle,
   &klap20_mem_key_handle,
   &dl21_mem_key_handle,
-  &dl21seq_mem_key_handle,  
+  &dl21seq_mem_key_handle,
 };
 
 #ifdef __cplusplus

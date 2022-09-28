@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,7 +22,7 @@
 
 #include "string.h"
 #include "trapdoor.h"
-/* #include "groupsig/kty04/trapdoor.h" */
+#include "groupsig/kty04/trapdoor.h"
 /* #include "groupsig/cpy06/trapdoor.h" */
 
 #ifdef __cplusplus
@@ -33,14 +33,14 @@ extern "C" {
  * @def TRAPDOOR_HANDLES_N
  * @brief Number of supported trapdoors.
  */
-#define TRAPDOOR_HANDLES_N 1//3
+#define TRAPDOOR_HANDLES_N 2
 
 /**
  * @var TRAPDOOR_HANDLES
  * @brief List of supported trapdoors.
  */
 static const trapdoor_handle_t *TRAPDOOR_HANDLES[TRAPDOOR_HANDLES_N] = {
-  //  &kty04_trapdoor_handle,
+  &kty04_trapdoor_handle,
   //  &cpy06_trapdoor_handle,
   NULL,
 };
@@ -52,7 +52,7 @@ static const trapdoor_handle_t *TRAPDOOR_HANDLES[TRAPDOOR_HANDLES_N] = {
 #ifdef __cplusplus
 /* Write any cplusplus specific code here */
 #endif
-  
+
 #endif /* _TRAPDOOR_HANDLES_H */
 
 /* trapdoor_handles.h ends here */

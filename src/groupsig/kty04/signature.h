@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -25,17 +25,17 @@
 #include "bigz.h"
 #include "kty04.h"
 
-/** @todo It will be a good improvement to make the scheme adaptable 
+/** @todo It will be a good improvement to make the scheme adaptable
     to other relations. */
 
 /**
- * @def KTY04_SIGNATURE_Z 
+ * @def KTY04_SIGNATURE_Z
  * @brief Defines the number of relations in the KTY04 scheme.
  */
 #define KTY04_SIGNATURE_Z 6
 
 /**
- * @def KTY04_SIGNATURE_R 
+ * @def KTY04_SIGNATURE_R
  * @brief Defines the number of free variables in the KTY04 scheme.
  */
 #define KTY04_SIGNATURE_R 5
@@ -50,20 +50,20 @@
  * @def KTY04_SUPPORTED_SIG_FORMATS_N
  * @brief Number of supported signature formats in KTY04.
  */
-#define KTY04_SUPPORTED_SIG_FORMATS_N 6
+// #define KTY04_SUPPORTED_SIG_FORMATS_N 6
 
 /**
  * @var KTY04_SUPPORTED_SIG_FORMATS
  * @brief List of supported signature formats in KTY04.
  */
-static const int KTY04_SUPPORTED_SIG_FORMATS[KTY04_SUPPORTED_SIG_FORMATS_N] = { 
-  GROUPSIG_SIGNATURE_FORMAT_FILE_NULL,
-  GROUPSIG_SIGNATURE_FORMAT_FILE_NULL_B64,
-  GROUPSIG_SIGNATURE_FORMAT_BYTEARRAY,
-  GROUPSIG_SIGNATURE_FORMAT_STRING_NULL_B64,
-  GROUPSIG_SIGNATURE_FORMAT_MESSAGE_NULL,
-  GROUPSIG_SIGNATURE_FORMAT_MESSAGE_NULL_B64,
-};
+// static const int KTY04_SUPPORTED_SIG_FORMATS[KTY04_SUPPORTED_SIG_FORMATS_N] = {
+//   GROUPSIG_SIGNATURE_FORMAT_FILE_NULL,
+//   GROUPSIG_SIGNATURE_FORMAT_FILE_NULL_B64,
+//   GROUPSIG_SIGNATURE_FORMAT_BYTEARRAY,
+//   GROUPSIG_SIGNATURE_FORMAT_STRING_NULL_B64,
+//   GROUPSIG_SIGNATURE_FORMAT_MESSAGE_NULL,
+//   GROUPSIG_SIGNATURE_FORMAT_MESSAGE_NULL_B64,
+// };
 
 /**
  * @struct kty04_signature_t
@@ -71,7 +71,7 @@ static const int KTY04_SUPPORTED_SIG_FORMATS[KTY04_SUPPORTED_SIG_FORMATS_N] = {
  */
 typedef struct {
   uint8_t scheme; /**< Metainformation: the gs scheme this key belongs to. */
-  bigz_t c; /**< The result of hash(message | B[1] | ... | B[z] | A[1] | ... | A[m]), 
+  bigz_t c; /**< The result of hash(message | B[1] | ... | B[z] | A[1] | ... | A[m]),
 	      where z is the number of relations, m the number of objects, and '|'
 	      denotes concatenation. */
   bigz_t *A; /**< The A's. */
@@ -82,62 +82,59 @@ typedef struct {
   uint32_t r; /**< The number of elements in sw. */
 } kty04_signature_t;
 
-/** 
+/**
  * @fn groupsig_signature_t* kty04_signature_init()
  * @brief Initializes the fields of a KTY04 signature.
- * 
+ *
  * @return A pointer to the allocated signature, or NULL if error.
  */
 groupsig_signature_t* kty04_signature_init();
 
-/** 
+/**
  * @fn int kty04_signature_free(groupsig_signature_t *sig)
  * @brief Frees the alloc'ed fields of the given KTY04 signature.
  *
  * @param[in,out] sig The signature to free.
- * 
+ *
  * @return IOK or IERROR
  */
 int kty04_signature_free(groupsig_signature_t *sig);
 
-/** 
- * @fn int kty04_signature_copy(groupsig_signature_t *dst, 
+/**
+ * @fn int kty04_signature_copy(groupsig_signature_t *dst,
  *                              groupsig_signature_t *src)
  * @brief Copies the given source signature into the destination signature.
  *
  * @param[in,out] dst The destination signature. Initialized by the caller.
- * @param[in] src The signature to copy. 
- * 
+ * @param[in] src The signature to copy.
+ *
  * @return IOK or IERROR.
  */
 int kty04_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src);
 
-/** 
+/**
  * @fn int kty04_signature_to_string(groupsig_signature_t *sig)
  * @brief Returns a printable string representing the current signature.
  *
  * @param[in] sig The signature o convert.
- * 
+ *
  * @return A pointer to the created string or NULL if error.
  */
 char* kty04_signature_to_string(groupsig_signature_t *sig);
 
-/** 
- * @fn int kty04_signature_get_size_in_format(groupsig_signature_t *sig, 
- *   groupsig_signature_format_t format)
- * Returns the size of the signature in the specified format. Useful when you have
+/**
+ * @fn int kty04_signature_get_size(groupsig_signature_t *sig)
+ * Returns the size of the signature. Useful when you have
  * to export the signature and pre-allocate the destination.
  *
  * @param[in] sig The signature.
- * @param[in] format The format.
- * 
+ *
  * @return -1 if error, the size that this signature would have in case of
- *  being exported to the specified format.
+ *  being exported.
  */
-int kty04_signature_get_size_in_format(groupsig_signature_t *sig, 
-				       groupsig_signature_format_t format);
+int kty04_signature_get_size(groupsig_signature_t *sig);
 
-/** 
+/**
  * @fn int kty04_signature_export(groupsig_signature *signature,
  *                                groupsig_signature_format_t format,
  *                                void *dst)
@@ -148,24 +145,22 @@ int kty04_signature_get_size_in_format(groupsig_signature_t *sig,
  * @param[in] format The format to use.
  * @param[in,out] dst Details about the destination. Will depend on the
  *  specified parameter.
- * 
+ *
  * @return IOK or IERROR
  */
-int kty04_signature_export(groupsig_signature_t *signature, 
-			   groupsig_signature_format_t format, 
-			   void *dst);
+int kty04_signature_export(byte_t **bytes, uint32_t *size, groupsig_signature_t *signature);
 
-/** 
- * @fn groupsig_signature_t* kty04_signature_import(kty04_groupsig_signature_format_t format, 
+/**
+ * @fn groupsig_signature_t* kty04_signature_import(kty04_groupsig_signature_format_t format,
  *                                            void *source)
  * @brief Imports a signature according to the specified format.
  *
  * @param[in] format The format of the signature to import.
  * @param[in] source The signature to be imported.
- * 
+ *
  * @return A pointer to the imported signature.
  */
-groupsig_signature_t* kty04_signature_import(groupsig_signature_format_t format, void *source);
+groupsig_signature_t* kty04_signature_import(byte_t *source, uint32_t size);
 
 /**
  * @var kty04_signature_handle
@@ -176,8 +171,7 @@ static const groupsig_signature_handle_t kty04_signature_handle = {
   &kty04_signature_init,  /**< Initializes signatures. */
   &kty04_signature_free, /**< Frees signatures. */
   &kty04_signature_copy, /**< Copies signatures. */
-  &kty04_signature_get_size_in_format, /**< Gets the size in bytes of a signature
-					  in a specific format. */
+  &kty04_signature_get_size, /**< Gets the size in bytes of a signature. */
   &kty04_signature_export, /**< Exports signatures. */
   &kty04_signature_import, /**< Imports signatures. */
   &kty04_signature_to_string, /**< Converts signatures to printable strings. */

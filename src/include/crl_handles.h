@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,7 +21,7 @@
 #define _CRL_HANDLES_H
 
 #include "crl.h"
-/* #include "groupsig/kty04/crl.h" */
+#include "groupsig/kty04/crl.h"
 /* #include "groupsig/bbs04/crl.h" */
 /* #include "groupsig/cpy06/crl.h" */
 
@@ -33,14 +33,14 @@ extern "C" {
  * @def CRL_HANDLES_N
  * @brief Number of supported CRL implementations.
  */
-#define CRL_HANDLES_N 0//3
+#define CRL_HANDLES_N 1//3
 
 /**
  * @var CRL_HANDLES
  * @brief List of handles of CRL implementations.
  */
 const crl_handle_t *CRL_HANDLES[CRL_HANDLES_N] = {
-  /* &kty04_crl_handle, */
+  &kty04_crl_handle,
   /* &bbs04_crl_handle, */
   /* &cpy06_crl_handle, */
 };
@@ -52,7 +52,7 @@ const crl_handle_t *CRL_HANDLES[CRL_HANDLES_N] = {
 #ifdef __cplusplus
 /* Write any cplusplus specific code here */
 #endif
-  
+
 #endif /* _CRL_HANDLES_H */
 
 /* crl_handles.h ends here */

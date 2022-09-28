@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -32,7 +32,7 @@
 int kty04_reveal(trapdoor_t *trap, crl_t *crl, gml_t *gml, uint64_t index) {
 
   kty04_crl_entry_t *crl_entry;
-  kty04_gml_entry_t *gml_entry;
+  kty04_gml_entry_data_t *gml_entry;
   bigz_t trapdoor;
 
   if(!trap || trap->scheme != GROUPSIG_KTY04_CODE ||
@@ -45,7 +45,7 @@ int kty04_reveal(trapdoor_t *trap, crl_t *crl, gml_t *gml, uint64_t index) {
   trapdoor = *(bigz_t *) trap->trap;
 
   /* The tracing trapdoor for the i-th member is the x field of its member key */
-  if(!(gml_entry = ((kty04_gml_entry_t *) gml_get(gml, index)))) {
+  if(!(gml_entry = ((kty04_gml_entry_data_t *) gml_get(gml, index)))) {
     LOG_EINVAL(&logger, __FILE__, "kty04_reveal", __LINE__, LOGERROR);
     return IERROR;
   }

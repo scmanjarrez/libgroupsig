@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,7 +21,7 @@
 #define _IDENTITY_HANDLES_H
 
 #include "identity.h"
-/* #include "groupsig/kty04/identity.h" */
+#include "groupsig/kty04/identity.h"
 /* #include "groupsig/cpy06/identity.h" */
 #include "groupsig/gl19/identity.h"
 #include "groupsig/dl21/identity.h"
@@ -35,18 +35,18 @@ extern "C" {
  * @def IDENTITY_HANDLES_N
  * @brief Number of supported identity handles.
  */
-#define IDENTITY_HANDLES_N 3
+#define IDENTITY_HANDLES_N 4
 
 /**
  * @var IDENTITY_HANDLES
  * @brief List of supported identity handles.
  */
 static const identity_handle_t *IDENTITY_HANDLES[IDENTITY_HANDLES_N] = {
-  /* &kty04_identity_handle, */
+  &kty04_identity_handle,
   /* &cpy06_identity_handle, */
   &gl19_identity_handle,
   &dl21_identity_handle,
-  &dl21seq_identity_handle,  
+  &dl21seq_identity_handle,
 };
 
 #ifdef __cplusplus
@@ -56,7 +56,7 @@ static const identity_handle_t *IDENTITY_HANDLES[IDENTITY_HANDLES_N] = {
 #ifdef __cplusplus
 /* Write any cplusplus specific code here */
 #endif
-  
+
 #endif /* _IDENTITY_HANDLES_H */
 
 /* identity_handles.h ends here */

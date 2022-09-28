@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -33,15 +33,15 @@
 
 /* Private functions */
 static int _is_supported_format(crl_format_t format) {
-  
+
   uint32_t i;
-  
+
   for(i=0; i<KTY04_SUPPORTED_CRL_FORMATS_N; i++) {
     if(format == KTY04_SUPPORTED_CRL_FORMATS[i]) return 1;
   }
-  
+
   return 0;
-  
+
 }
 
 static kty04_crl_entry_t* _crl_entry_import_file(FILE *fd, crl_format_t format,
@@ -50,7 +50,7 @@ static kty04_crl_entry_t* _crl_entry_import_file(FILE *fd, crl_format_t format,
   kty04_crl_entry_t *entry;
   char *line, *sid, *strapdoor;
   int rc;
-    
+
   if(!fd || !eof) {
     LOG_EINVAL(&logger, __FILE__, "_crl_entry_import_file",
  	       __LINE__, LOGERROR);
@@ -110,8 +110,8 @@ static kty04_crl_entry_t* _crl_entry_import_file(FILE *fd, crl_format_t format,
   if(!(entry->id = kty04_identity_from_string(sid))) {
     GOTOENDRC(IERROR, _crl_entry_import_file);
   }
-  
-  if(bigz_set_str(entry->trapdoor, strapdoor, 10) == IERROR) {
+
+  if(bigz_set_str10(entry->trapdoor, strapdoor) == IERROR) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "_crl_entry_import_file", __LINE__,
 		      EDQUOT, "Corrupted CRL file.", LOGERROR);
     GOTOENDRC(IERROR, _crl_entry_import_file);
@@ -126,7 +126,7 @@ static kty04_crl_entry_t* _crl_entry_import_file(FILE *fd, crl_format_t format,
   if(rc == IERROR) {
     if(entry) kty04_crl_entry_free(entry);
   }
-  
+
   return entry;
 
 }
@@ -153,11 +153,11 @@ static crl_t* _crl_import_file(char *filename) {
     fclose(fd);
     return NULL;
   }
-  
+
   /* Read the CRL entries */
   eof = 0;
   while(!eof) {
-    
+
     /** @todo CRL entry type fixed to "string"  */
     /* Parse the next member key */
 
@@ -169,7 +169,7 @@ static crl_t* _crl_import_file(char *filename) {
       fclose(fd);
       return NULL;
     }
-    
+
     /* If we got one, store it in the CRL structure */
     if(entry) {
       if(kty04_crl_insert(crl, entry) == IERROR) {
@@ -180,7 +180,7 @@ static crl_t* _crl_import_file(char *filename) {
     }
 
   }
-  
+
   fclose(fd);
 
   return crl;
@@ -227,7 +227,7 @@ static int _crl_export_file(crl_t *crl, char *filename) {
 /* entry functions  */
 
 kty04_crl_entry_t* kty04_crl_entry_init() {
-  
+
   kty04_crl_entry_t *entry;
 
   if(!(entry = (kty04_crl_entry_t *) malloc(sizeof(kty04_crl_entry_t)))) {
@@ -262,13 +262,13 @@ int kty04_crl_entry_free(kty04_crl_entry_t *entry) {
   }
 
   rc = IOK;
-  
+
   rc += kty04_identity_free(entry->id);
   rc += bigz_free(entry->trapdoor);
   free(entry); entry = NULL;
 
   if(rc) rc = IERROR;
-  
+
   return rc;
 
 }
@@ -292,7 +292,7 @@ int kty04_crl_entry_cmp_id(void *entry1, void *entry2) {
 
   if(id1->scheme != GROUPSIG_KTY04_CODE || id2->scheme != GROUPSIG_KTY04_CODE) {
     LOG_EINVAL(&logger, __FILE__, "kty04_crl_entry_cmp_id", __LINE__, LOGERROR);
-    return 0;    
+    return 0;
   }
 
   kty04_id1 = ((kty04_identity_t *) id1->id);
@@ -335,7 +335,7 @@ char* kty04_crl_entry_to_string(kty04_crl_entry_t *entry) {
     return NULL;
   }
 
-  if(!(strapdoor = bigz_get_str(10, entry->trapdoor))) {
+  if(!(strapdoor = bigz_get_str10(entry->trapdoor))) {
     free(sid); sid = NULL;
     return NULL;
   }
@@ -358,7 +358,7 @@ char* kty04_crl_entry_to_string(kty04_crl_entry_t *entry) {
   mem_free(strapdoor);
 
   return sentry;
- 
+
 }
 
 /* list functions */
@@ -381,11 +381,11 @@ crl_t* kty04_crl_init() {
 }
 
 int kty04_crl_free(crl_t *crl) {
- 
+
   uint64_t i;
 
   if(!crl || crl->scheme != GROUPSIG_KTY04_CODE) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "kty04_crl_free", __LINE__, 
+    LOG_EINVAL_MSG(&logger, __FILE__, "kty04_crl_free", __LINE__,
 		   "Nothing to free.", LOGWARN);
     return IOK;
   }
@@ -410,7 +410,7 @@ int kty04_crl_insert(crl_t *crl, void *entry) {
 
   if(!kty04_crl_entry_exists(crl, entry)) {
 
-    if(!(crl->entries = (void **) 
+    if(!(crl->entries = (void **)
 	 realloc(crl->entries, sizeof(kty04_crl_entry_t *)*(crl->n+1)))) {
       LOG_ERRORCODE(&logger, __FILE__, "kty04_crl_insert", __LINE__, errno, LOGERROR);
       return IERROR;
@@ -441,7 +441,7 @@ int kty04_crl_remove(crl_t *crl, uint64_t index) {
   /* Just set it to NULL */
   /** @todo This will generate a lot of unused memory! Use some other ADT */
   crl->entries[index] = NULL;
-  
+
   /* Decrement the number of entries */
   crl->n--;
 
@@ -463,7 +463,7 @@ void* kty04_crl_get(crl_t *crl, uint64_t index) {
   }
 
   return crl->entries[index];
-  
+
 }
 
 crl_t* kty04_crl_import(crl_format_t format, void *src) {
@@ -492,7 +492,7 @@ crl_t* kty04_crl_import(crl_format_t format, void *src) {
   }
 
   return NULL;
- 
+
 }
 
 int kty04_crl_export(crl_t *crl, void *dst, crl_format_t format) {
@@ -531,7 +531,7 @@ int kty04_crl_entry_exists(crl_t *crl, void *entry) {
     LOG_EINVAL(&logger, __FILE__, "kty04_crl_entry_exists", __LINE__, LOGERROR);
     return IERROR;
   }
-  
+
   for(i=0; i<crl->n; i++) {
 
     errno = 0;
@@ -570,7 +570,7 @@ int kty04_crl_trapdoor_exists(crl_t *crl, trapdoor_t *trap) {
   exists = kty04_crl_entry_exists(crl, entry);
   kty04_crl_entry_free(entry); entry = NULL;
 
-  return exists;  
+  return exists;
 
 }
 
@@ -600,14 +600,14 @@ int kty04_crl_trapdoor_exists(crl_t *crl, trapdoor_t *trap) {
 /*     LOG_EINVAL(&logger, __FILE__, "_crl_export_file", __LINE__, LOGERROR); */
 /*     return IERROR; */
 /*   } */
-  
+
 /*   /\** @todo Differentiate between new databases and already created ones to */
 /*       avoid re-writing everything! *\/ */
 /*   if(!(fd = fopen(filename, "w"))) { */
 /*     LOG_ERRORCODE(&logger, __FILE__, "_crl_export_file", __LINE__, errno, LOGERROR); */
 /*     return IERROR; */
 /*   } */
-  
+
 /*   /\* For now, we just print, for each entry in the crl, its index and trapdoor, */
 /*    in the same line, separated by a space. *\/ */
 /*   /\** @todo When doing this seriously, we should also write the ID of the CRL */
@@ -656,7 +656,7 @@ int kty04_crl_trapdoor_exists(crl_t *crl, trapdoor_t *trap) {
 /*     fclose(fd); */
 /*     return IERROR; */
 /*   } */
-  
+
 /*   fprintf(fd, "%lu %s\n", entry->index, strapdoor); */
 /*   free(strapdoor); strapdoor = NULL;    */
 
@@ -693,7 +693,7 @@ int kty04_crl_trapdoor_exists(crl_t *crl, trapdoor_t *trap) {
 
 /*   /\* Initialize the CRL *\/ */
 /*   if(!(crl = crl_init())) GOTOENDRC(IERROR, _crl_import_file); */
- 
+
 /*   if(!(trapdoor = bigz_init())) { */
 /*     GOTOENDRC(IERROR, _crl_import_file); */
 /*   } */
@@ -702,7 +702,7 @@ int kty04_crl_trapdoor_exists(crl_t *crl, trapdoor_t *trap) {
 /*   eof = 0;  */
 /*   while(!eof) { */
 /*   /\* for(i=0; i<n; i++) { *\/ */
-        
+
 /*     free(line); line = NULL; */
 /*     if(misc_read_file_line(fd, &line) == IERROR) { */
 /*       GOTOENDRC(IERROR, _crl_import_file); */
@@ -773,7 +773,7 @@ int kty04_crl_trapdoor_exists(crl_t *crl, trapdoor_t *trap) {
 /* 		    errno, LOGERROR); */
 /*       GOTOENDRC(IERROR, _crl_import_file); */
 /*     } */
-    
+
 /*     if(bigz_set(((kty04_crl_entry_t *)crl->entries[i-1])->trapdoor, trapdoor) == IERROR) { */
 /*       LOG_ERRORCODE(&logger, __FILE__, "_crl_import_file", __LINE__,  */
 /* 		    errno, LOGERROR); */
@@ -782,7 +782,7 @@ int kty04_crl_trapdoor_exists(crl_t *crl, trapdoor_t *trap) {
 
 /*     ((kty04_crl_entry_t *)crl->entries[i-1])->index = index; */
 /*     crl->n = i; */
-    
+
 /*   } */
 
 /*  _crl_import_file_end:   */
@@ -824,7 +824,7 @@ int kty04_crl_trapdoor_exists(crl_t *crl, trapdoor_t *trap) {
 /* } */
 
 /* int crl_free(crl_t *crl) { */
-  
+
 /*   uint64_t i; */
 
 /*   if(!crl) { */
@@ -859,7 +859,7 @@ int kty04_crl_trapdoor_exists(crl_t *crl, trapdoor_t *trap) {
 /*     free(entry); entry = NULL; */
 /*     return NULL; */
 /*   } */
-  
+
 /*   entry->index = UINT64_MAX; */
 
 /*   return entry; */
@@ -876,9 +876,9 @@ int kty04_crl_trapdoor_exists(crl_t *crl, trapdoor_t *trap) {
 
 /*   bigz_free(((kty04_crl_entry_t *) entry)->trapdoor); */
 /*   free(entry); entry = NULL; */
-  
+
 /*   return IOK; */
-  
+
 /* } */
 
 /* int crl_insert(crl_t *crl, void *entry) { */
@@ -907,7 +907,7 @@ int kty04_crl_trapdoor_exists(crl_t *crl, trapdoor_t *trap) {
 
 /*   crl->entries[crl->n] = entry; */
 /*   crl->n++; */
-  
+
 /*   return IOK; */
 
 /* } */
@@ -1052,7 +1052,7 @@ int kty04_crl_trapdoor_exists(crl_t *crl, trapdoor_t *trap) {
 
 /*     scur = strlen(sindex)+strlen("\tindex: \n")+ */
 /*       strlen(strap)+strlen("\ttrapdoor: \n"); */
-    
+
 /*     size += scur; */
 
 /*     if(!(scrl = (char *) realloc((char*) scrl, sizeof(char)*(size+1)))) { */
@@ -1066,7 +1066,7 @@ int kty04_crl_trapdoor_exists(crl_t *crl, trapdoor_t *trap) {
 
 /*     /\* Trailing '\0' *\/ */
 /*     scrl[length] = 0; */
-    
+
 /*     free(sindex); sindex = NULL; */
 /*     free(strap); strap = NULL; */
 

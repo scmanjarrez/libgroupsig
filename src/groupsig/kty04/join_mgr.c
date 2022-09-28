@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -33,9 +33,9 @@
 #include "sys/mem.h"
 
 /**
- * @todo The Join procedure includes a protocol for non-adaptive drawing of 
+ * @todo The Join procedure includes a protocol for non-adaptive drawing of
  * random powers such that the group member gets x, and the group manager gets
- * b^x (mod n). For now, and for testing purposes, we just let the user choose 
+ * b^x (mod n). For now, and for testing purposes, we just let the user choose
  * a random x and send it to the manager, but we must implement it as soon as
  * everything is working correctly.
  */
@@ -54,32 +54,38 @@ int kty04_get_joinstart(uint8_t *start) {
   return IOK;
 }
 
-/* @TODO This function still follows the old variable structure for join and 
-   I am just changing the interface to remove compiler complaints. But this 
+/* @TODO This function still follows the old variable structure for join and
+   I am just changing the interface to remove compiler complaints. But this
    breaks the functionality! Fix! */
 //gml_t *gml, groupsig_key_t *memkey, groupsig_key_t *mgrkey, groupsig_key_t *grpkey) {
-int kty04_join_mgr(void **mout, gml_t *gml,
+int kty04_join_mgr(message_t **mout, gml_t *gml,
 		   groupsig_key_t *mgrkey,
-		   int seq, void *min,
+		   int seq, message_t *min,
 		   groupsig_key_t *grpkey) {
 
   kty04_mgr_key_t *Mkey;
   kty04_grp_key_t *gkey;
   kty04_mem_key_t *mkey;
-  kty04_gml_entry_t *entry;
+  gml_entry_t *entry;
+  kty04_gml_entry_data_t *k_entry;
+  groupsig_key_t *gsig_key = NULL;
+  byte_t **out_bytes = NULL;
+  uint32_t out_size = -1;
   bigz_t e, einv, x, p1, q1, phin;
   int rc;
-  
+
   if(!mout || !gml || gml->scheme != GROUPSIG_KTY04_CODE ||
      !mgrkey || mgrkey->scheme != GROUPSIG_KTY04_CODE ||
      !grpkey || grpkey->scheme != GROUPSIG_KTY04_CODE) {
     LOG_EINVAL(&logger, __FILE__, "kty04_join_mgr", __LINE__, LOGERROR);
     return IERROR;
   }
-  
+
   gkey = (kty04_grp_key_t *) grpkey->key;
   Mkey = (kty04_mgr_key_t *) mgrkey->key;
-  //  mkey = (kty04_mem_key_t *) memkey->key;
+  /* It's ugly, but for the time being we will use min to insert the memkey */
+  gsig_key = kty04_mem_key_import(min->bytes, min->length);
+  mkey = (kty04_mem_key_t *) gsig_key->key;
 
   e = NULL; einv = NULL; x = NULL; p1 = NULL; q1 = NULL; phin = NULL;
   rc = IOK;
@@ -94,7 +100,7 @@ int kty04_join_mgr(void **mout, gml_t *gml,
   }
 
   /* We need the inverse of e mod(phi(n)) = e^(-1) mod((p-1)*(q-1)) */
-  if(!(p1 = bigz_init()) || !(q1 = bigz_init()) || 
+  if(!(p1 = bigz_init()) || !(q1 = bigz_init()) ||
      !(phin = bigz_init()) || !(einv = bigz_init())) {
     GOTOENDRC(IERROR, kty04_join_mgr);
   }
@@ -112,48 +118,60 @@ int kty04_join_mgr(void **mout, gml_t *gml,
   if(!(x = bigz_init())) GOTOENDRC(IERROR, kty04_join_mgr);
   if(sphere_get_random_prime(gkey->inner_lambda, x) == IERROR) {
     GOTOENDRC(IERROR,kty04_join_mgr);
-  }  
+  }
 
   /* A = (C*a^x*a0)^(e^-1) (mod n) */
-  if(bigz_powm(mkey->A, gkey->a, x, gkey->n) == IERROR) 
+  if(bigz_powm(mkey->A, gkey->a, x, gkey->n) == IERROR)
     GOTOENDRC(IERROR, kty04_join_mgr);
   if(bigz_mul(mkey->A, mkey->A, mkey->C) == IERROR)
     GOTOENDRC(IERROR, kty04_join_mgr);
   if(bigz_mul(mkey->A, mkey->A, gkey->a0) == IERROR)
     GOTOENDRC(IERROR, kty04_join_mgr);
-  if(bigz_powm(mkey->A, mkey->A, einv, gkey->n) == IERROR) 
+  if(bigz_powm(mkey->A, mkey->A, einv, gkey->n) == IERROR)
     GOTOENDRC(IERROR, kty04_join_mgr);
 
-  if(bigz_set(mkey->x, x) == IERROR) 
+  if(bigz_set(mkey->x, x) == IERROR)
     GOTOENDRC(IERROR, kty04_join_mgr);
-  if(bigz_set(mkey->e, e) == IERROR) 
+  if(bigz_set(mkey->e, e) == IERROR)
     GOTOENDRC(IERROR, kty04_join_mgr);
+
+  /* And, ugly again, we use mout to return the member key. Caller should update it. */
+  kty04_mem_key_export(out_bytes, &out_size, gsig_key);
+  (*mout)->bytes = *out_bytes;
+  (*mout)->length = out_size;
 
   /* We are done: */
 
   /* Update the gml, if any */
   if(gml) {
-    
-    /* Initialize the GML entry */ 
-    if(!(entry = kty04_gml_entry_init())) 
+
+    /* Initialize the GML entry */
+    if(!(entry = kty04_gml_entry_init()))
       GOTOENDRC(IERROR, kty04_join_mgr);
-    
-    if(bigz_set(*(kty04_trapdoor_t *) entry->trapdoor->trap, mkey->x) == IERROR)
+
+    k_entry = (kty04_gml_entry_data_t*) (entry->data);
+
+    if(bigz_set(*(kty04_trapdoor_t *) k_entry->trapdoor->trap, mkey->x) == IERROR)
       GOTOENDRC(IERROR, kty04_join_mgr);
-    
-    if(bigz_set(entry->A, mkey->A) == IERROR)
+
+    if(bigz_set(k_entry->A, mkey->A) == IERROR)
       GOTOENDRC(IERROR, kty04_join_mgr);
 
     /* Currently, KTY04 identities are just uint64_t's */
-    *(kty04_identity_t *) entry->id->id = gml->n;
-    
-    if(gml_insert(gml, entry) == IERROR) 
+    *(kty04_identity_t *) k_entry->id->id = gml->n;
+
+    entry->scheme = GROUPSIG_KTY04_CODE;
+    /* Currently, we don't use the identity field of the general gml entry */
+    entry->id = 0;
+    entry->data = (void*) entry;
+
+    if(gml_insert(gml, entry) == IERROR)
       GOTOENDRC(IERROR, kty04_join_mgr);
-    
+
   }
 
  kty04_join_mgr_end:
-  
+
   if(e) bigz_free(e);
   if(einv) bigz_free(einv);
   if(x) bigz_free(x);
