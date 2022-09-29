@@ -163,8 +163,17 @@ int kty04_mgr_key_get_size(groupsig_key_t *key) {
 
   size = 0;
   size += bigz_sizeinbits(((kty04_mgr_key_t *)(key->key))->p)/8;
+  if(bigz_sizeinbits(((kty04_mgr_key_t*)key->key)->p) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_mgr_key_t *)(key->key))->q)/8;
+  if(bigz_sizeinbits(((kty04_mgr_key_t*)key->key)->q) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_mgr_key_t *)(key->key))->x)/8;
+  if(bigz_sizeinbits(((kty04_mgr_key_t*)key->key)->x) % 8 != 0) {
+    size += 1;
+  }
   size += sizeof(uint64_t);
   /* Extra sign byte for each element */
   size += 3;
@@ -197,6 +206,8 @@ int kty04_mgr_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
 
   /* 1 byte for the length of each bigz */
   _size += 3;
+  /* 1 byte for the length of the groupsig code and another for the keytype */
+  _size += 2;
 
   if(!(_bytes = mem_malloc(sizeof(byte_t)*_size))) {
     return IERROR;
@@ -217,7 +228,7 @@ int kty04_mgr_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -229,7 +240,7 @@ int kty04_mgr_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -241,7 +252,7 @@ int kty04_mgr_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -249,7 +260,7 @@ int kty04_mgr_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   /* Dump nu */
   __bytes = &_bytes[ctr];
   for(i=0; i<8; i++){
-    __bytes[i] = (kty04_key->nu >> 7-i) && 0xFF;
+    __bytes[i] = (kty04_key->nu >> ((7-i)*8)) & 0xFF;
     ctr++;
   }
 

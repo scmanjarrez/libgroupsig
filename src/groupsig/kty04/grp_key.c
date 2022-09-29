@@ -317,26 +317,83 @@ int kty04_grp_key_get_size(groupsig_key_t *key) {
 
   size = 0;
   size += bigz_sizeinbits(((kty04_grp_key_t*)key->key)->n)/8;
+  if(bigz_sizeinbits(((kty04_grp_key_t*)key->key)->n) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_grp_key_t*)key->key)->a)/8;
+  if(bigz_sizeinbits(((kty04_grp_key_t*)key->key)->a) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_grp_key_t*)key->key)->a0)/8;
+  if(bigz_sizeinbits(((kty04_grp_key_t*)key->key)->a0) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_grp_key_t*)key->key)->b)/8;
+  if(bigz_sizeinbits(((kty04_grp_key_t*)key->key)->b) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_grp_key_t*)key->key)->g)/8;
+  if(bigz_sizeinbits(((kty04_grp_key_t*)key->key)->g) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_grp_key_t*)key->key)->h)/8;
+  if(bigz_sizeinbits(((kty04_grp_key_t*)key->key)->h) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_grp_key_t*)key->key)->y)/8;
+  if(bigz_sizeinbits(((kty04_grp_key_t*)key->key)->y) % 8 != 0) {
+    size += 1;
+  }
   /* epsilon, nu, k */
   size += 3*sizeof(uint64_t);
   size += bigz_sizeinbits(((kty04_grp_key_t*)key->key)->lambda->center)/8;
+  if(bigz_sizeinbits(((kty04_grp_key_t*)key->key)->lambda->center) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_grp_key_t*)key->key)->lambda->radius)/8;
+  if(bigz_sizeinbits(((kty04_grp_key_t*)key->key)->lambda->radius) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_grp_key_t*)key->key)->inner_lambda->center)/8;
+  if(bigz_sizeinbits(((kty04_grp_key_t*)key->key)->inner_lambda->center) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_grp_key_t*)key->key)->inner_lambda->radius)/8;
+  if(bigz_sizeinbits(((kty04_grp_key_t*)key->key)->inner_lambda->radius) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_grp_key_t*)key->key)->M->center)/8;
+  if(bigz_sizeinbits(((kty04_grp_key_t*)key->key)->M->center) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_grp_key_t*)key->key)->M->radius)/8;
+  if(bigz_sizeinbits(((kty04_grp_key_t*)key->key)->M->radius) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_grp_key_t*)key->key)->inner_M->center)/8;
+  if(bigz_sizeinbits(((kty04_grp_key_t*)key->key)->inner_M->center) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_grp_key_t*)key->key)->inner_M->radius)/8;
+  if(bigz_sizeinbits(((kty04_grp_key_t*)key->key)->inner_M->radius) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_grp_key_t*)key->key)->gamma->center)/8;
+  if(bigz_sizeinbits(((kty04_grp_key_t*)key->key)->gamma->center) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_grp_key_t*)key->key)->gamma->radius)/8;
+  if(bigz_sizeinbits(((kty04_grp_key_t*)key->key)->gamma->radius) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_grp_key_t*)key->key)->inner_gamma->center)/8;
+  if(bigz_sizeinbits(((kty04_grp_key_t*)key->key)->inner_gamma->center) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_grp_key_t*)key->key)->inner_gamma->radius)/8;
+  if(bigz_sizeinbits(((kty04_grp_key_t*)key->key)->inner_gamma->radius) % 8 != 0) {
+    size += 1;
+  }
   /* Extra sign byte for each bigz */
   size += 19;
 
@@ -368,6 +425,8 @@ int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
 
   /* 1 byte for the length of each bigz */
   _size += 19;
+  /* 1 byte for the length of the groupsig code and another for the keytype */
+  _size += 2;
 
   if(!(_bytes = mem_malloc(sizeof(byte_t)*_size))) {
     return IERROR;
@@ -388,7 +447,7 @@ int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -400,7 +459,7 @@ int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -412,7 +471,7 @@ int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -424,7 +483,7 @@ int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -436,7 +495,7 @@ int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -448,7 +507,7 @@ int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -460,7 +519,7 @@ int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -468,21 +527,21 @@ int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   /* Dump epsilon */
   __bytes = &_bytes[ctr];
   for(i=0; i<8; i++){
-    __bytes[i] = (kty04_key->epsilon >> 7-i) && 0xFF;
+    __bytes[i] = (kty04_key->epsilon >> ((7-i)*8)) & 0xFF;
     ctr++;
   }
 
   /* Dump nu */
   __bytes = &_bytes[ctr];
   for(i=0; i<8; i++){
-    __bytes[i] = (kty04_key->nu >> 7-i) && 0xFF;
+    __bytes[i] = (kty04_key->nu >> ((7-i)*8)) & 0xFF;
     ctr++;
   }
 
   /* Dump k */
   __bytes = &_bytes[ctr];
   for(i=0; i<8; i++){
-    __bytes[i] = (kty04_key->k >> 7-i) && 0xFF;
+    __bytes[i] = (kty04_key->k >> ((7-i)*8)) & 0xFF;
     ctr++;
   }
 
@@ -493,7 +552,7 @@ int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -505,7 +564,7 @@ int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -517,7 +576,7 @@ int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -529,7 +588,7 @@ int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -541,7 +600,7 @@ int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -553,7 +612,7 @@ int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -565,7 +624,7 @@ int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -577,7 +636,7 @@ int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -589,7 +648,7 @@ int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -601,7 +660,7 @@ int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -613,7 +672,7 @@ int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -625,7 +684,7 @@ int kty04_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -716,17 +775,17 @@ groupsig_key_t* kty04_grp_key_import(byte_t *source, uint32_t size) {
 
   /* Get g */
   len = source[ctr++];
-  kty04_key->b = bigz_import(&source[ctr], len);
+  kty04_key->g = bigz_import(&source[ctr], len);
   ctr += len;
 
   /* Get h */
   len = source[ctr++];
-  kty04_key->b = bigz_import(&source[ctr], len);
+  kty04_key->h = bigz_import(&source[ctr], len);
   ctr += len;
 
   /* Get y */
   len = source[ctr++];
-  kty04_key->b = bigz_import(&source[ctr], len);
+  kty04_key->y = bigz_import(&source[ctr], len);
   ctr += len;
 
   /* Get epsilon */
@@ -750,6 +809,9 @@ groupsig_key_t* kty04_grp_key_import(byte_t *source, uint32_t size) {
   }
   ctr += 8;
 
+  /* Init lambda */
+  kty04_key->lambda = sphere_init();
+
   /* Get lambda center */
   len = source[ctr++];
   kty04_key->lambda->center = bigz_import(&source[ctr], len);
@@ -759,6 +821,9 @@ groupsig_key_t* kty04_grp_key_import(byte_t *source, uint32_t size) {
   len = source[ctr++];
   kty04_key->lambda->radius = bigz_import(&source[ctr], len);
   ctr += len;
+
+  /* Init inner lambda */
+  kty04_key->inner_lambda = sphere_init();
 
   /* Get inner lambda center */
   len = source[ctr++];
@@ -770,6 +835,9 @@ groupsig_key_t* kty04_grp_key_import(byte_t *source, uint32_t size) {
   kty04_key->inner_lambda->radius = bigz_import(&source[ctr], len);
   ctr += len;
 
+  /* Init M */
+  kty04_key->M = sphere_init();
+
   /* Get M center */
   len = source[ctr++];
   kty04_key->M->center = bigz_import(&source[ctr], len);
@@ -779,6 +847,9 @@ groupsig_key_t* kty04_grp_key_import(byte_t *source, uint32_t size) {
   len = source[ctr++];
   kty04_key->M->radius = bigz_import(&source[ctr], len);
   ctr += len;
+
+  /* Init inner M */
+  kty04_key->inner_M = sphere_init();
 
   /* Get inner M center */
   len = source[ctr++];
@@ -790,6 +861,9 @@ groupsig_key_t* kty04_grp_key_import(byte_t *source, uint32_t size) {
   kty04_key->inner_M->radius = bigz_import(&source[ctr], len);
   ctr += len;
 
+  /* Init gamma */
+  kty04_key->gamma = sphere_init();
+
   /* Get gamma center */
   len = source[ctr++];
   kty04_key->gamma->center = bigz_import(&source[ctr], len);
@@ -799,6 +873,9 @@ groupsig_key_t* kty04_grp_key_import(byte_t *source, uint32_t size) {
   len = source[ctr++];
   kty04_key->gamma->radius = bigz_import(&source[ctr], len);
   ctr += len;
+
+  /* Init inner gamma */
+  kty04_key->inner_gamma = sphere_init();
 
   /* Get inner gamma center */
   len = source[ctr++];

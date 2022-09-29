@@ -151,10 +151,25 @@ int kty04_mem_key_get_size(groupsig_key_t *key) {
 
   size = 0;
   size += bigz_sizeinbits(((kty04_mem_key_t*)key->key)->A)/8;
+  if(bigz_sizeinbits(((kty04_mem_key_t*)key->key)->A) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_mem_key_t*)key->key)->C)/8;
+  if(bigz_sizeinbits(((kty04_mem_key_t*)key->key)->C) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_mem_key_t*)key->key)->x)/8;
+  if(bigz_sizeinbits(((kty04_mem_key_t*)key->key)->x) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_mem_key_t*)key->key)->xx)/8;
+  if(bigz_sizeinbits(((kty04_mem_key_t*)key->key)->xx) % 8 != 0) {
+    size += 1;
+  }
   size += bigz_sizeinbits(((kty04_mem_key_t*)key->key)->e)/8;
+  if(bigz_sizeinbits(((kty04_mem_key_t*)key->key)->e) % 8 != 0) {
+    size += 1;
+  }
   /* Extra sign byte for each element */
   size += 5;
 
@@ -439,6 +454,8 @@ int kty04_mem_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
 
   /* 1 byte for the length of each bigz */
   _size += 5;
+  /* 1 byte for the length of the groupsig code and another for the keytype */
+  _size += 2;
 
   if(!(_bytes = mem_malloc(sizeof(byte_t)*_size))) {
     return IERROR;
@@ -459,7 +476,7 @@ int kty04_mem_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -471,7 +488,7 @@ int kty04_mem_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -483,7 +500,7 @@ int kty04_mem_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -495,7 +512,7 @@ int kty04_mem_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
@@ -507,7 +524,7 @@ int kty04_mem_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   __bytes[0] = (byte_t) len;
   ctr++;
   for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+    __bytes[i] = aux_bytes[i - 1];
     ctr++;
   }
   free(aux_bytes);
