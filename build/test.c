@@ -75,13 +75,13 @@ int main ()
   rc = groupsig_sign(sig, msg, memkey, grpkey, UINT_MAX);
   printf("sign rc: %d\n", rc);
 
-  uint8_t b;
+  uint8_t b = 255;
   rc = groupsig_verify(&b, sig, msg, grpkey);
   printf("verify rc: %d\n", rc);
   printf("verify b: %d\n", b);
   printf("%d\n", b==1);
 
-  uint8_t b2;
+  uint8_t b2 = 255;
   rc = groupsig_verify(&b2, sig, msg2, grpkey);
   printf("verify rc: %d\n", rc);
   printf("verify b2: %d\n", b2);

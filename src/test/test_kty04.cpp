@@ -225,7 +225,7 @@ namespace groupsig {
     groupsig_signature_t *sig;
     message_t *msg;
     int rc;
-    uint8_t b = 255;
+    uint8_t b;
 
     rc = groupsig_setup(GROUPSIG_KTY04_CODE, grpkey, mgrkey, gml);
     EXPECT_EQ(rc, IOK);
@@ -249,8 +249,6 @@ namespace groupsig {
     rc = groupsig_verify(&b, sig, msg, grpkey);
     EXPECT_EQ(rc, IOK);
 
-    printf("b: %d\n", b);
-
     /* b must be 1 */
     EXPECT_EQ(b, 1);
 
@@ -269,7 +267,7 @@ namespace groupsig {
     groupsig_signature_t *sig;
     message_t *msg, *msg2;
     int rc;
-    uint8_t b2 = 255;
+    uint8_t b;
 
     rc = groupsig_setup(GROUPSIG_KTY04_CODE, grpkey, mgrkey, gml);
     EXPECT_EQ(rc, IOK);
@@ -294,13 +292,11 @@ namespace groupsig {
     EXPECT_NE(msg2, nullptr);
 
     /* Verify the signature */
-    rc = groupsig_verify(&b2, sig, msg2, grpkey);
+    rc = groupsig_verify(&b, sig, msg2, grpkey);
     EXPECT_EQ(rc, IOK);
 
-    printf("b2: %d\n", b2);
-
     /* b must be 0 */
-    EXPECT_EQ(b2, 0);
+    EXPECT_EQ(b, 0);
 
     rc = groupsig_signature_free(sig);
     EXPECT_EQ(rc, IOK);

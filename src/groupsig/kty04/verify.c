@@ -494,16 +494,16 @@ int kty04_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
   if(bigz_cmp(c, kty04_sig->c)) {
     if(errno) GOTOENDRC(IERROR, kty04_verify);
     fail = 1;
+    *ok = !fail;
     bigz_free(c);
     return IOK;
   } else {
     fail = 0;
+    *ok = !fail;
   }
 
   /* 2) Check that each relation of the relation set is satisfied */
   /* return _kty04_signature_check_relations(gkey, sig, fail); */
-
-  *ok = !fail;
 
  kty04_verify_end:
 
