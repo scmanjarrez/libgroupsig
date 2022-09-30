@@ -20,25 +20,15 @@ void print_gml(byte_t *bytes, uint32_t size) {
 int main ()
 {
   groupsig_key_t *mgrkey;
-  groupsig_key_t *grpkey;
-  gml_t *gml;
-  gml_entry_t *entry;
-  crl_t *crl;
-  groupsig_key_t *memkey;
-  int rc;
-  byte_t *bytes = NULL;
-  byte_t *bytes2 = NULL;
-  uint32_t size;
-  uint32_t size2;
-  message_t *m1, *m2;
-
   mgrkey = groupsig_mgr_key_init(GROUPSIG_KTY04_CODE);
   /* printf("mgr: %s\n", groupsig_mgr_key_to_string(mgrkey)); */
 
+  groupsig_key_t *grpkey;
   grpkey = groupsig_grp_key_init(GROUPSIG_KTY04_CODE);
   /* printf("grp: %s\n", groupsig_grp_key_to_string(grpkey)); */
-
+  gml_t *gml;
   gml = gml_init(GROUPSIG_KTY04_CODE);
+  /* gml_entry_t *entry; */
   /* entry = gml_entry_init(GROUPSIG_KTY04_CODE); */
   /* rc = gml_insert(gml, entry); */
   /* printf("gml n: %ld\n", gml->n); */
@@ -51,23 +41,25 @@ int main ()
   /* gml2 = gml_import(GROUPSIG_KTY04_CODE, bytes, size); */
   /* gml_export(&bytes2, &size2, gml2); */
   /* print_gml(bytes2, size2); */
+  crl_t *crl;
   crl = crl_init(GROUPSIG_KTY04_CODE);
 
+  int rc;
   rc = groupsig_setup(GROUPSIG_KTY04_CODE, grpkey, mgrkey, gml);
 
+  groupsig_key_t *memkey;
   /* memkey = (groupsig_key_t **) malloc(sizeof(gro4upsig_key_t *)); */
   memkey = groupsig_mem_key_init(grpkey->scheme);
 
+  message_t *m1, *m2;
   m1 = message_init();
   m2 = message_init();
 
   rc = groupsig_join_mem(&m1, memkey, 0, NULL, grpkey);
   printf("join_mem: %d\n", rc);
 
-  // this raise SIGSEGV
   rc = groupsig_join_mgr(&m2, gml, mgrkey, 1, m1, grpkey);
   printf("join_mgr: %d\n", rc);
-
 
 
   groupsig_mgr_key_free(mgrkey); mgrkey = NULL;

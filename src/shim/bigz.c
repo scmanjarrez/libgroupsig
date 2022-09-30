@@ -633,16 +633,13 @@ int bigz_probab_prime_p(bigz_t n) {
 }
 
 void print_bn(bigz_t num) {
-  char *ptr;
-  long val = strtol(BN_bn2hex(num), &ptr, 16);
-  printf("val: %ld\n", val);
+  char *ptr = BN_bn2dec(num);
+  printf("BN: %s\n", ptr);
 }
 
 void printf_bn(char *text, bigz_t num) {
-  char *ptr;
-  long val = strtol(BN_bn2hex(num), &ptr, 16);
-  printf("%s%ld\n", text, val);
-
+  char *ptr = BN_bn2dec(num);
+  printf("%s%s\n", text, ptr);
 }
 
 int bigz_nextprime(bigz_t rop, bigz_t lower) {

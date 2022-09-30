@@ -533,7 +533,7 @@ int kty04_mem_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   if(!*bytes) {
     *bytes = _bytes;
   } else {
-    if (!(*bytes = malloc(ctr)))
+    if (!(*bytes = malloc(sizeof(byte_t)*ctr)))
       GOTOENDRC(IERROR, kty04_mem_key_export);
     memcpy(*bytes, _bytes, ctr);
     mem_free(_bytes); _bytes = NULL;

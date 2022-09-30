@@ -81,12 +81,12 @@ int kty04_join_mem(message_t **mout, groupsig_key_t *memkey,
   /* if ((message_set_bytes(*mout, bytes, *size)) == IERROR) */
     /* return IERROR; */
 
-  byte_t **bytes;
+  byte_t *bytes;
   uint32_t size;
-  if ((kty04_mem_key_export(bytes, &size, memkey)) == IERROR)
+  if ((kty04_mem_key_export(&bytes, &size, memkey)) == IERROR)
     return IERROR;
 
-  if ((message_set_bytes(*mout, *bytes, size)) == IERROR)
+  if ((message_set_bytes(*mout, bytes, size)) == IERROR)
     return IERROR;
 
   return IOK;
