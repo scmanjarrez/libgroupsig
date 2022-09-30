@@ -47,8 +47,9 @@
 int kty04_join_mem(message_t **mout, groupsig_key_t *memkey,
                    int seq, message_t *min, groupsig_key_t *grpkey) {
 
-  if(!mout || !memkey || memkey->scheme != GROUPSIG_KTY04_CODE ||
-     !grpkey || grpkey->scheme != GROUPSIG_KTY04_CODE) {
+  if((seq != 0) ||
+     (!mout || !memkey || memkey->scheme != GROUPSIG_KTY04_CODE ||
+      !grpkey || grpkey->scheme != GROUPSIG_KTY04_CODE)) {
     LOG_EINVAL(&logger, __FILE__, "kty04_join_mem", __LINE__, LOGERROR);
     return IERROR;
   }

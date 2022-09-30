@@ -1,4 +1,7 @@
 #include "groupsig.h"
+#include "kty04.h"
+#include "mem_key.h"
+#include "signature.h"
 
 
 void print_gml(byte_t *bytes, uint32_t size) {
@@ -56,11 +59,33 @@ int main ()
   m2 = message_init();
 
   rc = groupsig_join_mem(&m1, memkey, 0, NULL, grpkey);
-  printf("join_mem: %d\n", rc);
 
   rc = groupsig_join_mgr(&m2, gml, mgrkey, 1, m1, grpkey);
-  printf("join_mgr: %d\n", rc);
 
+  memkey = groupsig_mem_key_import(GROUPSIG_KTY04_CODE, m2->bytes, m2->length);
+
+  message_t *msg;
+  msg = message_from_string((char *) "Hello, World!");
+
+  message_t *msg2;
+  msg2 = message_from_string((char *) "Hello, Worlds!");
+
+  groupsig_signature_t *sig;
+  sig = groupsig_signature_init(grpkey->scheme);
+  rc = groupsig_sign(sig, msg, memkey, grpkey, UINT_MAX);
+  printf("sign rc: %d\n", rc);
+
+  uint8_t b;
+  rc = groupsig_verify(&b, sig, msg, grpkey);
+  printf("verify rc: %d\n", rc);
+  printf("verify b: %d\n", b);
+  printf("%d\n", b==1);
+
+  uint8_t b2;
+  rc = groupsig_verify(&b2, sig, msg2, grpkey);
+  printf("verify rc: %d\n", rc);
+  printf("verify b2: %d\n", b2);
+  printf("%d\n", b2==0);
 
   groupsig_mgr_key_free(mgrkey); mgrkey = NULL;
   groupsig_grp_key_free(grpkey); grpkey = NULL;

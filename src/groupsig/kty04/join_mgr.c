@@ -63,9 +63,10 @@ int kty04_join_mgr(message_t **mout, gml_t *gml,
                    int seq, message_t *min,
                    groupsig_key_t *grpkey) {
 
-  if(!mout || !gml || gml->scheme != GROUPSIG_KTY04_CODE ||
-     !mgrkey || mgrkey->scheme != GROUPSIG_KTY04_CODE ||
-     !grpkey || grpkey->scheme != GROUPSIG_KTY04_CODE) {
+  if((seq != 1) ||
+     (!mout || !gml || gml->scheme != GROUPSIG_KTY04_CODE ||
+      !mgrkey || mgrkey->scheme != GROUPSIG_KTY04_CODE ||
+      !grpkey || grpkey->scheme != GROUPSIG_KTY04_CODE)) {
     LOG_EINVAL(&logger, __FILE__, "kty04_join_mgr", __LINE__, LOGERROR);
     return IERROR;
   }
@@ -74,7 +75,6 @@ int kty04_join_mgr(message_t **mout, gml_t *gml,
   Mkey = (kty04_mgr_key_t *) mgrkey->key;
   kty04_grp_key_t *gkey;
   gkey = (kty04_grp_key_t *) grpkey->key;
-  /* mkey = (kty04_mem_key_t *) memkey->key; */
 
   bigz_t e, einv, x, p1, q1, phin;
   e = NULL; einv = NULL; x = NULL; p1 = NULL; q1 = NULL; phin = NULL;
@@ -129,6 +129,14 @@ int kty04_join_mgr(message_t **mout, gml_t *gml,
     GOTOENDRC(IERROR, kty04_join_mgr);
 
   /* We are done: */
+  // Send filled memkey in mout
+  byte_t *bytes;
+  uint32_t size;
+  if ((kty04_mem_key_export(&bytes, &size, memkey)) == IERROR)
+    return IERROR;
+
+  if ((message_set_bytes(*mout, bytes, size)) == IERROR)
+    return IERROR;
 
   gml_entry_t *entry;
   /* Update the gml, if any */

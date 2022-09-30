@@ -100,14 +100,16 @@ namespace groupsig {
         m1 = message_init();
         ASSERT_NE(m1, nullptr);
 
-        rc = groupsig_join_mgr(&m1, gml, mgrkey, 0, nullptr, grpkey);
+        rc = groupsig_join_mem(&m1, memkey[i], 0, nullptr, grpkey);
         ASSERT_EQ(rc, IOK);
 
         m2 = message_init();
         ASSERT_NE(m2, nullptr);
 
-        rc = groupsig_join_mem(&m2, memkey[i], 1, m1, grpkey);
+        rc = groupsig_join_mgr(&m2, gml, mgrkey, 1, m1, grpkey);
         ASSERT_EQ(rc, IOK);
+
+        memkey[i] = groupsig_mem_key_import(GROUPSIG_KTY04_CODE, m2->bytes, m2->length);
 
       }
 
@@ -223,7 +225,7 @@ namespace groupsig {
     groupsig_signature_t *sig;
     message_t *msg;
     int rc;
-    uint8_t b;
+    uint8_t b = 255;
 
     rc = groupsig_setup(GROUPSIG_KTY04_CODE, grpkey, mgrkey, gml);
     EXPECT_EQ(rc, IOK);
@@ -247,6 +249,8 @@ namespace groupsig {
     rc = groupsig_verify(&b, sig, msg, grpkey);
     EXPECT_EQ(rc, IOK);
 
+    printf("b: %d\n", b);
+
     /* b must be 1 */
     EXPECT_EQ(b, 1);
 
@@ -265,7 +269,7 @@ namespace groupsig {
     groupsig_signature_t *sig;
     message_t *msg, *msg2;
     int rc;
-    uint8_t b;
+    uint8_t b2 = 255;
 
     rc = groupsig_setup(GROUPSIG_KTY04_CODE, grpkey, mgrkey, gml);
     EXPECT_EQ(rc, IOK);
@@ -290,11 +294,13 @@ namespace groupsig {
     EXPECT_NE(msg2, nullptr);
 
     /* Verify the signature */
-    rc = groupsig_verify(&b, sig, msg2, grpkey);
+    rc = groupsig_verify(&b2, sig, msg2, grpkey);
     EXPECT_EQ(rc, IOK);
 
+    printf("b2: %d\n", b2);
+
     /* b must be 0 */
-    EXPECT_EQ(b, 0);
+    EXPECT_EQ(b2, 0);
 
     rc = groupsig_signature_free(sig);
     EXPECT_EQ(rc, IOK);
