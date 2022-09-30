@@ -803,6 +803,12 @@ byte_t* bigz_export(bigz_t op, size_t *length) {
   /* BN_bn2bin does not store the sign, and we want it */
   if(bigz_sgn(op) == -1) bytes[0] |= 0x01;
 
+  /* unsigned char *test, *test2; */
+  /* test = mem_malloc(_length); */
+  /* test2 = mem_malloc(_length); */
+  /* int sz = BN_bn2bin(op, test); */
+  /* bigz_t *asd, *asd2; */
+   /* asd = (bigz_t *) BN_bin2bn(test, sz, NULL); */
   if(BN_bn2bin(op, &bytes[1]) != _length) {
     mem_free(bytes); bytes = NULL;
     return NULL;

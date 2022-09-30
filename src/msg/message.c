@@ -1,14 +1,14 @@
-/*                               -*- Mode: C -*- 
+/*                               -*- Mode: C -*-
  * @file: message.c
- * @brief: 
+ * @brief:
  * @author: jesus
- * Maintainer: 
+ * Maintainer:
  * @date: mié jul 18 22:16:54 2012 (+0200)
- * @version: 
+ * @version:
  * Last-Updated: Fri Jun  7 09:04:11 2013 (-0400)
  *           By: jesus
  *     Update #: 69
- * URL: 
+ * URL:
  */
 
 #include <stdlib.h>
@@ -22,7 +22,7 @@
 #include "misc/mjson.h"
 
 message_t* message_init() {
-  
+
   message_t *msg;
 
   if(!(msg = (message_t *) malloc(sizeof(message_t)))) {
@@ -34,13 +34,13 @@ message_t* message_init() {
   msg->length = 0;
 
   return msg;
-  
+
 }
 
 message_t* message_from_string(char *str) {
-  
+
   message_t *msg;
-  
+
   if(!str) {
     LOG_EINVAL(&logger, __FILE__, "message_from_str", __LINE__, LOGERROR);
     return NULL;
@@ -48,26 +48,26 @@ message_t* message_from_string(char *str) {
 
   if(!(msg = message_init()))
     return NULL;
-  
+
   if(message_set_bytes_from_string(msg, str) == IERROR) {
     message_free(msg); msg = NULL;
     return NULL;
   }
-  
+
   return msg;
-  
+
 }
 
 message_t* message_from_bytes(byte_t *bytes,
-			      uint64_t length) {
-  
+                              uint64_t length) {
+
   message_t *msg;
-  
+
   if(!bytes || !length) {
     LOG_EINVAL(&logger, __FILE__, "message_from_bytes", __LINE__, LOGERROR);
     return NULL;
   }
-  
+
   if(!(msg = message_init()))
     return NULL;
 
@@ -75,28 +75,28 @@ message_t* message_from_bytes(byte_t *bytes,
     message_free(msg); msg = NULL;
     return NULL;
   }
- 
+
   memcpy(msg->bytes, bytes, length);
   msg->length = length;
-  
+
   return msg;
-  
+
 }
 
 int message_free(message_t *msg) {
-  
+
   if(!msg) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "message_free", __LINE__, 
+    LOG_EINVAL_MSG(&logger, __FILE__, "message_free", __LINE__,
                    "Nothing to free.", LOGWARN);
     return IERROR;
   }
-    
+
   if(msg->bytes) { free(msg->bytes); msg->bytes = NULL; }
 
   free(msg); msg = NULL;
-  
+
   return IOK;
-  
+
 }
 
 int message_set_bytes(message_t *msg, byte_t *bytes, uint64_t length) {
@@ -110,7 +110,7 @@ int message_set_bytes(message_t *msg, byte_t *bytes, uint64_t length) {
     LOG_ERRORCODE(&logger, __FILE__, "message_set_bytes", __LINE__, errno, LOGERROR);
     return IERROR;
   }
-  
+
   memcpy(msg->bytes, bytes, length);
   msg->length = length;
 
@@ -161,7 +161,7 @@ int message_copy(message_t *dst, message_t *src) {
 char* message_to_string(message_t *msg) {
 
   char *smsg;
-  
+
   if(!msg) {
     LOG_EINVAL(&logger, __FILE__, "message_to_string", __LINE__, LOGERROR);
     return NULL;
@@ -198,10 +198,10 @@ message_t* message_from_base64(char *b64) {
   message_t *msg;
   byte_t *bytes;
   uint64_t len;
-  
+
   if (!b64) {
     LOG_EINVAL(&logger, __FILE__, "message_from_base64", __LINE__, LOGERROR);
-    return NULL;    
+    return NULL;
   }
 
   if(!(bytes = base64_decode(b64, &len))) {
@@ -213,7 +213,7 @@ message_t* message_from_base64(char *b64) {
   if(!(msg = message_from_bytes(bytes, len))) {
     LOG_ERRORCODE(&logger, __FILE__, "message_from_base64", __LINE__, errno,
 		  LOGERROR);
-    return NULL; 
+    return NULL;
   }
 
   return msg;
@@ -256,7 +256,7 @@ int message_json_get_key(char **value, message_t *msg, char *key) {
   }
 
   return IOK;
-    
+
 }
 
 /* message.c ends here */

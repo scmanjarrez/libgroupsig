@@ -45,10 +45,7 @@
    breaks the functionality! Fix! */
 // groupsig_key_t *memkey, groupsig_key_t *grpkey) {
 int kty04_join_mem(message_t **mout, groupsig_key_t *memkey,
-		   int seq, message_t *min, groupsig_key_t *grpkey) {
-
-  kty04_grp_key_t *gkey;
-  kty04_mem_key_t *mkey;
+                   int seq, message_t *min, groupsig_key_t *grpkey) {
 
   if(!mout || !memkey || memkey->scheme != GROUPSIG_KTY04_CODE ||
      !grpkey || grpkey->scheme != GROUPSIG_KTY04_CODE) {
@@ -56,8 +53,8 @@ int kty04_join_mem(message_t **mout, groupsig_key_t *memkey,
     return IERROR;
   }
 
-  gkey = (kty04_grp_key_t *) grpkey->key;
-  mkey = (kty04_mem_key_t *) memkey->key;
+  kty04_grp_key_t *gkey = (kty04_grp_key_t *) grpkey->key;
+  kty04_mem_key_t *mkey = (kty04_mem_key_t *) memkey->key;
 
   /* Get a random power in the inner sphere of Lambda */
 #ifdef DEBUG
@@ -74,6 +71,23 @@ int kty04_join_mem(message_t **mout, groupsig_key_t *memkey,
   if(bigz_powm(mkey->C, gkey->b, mkey->xx, gkey->n) == IERROR) {
     return IERROR;
   }
+
+  // SergioC: only export C to mout
+  /* byte_t *bytes; */
+  /* size_t *size; */
+  /* if (!(bytes = bigz_export(mkey->C, size))) */
+    /* return IERROR; */
+
+  /* if ((message_set_bytes(*mout, bytes, *size)) == IERROR) */
+    /* return IERROR; */
+
+  byte_t **bytes;
+  uint32_t size;
+  if ((kty04_mem_key_export(bytes, &size, memkey)) == IERROR)
+    return IERROR;
+
+  if ((message_set_bytes(*mout, *bytes, size)) == IERROR)
+    return IERROR;
 
   return IOK;
 

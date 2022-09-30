@@ -59,20 +59,9 @@ int kty04_get_joinstart(uint8_t *start) {
    breaks the functionality! Fix! */
 //gml_t *gml, groupsig_key_t *memkey, groupsig_key_t *mgrkey, groupsig_key_t *grpkey) {
 int kty04_join_mgr(message_t **mout, gml_t *gml,
-		   groupsig_key_t *mgrkey,
-		   int seq, message_t *min,
-		   groupsig_key_t *grpkey) {
-
-  kty04_mgr_key_t *Mkey;
-  kty04_grp_key_t *gkey;
-  kty04_mem_key_t *mkey;
-  gml_entry_t *entry;
-  kty04_gml_entry_data_t *k_entry;
-  groupsig_key_t *gsig_key = NULL;
-  byte_t **out_bytes = NULL;
-  uint32_t out_size = -1;
-  bigz_t e, einv, x, p1, q1, phin;
-  int rc;
+                   groupsig_key_t *mgrkey,
+                   int seq, message_t *min,
+                   groupsig_key_t *grpkey) {
 
   if(!mout || !gml || gml->scheme != GROUPSIG_KTY04_CODE ||
      !mgrkey || mgrkey->scheme != GROUPSIG_KTY04_CODE ||
@@ -81,13 +70,15 @@ int kty04_join_mgr(message_t **mout, gml_t *gml,
     return IERROR;
   }
 
-  gkey = (kty04_grp_key_t *) grpkey->key;
+  kty04_mgr_key_t *Mkey;
   Mkey = (kty04_mgr_key_t *) mgrkey->key;
-  /* It's ugly, but for the time being we will use min to insert the memkey */
-  gsig_key = kty04_mem_key_import(min->bytes, min->length);
-  mkey = (kty04_mem_key_t *) gsig_key->key;
+  kty04_grp_key_t *gkey;
+  gkey = (kty04_grp_key_t *) grpkey->key;
+  /* mkey = (kty04_mem_key_t *) memkey->key; */
 
+  bigz_t e, einv, x, p1, q1, phin;
   e = NULL; einv = NULL; x = NULL; p1 = NULL; q1 = NULL; phin = NULL;
+  int rc;
   rc = IOK;
 
   /* Select a random prime e in the inner sphere of Gamma */
@@ -120,6 +111,8 @@ int kty04_join_mgr(message_t **mout, gml_t *gml,
     GOTOENDRC(IERROR,kty04_join_mgr);
   }
 
+  groupsig_key_t *memkey = kty04_mem_key_import(min->bytes, min->length);
+  kty04_mem_key_t *mkey = memkey->key;
   /* A = (C*a^x*a0)^(e^-1) (mod n) */
   if(bigz_powm(mkey->A, gkey->a, x, gkey->n) == IERROR)
     GOTOENDRC(IERROR, kty04_join_mgr);
@@ -135,13 +128,9 @@ int kty04_join_mgr(message_t **mout, gml_t *gml,
   if(bigz_set(mkey->e, e) == IERROR)
     GOTOENDRC(IERROR, kty04_join_mgr);
 
-  /* And, ugly again, we use mout to return the member key. Caller should update it. */
-  kty04_mem_key_export(out_bytes, &out_size, gsig_key);
-  (*mout)->bytes = *out_bytes;
-  (*mout)->length = out_size;
-
   /* We are done: */
 
+  gml_entry_t *entry;
   /* Update the gml, if any */
   if(gml) {
 
@@ -149,21 +138,16 @@ int kty04_join_mgr(message_t **mout, gml_t *gml,
     if(!(entry = kty04_gml_entry_init()))
       GOTOENDRC(IERROR, kty04_join_mgr);
 
-    k_entry = (kty04_gml_entry_data_t*) (entry->data);
+    kty04_gml_entry_data_t *data = entry->data;
 
-    if(bigz_set(*(kty04_trapdoor_t *) k_entry->trapdoor->trap, mkey->x) == IERROR)
+    if(bigz_set(*(kty04_trapdoor_t *) data->trapdoor->trap, mkey->x) == IERROR)
       GOTOENDRC(IERROR, kty04_join_mgr);
 
-    if(bigz_set(k_entry->A, mkey->A) == IERROR)
+    if(bigz_set(data->A, mkey->A) == IERROR)
       GOTOENDRC(IERROR, kty04_join_mgr);
 
     /* Currently, KTY04 identities are just uint64_t's */
-    *(kty04_identity_t *) k_entry->id->id = gml->n;
-
-    entry->scheme = GROUPSIG_KTY04_CODE;
-    /* Currently, we don't use the identity field of the general gml entry */
-    entry->id = 0;
-    entry->data = (void*) entry;
+    *(kty04_identity_t *) data->id->id = gml->n;
 
     if(gml_insert(gml, entry) == IERROR)
       GOTOENDRC(IERROR, kty04_join_mgr);
@@ -182,5 +166,6 @@ int kty04_join_mgr(message_t **mout, gml_t *gml,
   return rc;
 
 }
+
 
 /* join_mgr.c ends here */

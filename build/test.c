@@ -54,20 +54,21 @@ int main ()
   crl = crl_init(GROUPSIG_KTY04_CODE);
 
   rc = groupsig_setup(GROUPSIG_KTY04_CODE, grpkey, mgrkey, gml);
-  printf("rc: %d\n", rc);
 
-  /* memkey = (groupsig_key_t **) malloc(sizeof(groupsig_key_t *)); */
+  /* memkey = (groupsig_key_t **) malloc(sizeof(gro4upsig_key_t *)); */
   memkey = groupsig_mem_key_init(grpkey->scheme);
 
   m1 = message_init();
-
-  // this raise SIGSEGV. min can't be NULL
-  rc = groupsig_join_mgr(&m1, gml, mgrkey, 0, NULL, grpkey);
-  printf("join_mgr: %d\n", rc);
   m2 = message_init();
 
-  rc = groupsig_join_mem(&m2, memkey, 1, m1, grpkey);
+  rc = groupsig_join_mem(&m1, memkey, 0, NULL, grpkey);
   printf("join_mem: %d\n", rc);
+
+  // this raise SIGSEGV
+  rc = groupsig_join_mgr(&m2, gml, mgrkey, 1, m1, grpkey);
+  printf("join_mgr: %d\n", rc);
+
+
 
   groupsig_mgr_key_free(mgrkey); mgrkey = NULL;
   groupsig_grp_key_free(grpkey); grpkey = NULL;
@@ -75,6 +76,6 @@ int main ()
   crl_free(crl); crl = NULL;
   message_free(m2); m2 = NULL;
   message_free(m1); m1 = NULL;
-
   return 0;
+
 }

@@ -170,10 +170,10 @@ int kty04_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
 
   // SergioC: lowered values to debug the algorithm
   // cfg = (kty04_config_t *) config->config;
-  /* k = KTY04_DEFAULT_SECURITY; */
-  k = 1;
-  /* primesize = KTY04_DEFAULT_PRIMESIZE; */
-  primesize = 9;
+  k = KTY04_DEFAULT_SECURITY;
+  /* k = 1; */
+  primesize = KTY04_DEFAULT_PRIMESIZE;
+  /* primesize = 9; */
   epsilon = KTY04_DEFAULT_EPSILON;
 
   if(_setup_parameters_check(k, primesize, epsilon) == IERROR) {
