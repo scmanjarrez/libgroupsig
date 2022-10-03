@@ -302,11 +302,20 @@ int kty04_signature_get_size(groupsig_signature_t *sig) {
   size = 0;
   size += sizeof(uint8_t);
   size += bigz_sizeinbits(((kty04_signature_t*)sig->sig)->c)/8;
+  if(bigz_sizeinbits(((kty04_signature_t*)sig->sig)->c) % 8 != 0) {
+    size += 1;
+  }
   for(i = 0; i < ((kty04_signature_t*)sig->sig)->m; i++) {
     size += bigz_sizeinbits(((kty04_signature_t*)sig->sig)->A[i])/8;
+    if(bigz_sizeinbits(((kty04_signature_t*)sig->sig)->A[i]) % 8 != 0) {
+      size += 1;
+    }
   }
   for(i = 0; i < ((kty04_signature_t*)sig->sig)->r; i++) {
     size += bigz_sizeinbits(((kty04_signature_t*)sig->sig)->sw[i])/8;
+    if(bigz_sizeinbits(((kty04_signature_t*)sig->sig)->sw[i]) % 8 != 0) {
+      size += 1;
+    }
   }
   size += sizeof(uint64_t)*3;
   /* Extra sign byte for each bigz */
