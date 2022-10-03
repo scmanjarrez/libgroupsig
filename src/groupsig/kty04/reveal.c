@@ -32,7 +32,7 @@
 int kty04_reveal(trapdoor_t *trap, crl_t *crl, gml_t *gml, uint64_t index) {
 
   kty04_crl_entry_t *crl_entry;
-  kty04_gml_entry_data_t *gml_entry;
+  gml_entry_t *gml_entry;
   bigz_t trapdoor;
 
   if(!trap || trap->scheme != GROUPSIG_KTY04_CODE ||
@@ -45,12 +45,12 @@ int kty04_reveal(trapdoor_t *trap, crl_t *crl, gml_t *gml, uint64_t index) {
   trapdoor = *(bigz_t *) trap->trap;
 
   /* The tracing trapdoor for the i-th member is the x field of its member key */
-  if(!(gml_entry = ((kty04_gml_entry_data_t *) gml_get(gml, index)))) {
+  if(!(gml_entry = ((gml_entry_t *) gml_get(gml, index)))) {
     LOG_EINVAL(&logger, __FILE__, "kty04_reveal", __LINE__, LOGERROR);
     return IERROR;
   }
 
-  if(bigz_set(trapdoor, *(kty04_trapdoor_t *) gml_entry->trapdoor->trap) == IERROR) {
+  if(bigz_set(trapdoor, *(kty04_trapdoor_t *)((kty04_gml_entry_data_t *)gml_entry->data)->trapdoor->trap) == IERROR) {
     LOG_EINVAL(&logger, __FILE__, "kty04_reveal", __LINE__, LOGERROR);
     return IERROR;
   }
@@ -65,7 +65,7 @@ int kty04_reveal(trapdoor_t *trap, crl_t *crl, gml_t *gml, uint64_t index) {
 
     bigz_set(crl_entry->trapdoor, trapdoor);
 
-    if(kty04_identity_copy(crl_entry->id, gml_entry->id) == IERROR) {
+    if(kty04_identity_copy(crl_entry->id, ((kty04_gml_entry_data_t *)gml_entry->data)->id) == IERROR) {
       LOG_EINVAL(&logger, __FILE__, "kty04_reveal", __LINE__, LOGERROR);
       kty04_crl_entry_free(crl_entry);
       return IERROR;

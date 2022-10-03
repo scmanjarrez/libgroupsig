@@ -54,6 +54,8 @@ int main ()
   /* memkey = (groupsig_key_t **) malloc(sizeof(gro4upsig_key_t *)); */
   memkey = groupsig_mem_key_init(grpkey->scheme);
 
+  char *str_aux;
+
   message_t *m1, *m2;
   m1 = message_init();
   m2 = message_init();
@@ -102,10 +104,29 @@ int main ()
   printf("proof verif b3: %d\n", b3);
   printf("%d\n", b3==1);
 
+  uint8_t b4 = 255;
+  rc = groupsig_trace(&b4, sig, grpkey, crl, mgrkey, gml);
+  printf("illegal trace rc: %d\n", rc);
+  printf("illegal trace b4: %d\n", b4);
+  printf("%d\n", b4==0);
+
   uint64_t id = 255;
   rc = groupsig_open(&id, p1, crl, sig, grpkey, mgrkey, gml);
   printf("open rc: %d\n", rc);
   printf("open id: %lu\n", id);
+
+  trapdoor_t *trapdoor = NULL;
+  trapdoor = trapdoor_init(memkey->scheme);
+  rc = groupsig_reveal(trapdoor, crl, gml, 0);
+  printf("reveal rc: %d\n", rc);
+  str_aux = bigz_get_str16(*(bigz_t *)trapdoor->trap);
+  printf("reveal td: %s\n", str_aux);
+
+  uint8_t b5 = 255;
+  rc = groupsig_trace(&b5, sig, grpkey, crl, mgrkey, gml);
+  printf("legal trace rc: %d\n", rc);
+  printf("legal trace b5: %d\n", b5);
+  printf("%d\n", b5==1);
 
   groupsig_mgr_key_free(mgrkey); mgrkey = NULL;
   groupsig_grp_key_free(grpkey); grpkey = NULL;
@@ -114,6 +135,7 @@ int main ()
   crl_free(crl); crl = NULL;
   message_free(m2); m2 = NULL;
   message_free(m1); m1 = NULL;
+  trapdoor_free(trapdoor);
   groupsig_proof_free(p1);
   groupsig_signature_free(sig); sig = NULL;
   free(sigs);
