@@ -75,26 +75,31 @@ int main ()
   message_t *msg2;
   msg2 = message_from_string((char *) "Hello, Worlds!");
 
-  groupsig_signature_t *sig;
-  sig = groupsig_signature_init(grpkey->scheme);
-  rc = groupsig_sign(sig, msg, memkey, grpkey, UINT_MAX);
+  groupsig_signature_t *sig1;
+  sig1 = groupsig_signature_init(grpkey->scheme);
+  rc = groupsig_sign(sig1, msg, memkey, grpkey, UINT_MAX);
   printf("sign rc: %d\n", rc);
 
+  groupsig_signature_t *sig2;
+  sig2 = groupsig_signature_init(grpkey->scheme);
+  rc = groupsig_sign(sig1, msg2, memkey, grpkey, UINT_MAX);
+  printf("sign 2 rc: %d\n", rc);
+
   uint8_t b = 255;
-  rc = groupsig_verify(&b, sig, msg, grpkey);
+  rc = groupsig_verify(&b, sig1, msg, grpkey);
   printf("verify rc: %d\n", rc);
   printf("verify b: %d\n", b);
   printf("%d\n", b==1);
 
   uint8_t b2 = 255;
-  rc = groupsig_verify(&b2, sig, msg2, grpkey);
+  rc = groupsig_verify(&b2, sig1, msg2, grpkey);
   printf("verify rc: %d\n", rc);
   printf("verify b2: %d\n", b2);
   printf("%d\n", b2==0);
 
   groupsig_proof_t *p1;
   p1 = groupsig_proof_init(grpkey->scheme);
-  sigs[0] = sig;
+  sigs[0] = sig1;
   rc = groupsig_prove_equality(p1, memkey, grpkey, sigs, 1);
   printf("proof rc: %d\n", rc);
 
@@ -105,13 +110,21 @@ int main ()
   printf("%d\n", b3==1);
 
   uint8_t b4 = 255;
-  rc = groupsig_trace(&b4, sig, grpkey, crl, mgrkey, gml);
+  sigs[0] = sig2;
+  rc = groupsig_prove_equality_verify(&b4, p1, grpkey, sigs, 1);
+  printf("wrong proof verif rc: %d\n", rc);
+  printf("wrong proof verif b4: %d\n", b4);
+  printf("%d\n", b4==0);
+  sigs[0] = sig1;
+
+  uint8_t b5 = 255;
+  rc = groupsig_trace(&b5, sig1, grpkey, crl, mgrkey, gml);
   printf("illegal trace rc: %d\n", rc);
-  printf("illegal trace b4: %d\n", b4);
+  printf("illegal trace b5: %d\n", b5);
   printf("%d\n", b4==0);
 
   uint64_t id = 255;
-  rc = groupsig_open(&id, p1, crl, sig, grpkey, mgrkey, gml);
+  rc = groupsig_open(&id, p1, crl, sig1, grpkey, mgrkey, gml);
   printf("open rc: %d\n", rc);
   printf("open id: %lu\n", id);
 
@@ -122,22 +135,28 @@ int main ()
   str_aux = bigz_get_str16(*(bigz_t *)trapdoor->trap);
   printf("reveal td: %s\n", str_aux);
 
-  uint8_t b5 = 255;
-  rc = groupsig_trace(&b5, sig, grpkey, crl, mgrkey, gml);
+  uint8_t b6 = 255;
+  rc = groupsig_trace(&b6, sig1, grpkey, crl, mgrkey, gml);
   printf("legal trace rc: %d\n", rc);
-  printf("legal trace b5: %d\n", b5);
-  printf("%d\n", b5==1);
+  printf("legal trace b6: %d\n", b6);
+  printf("%d\n", b6==1);
 
   groupsig_proof_t *p2;
   p2 = groupsig_proof_init(grpkey->scheme);
-  rc = groupsig_claim(p2, memkey, grpkey, sig);
+  rc = groupsig_claim(p2, memkey, grpkey, sig1);
   printf("claim rc: %d\n", rc);
 
-  uint8_t b6 = 255;
-  rc = groupsig_claim_verify(&b6, p2, sig, grpkey);
+  uint8_t b7 = 255;
+  rc = groupsig_claim_verify(&b7, p2, sig1, grpkey);
   printf("claim verif rc: %d\n", rc);
-  printf("claim verif b6: %d\n", rc);
+  printf("claim verif b7: %d\n", b7);
   printf("%d\n", b6==1);
+
+  uint8_t b8 = 255;
+  rc = groupsig_claim_verify(&b8, p2, sig2, grpkey);
+  printf("wrong claim verif rc: %d\n", rc);
+  printf("wrong claim verif b8: %d\n", b8);
+  printf("%d\n", b8==0);
 
   groupsig_mgr_key_free(mgrkey); mgrkey = NULL;
   groupsig_grp_key_free(grpkey); grpkey = NULL;
@@ -149,7 +168,7 @@ int main ()
   trapdoor_free(trapdoor);
   groupsig_proof_free(p1);
   groupsig_proof_free(p2);
-  groupsig_signature_free(sig); sig = NULL;
+  groupsig_signature_free(sig1); sig1 = NULL;
   free(sigs);
   return 0;
 
