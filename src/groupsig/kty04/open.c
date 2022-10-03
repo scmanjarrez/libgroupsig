@@ -104,7 +104,7 @@ int kty04_open(uint64_t *id, groupsig_proof_t *proof,
 	// return IERROR;
   //     }
 
-			*id = *(uint64_t *)(aux_entry->id);
+			*id = *(uint64_t *)(((identity_t *)aux_entry->data)->id);
 
       match = 1;
       break;

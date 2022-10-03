@@ -58,6 +58,9 @@ int main ()
   m1 = message_init();
   m2 = message_init();
 
+  groupsig_signature_t **sigs;
+  sigs = (groupsig_signature_t **)malloc(1*sizeof(groupsig_signature_t*));
+
   rc = groupsig_join_mem(&m1, memkey, 0, NULL, grpkey);
 
   rc = groupsig_join_mgr(&m2, gml, mgrkey, 1, m1, grpkey);
@@ -87,12 +90,33 @@ int main ()
   printf("verify b2: %d\n", b2);
   printf("%d\n", b2==0);
 
+  groupsig_proof_t *p1;
+  p1 = groupsig_proof_init(grpkey->scheme);
+  sigs[0] = sig;
+  rc = groupsig_prove_equality(p1, memkey, grpkey, sigs, 1);
+  printf("proof rc: %d\n", rc);
+
+  uint8_t b3 = 255;
+  rc = groupsig_prove_equality_verify(&b3, p1, grpkey, sigs, 1);
+  printf("proof verif rc: %d\n", rc);
+  printf("proof verif b3: %d\n", b3);
+  printf("%d\n", b3==1);
+
+  uint64_t id = 255;
+  rc = groupsig_open(&id, p1, crl, sig, grpkey, mgrkey, gml);
+  printf("open rc: %d\n", rc);
+  printf("open id: %lu\n", id);
+
   groupsig_mgr_key_free(mgrkey); mgrkey = NULL;
   groupsig_grp_key_free(grpkey); grpkey = NULL;
+  groupsig_mem_key_free(memkey); memkey = NULL;
   gml_free(gml); gml = NULL;
   crl_free(crl); crl = NULL;
   message_free(m2); m2 = NULL;
   message_free(m1); m1 = NULL;
+  groupsig_proof_free(p1);
+  groupsig_signature_free(sig); sig = NULL;
+  free(sigs);
   return 0;
 
 }
