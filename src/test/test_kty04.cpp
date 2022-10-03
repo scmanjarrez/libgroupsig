@@ -351,6 +351,451 @@ namespace groupsig {
 
   }
 
+  TEST_F(KTY04Test, InitializeProof) {
+
+    groupsig_proof_t *proof;
+    int rc;
+
+    rc = groupsig_setup(GROUPSIG_KTY04_CODE, grpkey, mgrkey, gml);
+    EXPECT_EQ(rc, IOK);
+
+    /* Initialize the proof object */
+    proof = groupsig_proof_init(grpkey->scheme);
+    EXPECT_NE(proof, nullptr);
+
+    EXPECT_EQ(proof->scheme, GROUPSIG_KTY04_CODE);
+
+    groupsig_proof_free(proof);
+    proof = nullptr;
+
+  }
+
+  /* Generate a claim (proof) of a signature and verifies it */
+  TEST_F(KTY04Test, ClaimValid) {
+
+    groupsig_signature_t *sig;
+    groupsig_proof_t *proof;
+    message_t *msg;
+    int rc;
+    uint8_t b;
+
+    rc = groupsig_setup(GROUPSIG_KTY04_CODE, grpkey, mgrkey, gml);
+    EXPECT_EQ(rc, IOK);
+
+    /* Initialize the group signature object */
+    sig = groupsig_signature_init(grpkey->scheme);
+    EXPECT_NE(sig, nullptr);
+
+    /* Initialize the proof object */
+    proof = groupsig_proof_init(grpkey->scheme);
+    EXPECT_NE(proof, nullptr);
+
+    /* Add one member */
+    addMembers(1);
+
+    /* Import the message from the external file into the initialized message object */
+    msg = message_from_string((char *) "Hello, World!");
+    EXPECT_NE(msg, nullptr);
+
+    /* Sign */
+    rc = groupsig_sign(sig, msg, memkey[0], grpkey, UINT_MAX);
+    EXPECT_EQ(rc, IOK);
+
+    /* Create claim */
+    rc = groupsig_claim(proof, memkey[0], grpkey, sig);
+    EXPECT_EQ(rc, IOK);
+
+    /* Verify claim */
+    rc = groupsig_claim_verify(&b, proof, sig, grpkey);
+    EXPECT_EQ(rc, IOK);
+    EXPECT_EQ(b, 1);
+
+    /* Free stuff */
+    rc = message_free(msg);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_signature_free(sig);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_proof_free(proof);
+    EXPECT_EQ(rc, IOK);
+
+  }
+
+  /* Generate a claim (proof) of a signature and verifies it with wrong parameters */
+  TEST_F(KTY04Test, ClaimWrong) {
+
+    groupsig_signature_t *sig, *sig2, *sig3;
+    groupsig_proof_t *proof;
+    message_t *msg, *msg2;
+    int rc;
+    uint8_t b;
+
+    rc = groupsig_setup(GROUPSIG_KTY04_CODE, grpkey, mgrkey, gml);
+    EXPECT_EQ(rc, IOK);
+
+    /* Initialize the group signature object */
+    sig = groupsig_signature_init(grpkey->scheme);
+    EXPECT_NE(sig, nullptr);
+
+    /* Initialize the second group signature object */
+    sig2 = groupsig_signature_init(grpkey->scheme);
+    EXPECT_NE(sig2, nullptr);
+
+    /* Initialize the third group signature object */
+    sig3 = groupsig_signature_init(grpkey->scheme);
+    EXPECT_NE(sig3, nullptr);
+
+    /* Initialize the proof object */
+    proof = groupsig_proof_init(grpkey->scheme);
+    EXPECT_NE(proof, nullptr);
+
+    /* Add one member */
+    addMembers(2);
+
+    /* Import the message from the external file into the initialized message object */
+    msg = message_from_string((char *) "Hello, World!");
+    EXPECT_NE(msg, nullptr);
+
+    /* Import the message from the external file into the initialized message object */
+    msg2 = message_from_string((char *) "Hello, Worlds!");
+    EXPECT_NE(msg, nullptr);
+
+    /* Sign */
+    rc = groupsig_sign(sig, msg, memkey[0], grpkey, UINT_MAX);
+    EXPECT_EQ(rc, IOK);
+
+    /* Sign 2 (same user, different message) */
+    rc = groupsig_sign(sig2, msg2, memkey[0], grpkey, UINT_MAX);
+    EXPECT_EQ(rc, IOK);
+
+    /* Sign 3 (different user, same message) */
+    rc = groupsig_sign(sig3, msg, memkey[1], grpkey, UINT_MAX);
+    EXPECT_EQ(rc, IOK);
+
+    /* Create claim */
+    rc = groupsig_claim(proof, memkey[0], grpkey, sig);
+    EXPECT_EQ(rc, IOK);
+
+    /* Verify claim with other signature (different message)*/
+    rc = groupsig_claim_verify(&b, proof, sig2, grpkey);
+    EXPECT_EQ(rc, IOK);
+    EXPECT_EQ(b, 0);
+
+    /* Verify claim with other signature (different user)*/
+    rc = groupsig_claim_verify(&b, proof, sig3, grpkey);
+    EXPECT_EQ(rc, IOK);
+    EXPECT_EQ(b, 0);
+
+    /* Free stuff */
+    rc = message_free(msg);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_signature_free(sig);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_signature_free(sig2);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_signature_free(sig3);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_proof_free(proof);
+    EXPECT_EQ(rc, IOK);
+
+  }
+
+  /* Trace a revealed user */
+  TEST_F(KTY04Test, TraceValid) {
+
+    groupsig_signature_t *sig;
+    groupsig_proof_t *proof;
+    trapdoor_t *trapdoor;
+    message_t *msg;
+    int rc;
+    uint64_t id;
+    uint8_t b;
+
+    rc = groupsig_setup(GROUPSIG_KTY04_CODE, grpkey, mgrkey, gml);
+    EXPECT_EQ(rc, IOK);
+
+    /* Initialize the group signature object */
+    sig = groupsig_signature_init(grpkey->scheme);
+    EXPECT_NE(sig, nullptr);
+
+    /* Initialize the proof object */
+    proof = groupsig_proof_init(grpkey->scheme);
+    EXPECT_NE(proof, nullptr);
+
+    /* Add one member */
+    addMembers(1);
+
+    /* Import the message from the external file into the initialized message object */
+    msg = message_from_string((char *) "Hello, World!");
+    EXPECT_NE(msg, nullptr);
+
+    /* Sign */
+    rc = groupsig_sign(sig, msg, memkey[0], grpkey, UINT_MAX);
+    EXPECT_EQ(rc, IOK);
+
+    /* Create claim */
+    rc = groupsig_claim(proof, memkey[0], grpkey, sig);
+    EXPECT_EQ(rc, IOK);
+
+    /* Open */
+    rc = groupsig_open(&id, proof, crl, sig, grpkey, mgrkey, gml);
+    EXPECT_EQ(rc, IOK);
+    EXPECT_EQ(id, 0);
+
+    trapdoor = trapdoor_init(grpkey->scheme);
+    EXPECT_NE(trapdoor, nullptr);
+
+    rc = groupsig_reveal(trapdoor, crl, gml, id);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_trace(&b, sig, grpkey, crl, mgrkey, gml);
+    EXPECT_EQ(rc, IOK);
+    EXPECT_EQ(b, 1);
+
+    /* Free stuff */
+    rc = message_free(msg);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_signature_free(sig);
+    EXPECT_EQ(rc, IOK);
+
+    rc = trapdoor_free(trapdoor);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_proof_free(proof);
+    EXPECT_EQ(rc, IOK);
+
+  }
+
+  /* Trace a not revealed user */
+  TEST_F(KTY04Test, TraceWrong) {
+
+    groupsig_signature_t *sig;
+    message_t *msg;
+    int rc;
+    uint64_t id;
+    uint8_t b;
+
+    rc = groupsig_setup(GROUPSIG_KTY04_CODE, grpkey, mgrkey, gml);
+    EXPECT_EQ(rc, IOK);
+
+    /* Initialize the group signature object */
+    sig = groupsig_signature_init(grpkey->scheme);
+    EXPECT_NE(sig, nullptr);
+
+    /* Add one member */
+    addMembers(1);
+
+    /* Import the message from the external file into the initialized message object */
+    msg = message_from_string((char *) "Hello, World!");
+    EXPECT_NE(msg, nullptr);
+
+    /* Sign */
+    rc = groupsig_sign(sig, msg, memkey[0], grpkey, UINT_MAX);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_trace(&b, sig, grpkey, crl, mgrkey, gml);
+    EXPECT_EQ(rc, IOK);
+    EXPECT_EQ(b, 0);
+
+    /* Free stuff */
+    rc = message_free(msg);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_signature_free(sig);
+    EXPECT_EQ(rc, IOK);
+
+  }
+
+  /* Generate a claim (proof) of two signatures and verify it */
+  TEST_F(KTY04Test, ProveEqualityValid) {
+
+    groupsig_signature_t *sig, *sig2, **sigs;
+    groupsig_proof_t *proof;
+    message_t *msg, *msg2;
+    int rc;
+    uint8_t b;
+
+    rc = groupsig_setup(GROUPSIG_KTY04_CODE, grpkey, mgrkey, gml);
+    EXPECT_EQ(rc, IOK);
+
+    /* Initialize the group signature object */
+    sig = groupsig_signature_init(grpkey->scheme);
+    EXPECT_NE(sig, nullptr);
+
+    /* Initialize the other group signature object */
+    sig2 = groupsig_signature_init(grpkey->scheme);
+    EXPECT_NE(sig2, nullptr);
+
+    /* Initialize the proof object */
+    proof = groupsig_proof_init(grpkey->scheme);
+    EXPECT_NE(proof, nullptr);
+
+    /* Get memory for the array of signatures */
+    sigs = (groupsig_signature_t **)malloc(2*sizeof(groupsig_signature_t*));
+    EXPECT_NE(sigs, nullptr);
+
+    /* Add one member */
+    addMembers(1);
+
+    /* Import the message from the external file into the initialized message object */
+    msg = message_from_string((char *) "Hello, World!");
+    EXPECT_NE(msg, nullptr);
+
+    /* Import a different message */
+    msg2 = message_from_string((char *) "Hello, Worlds!");
+    EXPECT_NE(msg2, nullptr);
+
+    /* Sign */
+    rc = groupsig_sign(sig, msg, memkey[0], grpkey, UINT_MAX);
+    EXPECT_EQ(rc, IOK);
+
+    /* Sign the other message */
+    rc = groupsig_sign(sig2, msg2, memkey[0], grpkey, UINT_MAX);
+    EXPECT_EQ(rc, IOK);
+
+    sigs[0] = sig;
+    sigs[1] = sig2;
+
+    /* Create claim */
+    rc = groupsig_prove_equality(proof, memkey[0], grpkey, sigs, 2);
+    EXPECT_EQ(rc, IOK);
+
+    /* Verify claim */
+    rc = groupsig_prove_equality_verify(&b, proof, grpkey, sigs, 2);
+    EXPECT_EQ(rc, IOK);
+    EXPECT_EQ(b, 1);
+
+    /* Free stuff */
+    rc = message_free(msg);
+    EXPECT_EQ(rc, IOK);
+
+    rc = message_free(msg2);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_signature_free(sig);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_signature_free(sig2);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_proof_free(proof);
+    EXPECT_EQ(rc, IOK);
+
+    free(sigs);
+
+  }
+
+  /* Generate a claim (proof) of two signatures and verify it with wrong parameters */
+  TEST_F(KTY04Test, ProveEqualityWrong) {
+
+    groupsig_signature_t *sig, *sig2, **sigs;
+    groupsig_proof_t *proof;
+    message_t *msg, *msg2;
+    int rc;
+    uint8_t b;
+
+    rc = groupsig_setup(GROUPSIG_KTY04_CODE, grpkey, mgrkey, gml);
+    EXPECT_EQ(rc, IOK);
+
+    /* Initialize the group signature object */
+    sig = groupsig_signature_init(grpkey->scheme);
+    EXPECT_NE(sig, nullptr);
+
+    /* Initialize the other group signature object */
+    sig2 = groupsig_signature_init(grpkey->scheme);
+    EXPECT_NE(sig2, nullptr);
+
+    /* Initialize the proof object */
+    proof = groupsig_proof_init(grpkey->scheme);
+    EXPECT_NE(proof, nullptr);
+
+    /* Get memory for the array of signatures */
+    sigs = (groupsig_signature_t **)malloc(2*sizeof(groupsig_signature_t*));
+    EXPECT_NE(sigs, nullptr);
+
+    /* Add one member */
+    addMembers(2);
+
+    /* Import the message from the external file into the initialized message object */
+    msg = message_from_string((char *) "Hello, World!");
+    EXPECT_NE(msg, nullptr);
+
+    /* Import a different message */
+    msg2 = message_from_string((char *) "Hello, Worlds!");
+    EXPECT_NE(msg2, nullptr);
+
+    /* Sign */
+    rc = groupsig_sign(sig, msg, memkey[0], grpkey, UINT_MAX);
+    EXPECT_EQ(rc, IOK);
+
+    /* Sign the other message */
+    rc = groupsig_sign(sig2, msg2, memkey[0], grpkey, UINT_MAX);
+    EXPECT_EQ(rc, IOK);
+
+    sigs[0] = sig;
+    sigs[1] = sig2;
+
+    /* Create claim */
+    rc = groupsig_prove_equality(proof, memkey[0], grpkey, sigs, 2);
+    EXPECT_EQ(rc, IOK);
+
+    /* Swapping order of signature */
+    sigs[0] = sig2;
+    sigs[1] = sig;
+
+    /* Verify claim */
+    rc = groupsig_prove_equality_verify(&b, proof, grpkey, sigs, 2);
+    EXPECT_EQ(rc, IOK);
+    EXPECT_EQ(b, 0);
+
+    /* Modifying a signature */
+    sigs[0] = sig;
+    sigs[1] = sig;
+
+    /* Verify claim */
+    rc = groupsig_prove_equality_verify(&b, proof, grpkey, sigs, 2);
+    EXPECT_EQ(rc, IOK);
+    EXPECT_EQ(b, 0);
+
+    /* Create claim for signatures issued by another member */
+    sigs[0] = sig;
+    sigs[1] = sig2;
+
+    /* Create claim */
+    rc = groupsig_prove_equality(proof, memkey[1], grpkey, sigs, 2);
+    EXPECT_EQ(rc, IOK);
+
+    /* Verify claim */
+    rc = groupsig_prove_equality_verify(&b, proof, grpkey, sigs, 2);
+    EXPECT_EQ(rc, IOK);
+    EXPECT_EQ(b, 0);
+
+    /* Free stuff */
+    rc = message_free(msg);
+    EXPECT_EQ(rc, IOK);
+
+    rc = message_free(msg2);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_signature_free(sig);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_signature_free(sig2);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_proof_free(proof);
+    EXPECT_EQ(rc, IOK);
+
+    free(sigs);
+
+  }
+
   /** Group key tests **/
 
   /* Successfully exports and imports a group key to a string */
@@ -686,6 +1131,8 @@ namespace groupsig {
     free(bytes); bytes = nullptr;
 
   }
+
+
 
   /** GML tests **/
 
