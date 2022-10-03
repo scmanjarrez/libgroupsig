@@ -18,12 +18,15 @@
  */
 
 #include <stdlib.h>
-#include <openssl/sha.h> /** @todo This should not be! */
+// #include <openssl/sha.h> /** @todo This should not be! */
+#include <openssl/evp.h>
 
 #include "kty04.h"
 #include "groupsig/kty04/grp_key.h"
 #include "groupsig/kty04/signature.h"
 #include "bigz.h"
+
+#define SHA256_DIGEST_LENGTH 32
 
 /* Private functions */
 
@@ -384,8 +387,9 @@ int kty04_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
 
   kty04_grp_key_t *gkey;
   kty04_signature_t *kty04_sig;
-  byte_t sc[SHA_DIGEST_LENGTH+1];
-  SHA_CTX sha;
+  byte_t sc[SHA256_DIGEST_LENGTH+1];
+  // SHA_CTX sha;
+	EVP_MD_CTX *mdctx;
   bigz_t c, *B;
   char *aux_sB, *aux_sA;
   uint32_t i;
@@ -434,16 +438,21 @@ int kty04_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
 
   /* Initialize the hashing environment */
   /** @todo Use EVP_* instead of SHA1_* */
-  if(!SHA1_Init(&sha)) {
+  if((mdctx = EVP_MD_CTX_new()) == NULL) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_verify", __LINE__, EDQUOT,
-		      "SHA1_Init", LOGERROR);
+		      "EVP_MD_CTX_new", LOGERROR);
+    GOTOENDRC(IERROR, kty04_verify);
+  }
+	if(EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL) != 1) {
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_verify", __LINE__, EDQUOT,
+		      "EVP_DigestInit_ex", LOGERROR);
     GOTOENDRC(IERROR, kty04_verify);
   }
 
   /* Put the message into the hash */
-  if(!SHA1_Update(&sha, msg->bytes, msg->length)) {
+  if(EVP_DigestUpdate(mdctx, msg->bytes, msg->length) != 1) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_verify", __LINE__, EDQUOT,
-		      "SHA1_Update", LOGERROR);
+		      "EVP_DigestUpdate", LOGERROR);
     GOTOENDRC(IERROR, kty04_verify);
   }
 
@@ -451,9 +460,9 @@ int kty04_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
 
     /* Put the i-th element of the array */
     if(!(aux_sB = bigz_get_str10(B[i]))) GOTOENDRC(IERROR, kty04_verify);
-    if(!SHA1_Update(&sha, aux_sB, strlen(aux_sB))) {
+    if(EVP_DigestUpdate(mdctx, aux_sB, strlen(aux_sB)) != 1) {
       LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_verify", __LINE__, EDQUOT,
-			"SHA1_Update", LOGERROR);
+			"EVP_DigestUpdate", LOGERROR);
       GOTOENDRC(IERROR, kty04_verify);
     }
 
@@ -468,9 +477,9 @@ int kty04_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
 
     /* Put the i-th element of the array */
     if(!(aux_sA = bigz_get_str10(kty04_sig->A[i]))) GOTOENDRC(IERROR, kty04_verify);
-    if(!SHA1_Update(&sha, aux_sA, strlen(aux_sA))) {
+    if(EVP_DigestUpdate(mdctx, aux_sA, strlen(aux_sA)) != 1) {
       LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_verify", __LINE__, EDQUOT,
-			"SHA1_Update", LOGERROR);
+			"EVP_DigestUpdate", LOGERROR);
       GOTOENDRC(IERROR, kty04_verify);
     }
 
@@ -479,15 +488,15 @@ int kty04_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
   }
 
   /* Calculate the hash */
-  memset(sc, 0, SHA_DIGEST_LENGTH+1);
-  if(!SHA1_Final(sc, &sha)) {
+  memset(sc, 0, SHA256_DIGEST_LENGTH+1);
+  if(EVP_DigestFinal_ex(mdctx, sc, NULL) != 1) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_verify", __LINE__, EDQUOT,
-			"SHA1_Final", LOGERROR);
+			"EVP_DigestFinal_ex", LOGERROR);
       GOTOENDRC(IERROR, kty04_verify);
   }
 
   /* Now, we have to get c = h(message,B[1],...,B[z],A[1],...,A[m]) as an mpz */
-  if(!(c = bigz_import(sc, SHA_DIGEST_LENGTH))) GOTOENDRC(IERROR, kty04_verify);
+  if(!(c = bigz_import(sc, SHA256_DIGEST_LENGTH))) GOTOENDRC(IERROR, kty04_verify);
 
   /* Check the hash */
   errno = 0;

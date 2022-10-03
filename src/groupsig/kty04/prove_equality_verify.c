@@ -18,7 +18,8 @@
  */
 
 #include <stdlib.h>
-#include <openssl/sha.h> /** @todo This should not be! */
+// #include <openssl/sha.h> /** @todo This should not be! */
+#include <openssl/evp.h>
 
 #include "kty04.h"
 #include "groupsig/kty04/sphere.h"
@@ -27,6 +28,8 @@
 #include "groupsig/kty04/signature.h"
 #include "bigz.h"
 #include "sys/mem.h"
+
+#define SHA256_DIGEST_LENGTH 32
 
 /* Private functions */
 
@@ -40,8 +43,9 @@ int kty04_prove_equality_verify(uint8_t *ok, groupsig_proof_t *proof,
   kty04_grp_key_t *gkey;
   kty04_signature_t *sig;
   kty04_proof_t *kty04_proof;
-  byte_t aux_sc[SHA_DIGEST_LENGTH+1];
-  SHA_CTX aux_sha;
+  byte_t aux_sc[SHA256_DIGEST_LENGTH+1];
+  // SHA_CTX aux_sha;
+	EVP_MD_CTX *mdctx;
   bigz_t t7r, t7s, t6c, c;
   char *aux_t7r, *aux_t7, *aux_n;
   int rc;
@@ -62,9 +66,14 @@ int kty04_prove_equality_verify(uint8_t *ok, groupsig_proof_t *proof,
 
   /* Initialize the hashing environment */
   /** @todo Use EVP_* instead of SHA1_* */
-  if(!SHA1_Init(&aux_sha)) {
+	if((mdctx = EVP_MD_CTX_new()) == NULL) {
+		LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_prove_equality_verify", __LINE__, EDQUOT,
+ 		      "EVP_MD_CTX_new", LOGERROR);
+    GOTOENDRC(IERROR, kty04_prove_equality_verify);
+	}
+  if(EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL) != 1) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_prove_equality_verify", __LINE__, EDQUOT,
- 		      "SHA1_Init", LOGERROR);
+ 		      "EVP_DigestInit_ex", LOGERROR);
     GOTOENDRC(IERROR, kty04_prove_equality_verify);
   }
 
@@ -102,18 +111,18 @@ int kty04_prove_equality_verify(uint8_t *ok, groupsig_proof_t *proof,
 
     /* Put the i-th element of the array */
     if(!(aux_t7r = bigz_get_str10(t7r))) GOTOENDRC(IERROR, kty04_prove_equality_verify);
-    if(!SHA1_Update(&aux_sha, aux_t7r, strlen(aux_t7r))) {
+		if(EVP_DigestUpdate(mdctx, aux_t7r, strlen(aux_t7r)) != 1) {
       LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_prove_equality_verify", __LINE__, EDQUOT,
- 			"SHA1_Update", LOGERROR);
+ 			"EVP_DigestUpdate", LOGERROR);
       GOTOENDRC(IERROR, kty04_prove_equality_verify);
     }
     free(aux_t7r); aux_t7r = NULL;
 
     /* Put also the base (the T7's) into the hash */
     if(!(aux_t7 = bigz_get_str10(sig->A[4]))) GOTOENDRC(IERROR, kty04_prove_equality_verify);
-    if(!SHA1_Update(&aux_sha, aux_t7, strlen(aux_t7))) {
+		if(EVP_DigestUpdate(mdctx, aux_t7, strlen(aux_t7)) != 1) {
       LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_prove_equality_verify", __LINE__, EDQUOT,
- 			"SHA1_Update", LOGERROR);
+ 			"EVP_DigestUpdate", LOGERROR);
       GOTOENDRC(IERROR, kty04_prove_equality_verify);
     }
     free(aux_t7); aux_t7 = NULL;
@@ -122,23 +131,23 @@ int kty04_prove_equality_verify(uint8_t *ok, groupsig_proof_t *proof,
 
   /* And finally, put the modulus into the hash */
   if(!(aux_n = bigz_get_str10(gkey->n))) GOTOENDRC(IERROR, kty04_prove_equality_verify);
-  if(!SHA1_Update(&aux_sha, aux_n, strlen(aux_n))) {
+	if(EVP_DigestUpdate(mdctx, aux_n, strlen(aux_n)) != 1) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_prove_equality_verify", __LINE__, EDQUOT,
- 		      "SHA1_Update", LOGERROR);
+ 		      "EVP_DigestUpdate", LOGERROR);
     GOTOENDRC(IERROR, kty04_prove_equality_verify);
   }
   free(aux_n); aux_n = NULL;
 
   /* (2) Calculate c = hash(t7r[0] || t7[0] || ... || t7r[n-1] || t7[n-1] || mod ) */
-  memset(aux_sc, 0, SHA_DIGEST_LENGTH+1);
-  if(!SHA1_Final(aux_sc, &aux_sha)) {
+  memset(aux_sc, 0, SHA256_DIGEST_LENGTH+1);
+	if(EVP_DigestFinal_ex(mdctx, aux_sc, NULL) != 1) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "proof_equality_verify", __LINE__, EDQUOT,
- 		      "SHA1_Final", LOGERROR);
+ 		      "EVP_DigestFinal_ex", LOGERROR);
     GOTOENDRC(IERROR, kty04_prove_equality_verify);
   }
 
   /* Now, we have to get c as a bigz_t */
-  if(!(c = bigz_import(aux_sc, SHA_DIGEST_LENGTH)))
+  if(!(c = bigz_import(aux_sc, SHA256_DIGEST_LENGTH)))
     GOTOENDRC(IERROR, kty04_prove_equality_verify);
 
   /* Compare the obtained c with the c received in the proof, if there is a

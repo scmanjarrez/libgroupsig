@@ -19,7 +19,8 @@
 
 #include <stdlib.h>
 #include <limits.h>
-#include <openssl/sha.h> /** @todo This should not be! */
+// #include <openssl/sha.h> /** @todo This should not be! */
+#include <openssl/evp.h>
 
 #include "kty04.h"
 #include "groupsig/kty04/sphere.h"
@@ -27,6 +28,8 @@
 #include "groupsig/kty04/mem_key.h"
 #include "groupsig/kty04/signature.h"
 #include "bigz.h"
+
+#define SHA256_DIGEST_LENGTH 32
 
 /* Private functions */
 
@@ -520,9 +523,11 @@ int kty04_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   kty04_grp_key_t *gkey;
   kty04_mem_key_t *mkey;
   kty04_signature_t *kty04_sig;
-  byte_t aux_sc[SHA_DIGEST_LENGTH+1];
+  byte_t aux_sc[SHA256_DIGEST_LENGTH+1];
   bigz_t k, kk, r, hh, *A, *tw, *B, c, *sw;
-  SHA_CTX aux_sha;
+  // SHA_CTX aux_sha;
+	EVP_MD_CTX *mdctx;
+
   uint32_t aux_i;
   char *aux_sB, *aux_sA;
   int rc;
@@ -611,16 +616,21 @@ int kty04_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
 
   /* Initialize the hashing environment */
   /** @todo Use EVP_* instead of SHA1_* */
-  if(!SHA1_Init(&aux_sha)) {
+  if((mdctx = EVP_MD_CTX_new()) == NULL) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_sign", __LINE__, EDQUOT,
-		      "SHA1_Init", LOGERROR);
+		      "EVP_MD_CTX_new", LOGERROR);
+    GOTOENDRC(IERROR, kty04_sign);
+  }
+	if(EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL) != 1) {
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_sign", __LINE__, EDQUOT,
+		      "EVP_DigestInit_ex", LOGERROR);
     GOTOENDRC(IERROR, kty04_sign);
   }
 
   /* Put the message into the hash */
-  if(!SHA1_Update(&aux_sha, msg->bytes, msg->length)) {
+  if(EVP_DigestUpdate(mdctx, msg->bytes, msg->length) != 1) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_sign", __LINE__, EDQUOT,
-		      "SHA1_Update", LOGERROR);
+		      "EVP_DigestUpdate", LOGERROR);
     GOTOENDRC(IERROR, kty04_sign);
   }
 
@@ -628,9 +638,9 @@ int kty04_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
 
     /* Put the i-th element of the array */
     if(!(aux_sB = bigz_get_str10(B[aux_i]))) GOTOENDRC(IERROR, kty04_sign);
-    if(!SHA1_Update(&aux_sha, aux_sB, strlen(aux_sB))) {
+    if(EVP_DigestUpdate(mdctx, aux_sB, strlen(aux_sB)) != 1) {
       LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_sign", __LINE__, EDQUOT,
-			"SHA1_Update", LOGERROR);
+			"EVP_DigestUpdate", LOGERROR);
       GOTOENDRC(IERROR, kty04_sign);
     }
 
@@ -642,9 +652,9 @@ int kty04_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
 
     /* Put the i-th element of the array */
     if(!(aux_sA = bigz_get_str10(A[aux_i]))) GOTOENDRC(IERROR, kty04_sign);
-    if(!SHA1_Update(&aux_sha, aux_sA, strlen(aux_sA))) {
+    if(EVP_DigestUpdate(mdctx, aux_sA, strlen(aux_sA)) != 1) {
       LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_sign", __LINE__, EDQUOT,
-			"SHA1_Update", LOGERROR);
+			"EVP_DigestUpdate", LOGERROR);
       GOTOENDRC(IERROR, kty04_sign);
     }
 
@@ -653,15 +663,15 @@ int kty04_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   }
 
   /* Calculate the hash */
-  memset(aux_sc, 0, SHA_DIGEST_LENGTH+1);
-  if(!SHA1_Final(aux_sc, &aux_sha)) {
+  memset(aux_sc, 0, SHA256_DIGEST_LENGTH+1);
+  if(EVP_DigestFinal_ex(mdctx, aux_sc, NULL) != 1) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_sign", __LINE__, EDQUOT,
-			"SHA1_Final", LOGERROR);
+			"EVP_DigestFinal_ex", LOGERROR);
       GOTOENDRC(IERROR, kty04_sign);
   }
 
   /* Now, we have to get c = h(message,B[1],...,B[z],A[1]...,A[m]) as an mpz */
-  if(!(c = bigz_import(aux_sc,SHA_DIGEST_LENGTH))) GOTOENDRC(IERROR, kty04_sign);
+  if(!(c = bigz_import(aux_sc,SHA256_DIGEST_LENGTH))) GOTOENDRC(IERROR, kty04_sign);
   if(bigz_set(kty04_sig->c, c) == IERROR) GOTOENDRC(IERROR, kty04_sign);
 
   /* For the calculations of the sw's we are only interested in the k LSbits of c. */
