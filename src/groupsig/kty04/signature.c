@@ -317,7 +317,7 @@ int kty04_signature_get_size(groupsig_signature_t *sig) {
       size += 1;
     }
   }
-  size += sizeof(uint64_t)*3;
+  size += sizeof(uint32_t)*3;
   /* Extra sign byte for each bigz */
   size += 1 + ((kty04_signature_t*) sig->sig)->m + ((kty04_signature_t*) sig->sig)->r;
 
@@ -332,7 +332,7 @@ int kty04_signature_get_size(groupsig_signature_t *sig) {
 
 int kty04_signature_export(byte_t **bytes, uint32_t *size, groupsig_signature_t *signature) {
 
-  int _size, rc, ctr, i;
+  int _size, rc, ctr, i, j;
   size_t len;
   uint8_t code, type;
   byte_t *_bytes, *__bytes, *aux_bytes;
@@ -363,21 +363,21 @@ int kty04_signature_export(byte_t **bytes, uint32_t *size, groupsig_signature_t 
   /* Dump m */
   __bytes = &_bytes[ctr];
   for(i=0; i<4; i++){
-    __bytes[i] = (kty04_signature->m >> (3-i)*8) && 0xFF;
+    __bytes[i] = (kty04_signature->m >> (3-i)*8) & 0xFF;
     ctr++;
   }
 
   /* Dump z */
   __bytes = &_bytes[ctr];
   for(i=0; i<4; i++){
-    __bytes[i] = (kty04_signature->z >> (3-i)*8) && 0xFF;
+    __bytes[i] = (kty04_signature->z >> (3-i)*8) & 0xFF;
     ctr++;
   }
 
   /* Dump r */
   __bytes = &_bytes[ctr];
   for(i=0; i<4; i++){
-    __bytes[i] = (kty04_signature->r >> (3-i)*8) && 0xFF;
+    __bytes[i] = (kty04_signature->r >> (3-i)*8) & 0xFF;
     ctr++;
   }
 
@@ -387,8 +387,8 @@ int kty04_signature_export(byte_t **bytes, uint32_t *size, groupsig_signature_t 
   if(!aux_bytes) GOTOENDRC(IERROR, kty04_signature_export);
   __bytes[0] = (byte_t) len;
   ctr++;
-  for(i = 1; i < len + 1; i++){
-    __bytes[i] = aux_bytes[i];
+  for(j = 1; j < len + 1; j++){
+    __bytes[j] = aux_bytes[j-1];
     ctr++;
   }
   free(aux_bytes);
@@ -400,8 +400,8 @@ int kty04_signature_export(byte_t **bytes, uint32_t *size, groupsig_signature_t 
     if(!aux_bytes) GOTOENDRC(IERROR, kty04_signature_export);
     __bytes[0] = (byte_t) len;
     ctr++;
-    for(i = 1; i < len + 1; i++){
-      __bytes[i] = aux_bytes[i];
+    for(j = 1; j < len + 1; j++){
+      __bytes[j] = aux_bytes[j-1];
       ctr++;
     }
     free(aux_bytes);
@@ -414,8 +414,8 @@ int kty04_signature_export(byte_t **bytes, uint32_t *size, groupsig_signature_t 
     if(!aux_bytes) GOTOENDRC(IERROR, kty04_signature_export);
     __bytes[0] = (byte_t) len;
     ctr++;
-    for(i = 1; i < len + 1; i++){
-      __bytes[i] = aux_bytes[i];
+    for(j = 1; j < len + 1; j++){
+      __bytes[j] = aux_bytes[j-1];
       ctr++;
     }
     free(aux_bytes);
