@@ -128,6 +128,17 @@ int main ()
   printf("legal trace b5: %d\n", b5);
   printf("%d\n", b5==1);
 
+  groupsig_proof_t *p2;
+  p2 = groupsig_proof_init(grpkey->scheme);
+  rc = groupsig_claim(p2, memkey, grpkey, sig);
+  printf("claim rc: %d\n", rc);
+
+  uint8_t b6 = 255;
+  rc = groupsig_claim_verify(&b6, p2, sig, grpkey);
+  printf("claim verif rc: %d\n", rc);
+  printf("claim verif b6: %d\n", rc);
+  printf("%d\n", b6==1);
+
   groupsig_mgr_key_free(mgrkey); mgrkey = NULL;
   groupsig_grp_key_free(grpkey); grpkey = NULL;
   groupsig_mem_key_free(memkey); memkey = NULL;
@@ -137,6 +148,7 @@ int main ()
   message_free(m1); m1 = NULL;
   trapdoor_free(trapdoor);
   groupsig_proof_free(p1);
+  groupsig_proof_free(p2);
   groupsig_signature_free(sig); sig = NULL;
   free(sigs);
   return 0;
