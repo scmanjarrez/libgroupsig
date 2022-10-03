@@ -82,7 +82,7 @@ int main ()
 
   groupsig_signature_t *sig2;
   sig2 = groupsig_signature_init(grpkey->scheme);
-  rc = groupsig_sign(sig1, msg2, memkey, grpkey, UINT_MAX);
+  rc = groupsig_sign(sig2, msg2, memkey, grpkey, UINT_MAX);
   printf("sign 2 rc: %d\n", rc);
 
   uint8_t b = 255;
