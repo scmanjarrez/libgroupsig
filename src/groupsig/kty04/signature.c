@@ -312,6 +312,11 @@ int kty04_signature_get_size(groupsig_signature_t *sig) {
   /* Extra sign byte for each bigz */
   size += 1 + ((kty04_signature_t*) sig->sig)->m + ((kty04_signature_t*) sig->sig)->r;
 
+  kty04_signature_t *kty04_signature;
+  /* 1 byte for the size of each bigz */
+  kty04_signature = (kty04_signature_t*) sig->sig;
+  size += 1 + kty04_signature->m + kty04_signature->r;
+
   return (int) size;
 
 }
@@ -337,9 +342,6 @@ int kty04_signature_export(byte_t **bytes, uint32_t *size, groupsig_signature_t 
   if ((_size = kty04_signature_get_size(signature)) == -1) {
     return IERROR;
   }
-
-  /* 1 byte for the size of each bigz */
-  _size += 1 + kty04_signature->m + kty04_signature->r;
 
   if(!(_bytes = mem_malloc(sizeof(byte_t)*_size))) {
     return IERROR;

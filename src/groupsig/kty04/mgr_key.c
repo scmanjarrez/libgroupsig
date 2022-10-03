@@ -177,6 +177,10 @@ int kty04_mgr_key_get_size(groupsig_key_t *key) {
   size += sizeof(uint64_t);
   /* Extra sign byte for each element */
   size += 3;
+  /* 1 byte for the length of each bigz */
+  size += 3;
+  /* 1 byte for the length of the groupsig code and another for the keytype */
+  size += 2;
 
   return (int) size;
 
@@ -203,11 +207,6 @@ int kty04_mgr_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   if ((_size = kty04_mgr_key_get_size(key)) == -1) {
     return IERROR;
   }
-
-  /* 1 byte for the length of each bigz */
-  _size += 3;
-  /* 1 byte for the length of the groupsig code and another for the keytype */
-  _size += 2;
 
   if(!(_bytes = mem_malloc(sizeof(byte_t)*_size))) {
     return IERROR;
