@@ -363,21 +363,21 @@ int kty04_signature_export(byte_t **bytes, uint32_t *size, groupsig_signature_t 
   /* Dump m */
   __bytes = &_bytes[ctr];
   for(i=0; i<4; i++){
-    __bytes[i] = (kty04_signature->m >> 3-i) && 0xFF;
+    __bytes[i] = (kty04_signature->m >> (3-i)*8) && 0xFF;
     ctr++;
   }
 
   /* Dump z */
   __bytes = &_bytes[ctr];
   for(i=0; i<4; i++){
-    __bytes[i] = (kty04_signature->z >> 3-i) && 0xFF;
+    __bytes[i] = (kty04_signature->z >> (3-i)*8) && 0xFF;
     ctr++;
   }
 
   /* Dump r */
   __bytes = &_bytes[ctr];
   for(i=0; i<4; i++){
-    __bytes[i] = (kty04_signature->r >> 3-i) && 0xFF;
+    __bytes[i] = (kty04_signature->r >> (3-i)*8) && 0xFF;
     ctr++;
   }
 
