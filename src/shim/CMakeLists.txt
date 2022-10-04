@@ -6,14 +6,16 @@ target_link_libraries(big
 # libbase64
 add_library (base64 base64.c)
 
-# libpbcext
-add_library (pbcext pbc_ext.c)
-target_include_directories (pbcext
-  PUBLIC
-  ${MCL_INCLUDE_DIR})
-target_link_libraries (pbcext
-  ${MCL384_256_LIBRARY}
-  ${MCL_LIBRARY})
+if(ALL)
+    # libpbcext
+    add_library (pbcext pbc_ext.c)
+    target_include_directories (pbcext
+      PUBLIC
+      ${MCL_INCLUDE_DIR})
+    target_link_libraries (pbcext
+      ${MCL384_256_LIBRARY}
+      ${MCL_LIBRARY})
+endif()
 
 # libhash
 add_library (hash hash.c)

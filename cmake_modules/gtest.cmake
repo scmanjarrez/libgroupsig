@@ -3,6 +3,7 @@ set(EXTERNAL_INSTALL_LOCATION ${CMAKE_BINARY_DIR}/external)
 
 ExternalProject_Add(gtest-project
   GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG main
   CMAKE_ARGS
   -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_LOCATION}
   -DCMAKE_INSTALL_RPATH=${EXTERNAL_INSTALL_LOCATION}/lib
