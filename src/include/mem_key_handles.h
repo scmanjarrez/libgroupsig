@@ -22,6 +22,7 @@
 
 #include "mem_key.h"
 #include "groupsig/kty04/mem_key.h"
+#ifdef ALL
 #include "groupsig/bbs04/mem_key.h"
 /* #include "groupsig/cpy06/mem_key.h" */
 #include "groupsig/gl19/mem_key.h"
@@ -29,6 +30,7 @@
 #include "groupsig/klap20/mem_key.h"
 #include "groupsig/dl21/mem_key.h"
 #include "groupsig/dl21seq/mem_key.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,7 +40,11 @@ extern "C" {
  * @def GROUPSIG_MEM_KEY_HANDLES_N
  * @brief Number of known handles of member key schemes.
  */
+#ifdef ALL
 #define GROUPSIG_MEM_KEY_HANDLES_N 7
+#else
+#define GROUPSIG_MEM_KEY_HANDLES_N 1
+#endif
 
 /**
  * @var GROUPSIG_MEM_KEY_HANDLES
@@ -46,6 +52,7 @@ extern "C" {
  */
 static const mem_key_handle_t *GROUPSIG_MEM_KEY_HANDLES[GROUPSIG_MEM_KEY_HANDLES_N] = {
   &kty04_mem_key_handle,
+#ifdef ALL
   &bbs04_mem_key_handle,
   /* &cpy06_mem_key_handle, */
   &gl19_mem_key_handle,
@@ -53,6 +60,7 @@ static const mem_key_handle_t *GROUPSIG_MEM_KEY_HANDLES[GROUPSIG_MEM_KEY_HANDLES
   &klap20_mem_key_handle,
   &dl21_mem_key_handle,
   &dl21seq_mem_key_handle,
+#endif
 };
 
 #ifdef __cplusplus

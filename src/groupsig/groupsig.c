@@ -28,9 +28,14 @@
 #include "sys/mem.h"
 #include "registered_groupsigs.h"
 
+#ifdef ALL
 #define GROUPSIG_REGISTERED_GROUPSIGS_N 7
+#else
+#define GROUPSIG_REGISTERED_GROUPSIGS_N 1
+#endif
 static const groupsig_t *GROUPSIG_REGISTERED_GROUPSIGS[GROUPSIG_REGISTERED_GROUPSIGS_N] = {
   &kty04_groupsig_bundle,
+#ifdef ALL
   &bbs04_groupsig_bundle,
   /* &cpy06_groupsig_bundle, */
   &gl19_groupsig_bundle,
@@ -38,6 +43,7 @@ static const groupsig_t *GROUPSIG_REGISTERED_GROUPSIGS[GROUPSIG_REGISTERED_GROUP
   &klap20_groupsig_bundle,
   &dl21_groupsig_bundle,
   &dl21seq_groupsig_bundle,
+#endif
 };
 
 int groupsig_hello_world(void) {

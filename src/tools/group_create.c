@@ -513,13 +513,14 @@ int main(int argc, char **argv) {
     if(!(mgrkey = groupsig_mgr_key_init(opt.scheme))) {
       return IERROR;
     }
-
+#ifdef ALL
     /* In GL19, we have two manager keys */
     if(opt.scheme == GROUPSIG_GL19_CODE) {
       if(!(mgrkey2 = groupsig_mgr_key_init(opt.scheme))) {
 	return IERROR;
       }
     }
+#endif
 
     if(!(gs = groupsig_get_groupsig_from_code(opt.scheme))) {
       return IERROR;
@@ -552,6 +553,7 @@ int main(int argc, char **argv) {
       return IERROR;
     }
 
+#ifdef ALL
     /* In GL19, we have to call the setup function twice. */
     if (opt.scheme == GROUPSIG_GL19_CODE) {
       if(groupsig_setup(opt.scheme, grpkey, mgrkey2, gml) == IERROR) {
@@ -559,6 +561,7 @@ int main(int argc, char **argv) {
 	return IERROR;
       }
     }
+#endif
 
 #ifdef PROFILE
     if(!profile_skip && profile_get_time(&tv_end, &clck_end, &cycle_end) == IOK) {
@@ -587,6 +590,7 @@ int main(int argc, char **argv) {
 
     mem_free(keyfile);
 
+#ifdef ALL
     /* In GL19, we have two manager keys */
     if(opt.scheme == GROUPSIG_GL19_CODE) {
 
@@ -609,6 +613,7 @@ int main(int argc, char **argv) {
       mem_free(keyfile);
 	  
     }
+#endif
   
     /* Group key */
     if(!(keyfile = str_ncat(3, "%s %s %s", dir_gs_grp, "/", DFLT_GRPKEY_FILE))) {

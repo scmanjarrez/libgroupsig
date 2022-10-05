@@ -28,7 +28,6 @@
 #include "groupsig/kty04/gml.h"
 #include "math/nt.h"
 #include "sys/mem.h"
-#include "shim/pbc_ext.h"
 
 /**
  * @def EPSILON_MIN

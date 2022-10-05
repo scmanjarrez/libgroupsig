@@ -22,6 +22,7 @@
 
 #include "grp_key.h"
 #include "groupsig/kty04/grp_key.h"
+#ifdef ALL
 #include "groupsig/bbs04/grp_key.h"
 /* #include "groupsig/cpy06/grp_key.h" */
 #include "groupsig/gl19/grp_key.h"
@@ -29,6 +30,7 @@
 #include "groupsig/klap20/grp_key.h"
 #include "groupsig/dl21/grp_key.h"
 #include "groupsig/dl21seq/grp_key.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,7 +40,12 @@ extern "C" {
  * @def GROUPSIG_GRP_KEY_HANDLES_N
  * @brief Number of supported group key implementations.
  */
+#ifdef ALL
 #define GROUPSIG_GRP_KEY_HANDLES_N 7
+#else
+#define GROUPSIG_GRP_KEY_HANDLES_N 1
+#endif
+
 
 /**
  * @var GROUPSIG_GRP_KEY_HANDLES
@@ -46,6 +53,7 @@ extern "C" {
  */
 static const grp_key_handle_t *GROUPSIG_GRP_KEY_HANDLES[GROUPSIG_GRP_KEY_HANDLES_N] = {
   &kty04_grp_key_handle,
+#ifdef ALL
   &bbs04_grp_key_handle,
   /* &cpy06_grp_key_handle, */
   &gl19_grp_key_handle,
@@ -53,6 +61,7 @@ static const grp_key_handle_t *GROUPSIG_GRP_KEY_HANDLES[GROUPSIG_GRP_KEY_HANDLES
   &klap20_grp_key_handle,
   &dl21_grp_key_handle,
   &dl21seq_grp_key_handle,
+#endif
 };
 
 #ifdef __cplusplus

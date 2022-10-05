@@ -52,6 +52,7 @@ _do_setup
     return IERROR;
 
   switch(code) {
+#ifdef ALL
   case GROUPSIG_GL19_CODE:
     if (groupsig_setup(code, grpkey, mgrkey1, gml) == IERROR)
       return IERROR;
@@ -63,7 +64,8 @@ _do_setup
       return IERROR;
     if (groupsig_setup(code, grpkey, mgrkey2, gml) == IERROR)
       return IERROR;    
-    break;    
+    break;
+#endif
   default:
     if (groupsig_setup(code, grpkey, mgrkey1, gml) == IERROR)
       return IERROR;
@@ -765,7 +767,9 @@ _run_benchmark
     if (memkey) { groupsig_mem_key_free(memkey); memkey = NULL; }
     if (mgrkey1) { groupsig_mgr_key_free(mgrkey1); mgrkey1 = NULL; }
     if (mgrkey2) { groupsig_mgr_key_free(mgrkey2); mgrkey2 = NULL; }
+#ifdef ALL
     if (bldkey) { groupsig_bld_key_free(bldkey); bldkey = NULL; }      
+#endif
     if (gml && gh->desc->has_gml) { gml_free(gml); gml = NULL; }
     if (crl && gh->desc->has_crl) { crl_free(crl); crl = NULL; }      
     if (min) { message_free(min); min = NULL; }

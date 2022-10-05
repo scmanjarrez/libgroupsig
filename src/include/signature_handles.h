@@ -22,6 +22,7 @@
 
 #include "signature.h"
 #include "groupsig/kty04/signature.h"
+#ifdef ALL
 #include "groupsig/bbs04/signature.h"
 /* #include "groupsig/cpy06/signature.h" */
 #include "groupsig/gl19/signature.h"
@@ -29,6 +30,7 @@
 #include "groupsig/klap20/signature.h"
 #include "groupsig/dl21/signature.h"
 #include "groupsig/dl21seq/signature.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,7 +40,11 @@ extern "C" {
  * @def GROUPSIG_SIGNATURE_HANDLES_N
  * @brief Number of supported set of handles for managing group signatures.
  */
+#ifdef ALL
 #define GROUPSIG_SIGNATURE_HANDLES_N 7
+#else
+#define GROUPSIG_SIGNATURE_HANDLES_N 1
+#endif
 
 /**
  * @var GROUPSIG_SIGNATURE_HANDLES
@@ -46,6 +52,7 @@ extern "C" {
  */
 static const groupsig_signature_handle_t *GROUPSIG_SIGNATURE_HANDLES[GROUPSIG_SIGNATURE_HANDLES_N] = {
   &kty04_signature_handle,
+#ifdef ALL
   &bbs04_signature_handle,
   /* &cpy06_signature_handle, */
   &gl19_signature_handle,
@@ -53,6 +60,7 @@ static const groupsig_signature_handle_t *GROUPSIG_SIGNATURE_HANDLES[GROUPSIG_SI
   &klap20_signature_handle,
   &dl21_signature_handle,
   &dl21seq_signature_handle,
+#endif
 };
 
 #ifdef __cplusplus

@@ -9,7 +9,6 @@ set(src
   proof.c
   identity.c
   trapdoor.c
-  weak_def.c
   gml.c
   crl.c)
 
@@ -52,13 +51,9 @@ else()
       PUBLIC math
       PUBLIC base64
       PUBLIC misc
-      PUBLIC hash
-      PUBLIC gcrypto
       PUBLIC msg
       PUBLIC logger
-      PUBLIC ${OPENSSL_LIBRARIES}
-      PUBLIC ${MCL_LIBRARY}
-      PUBLIC ${MCL384_256_LIBRARY})
+      PUBLIC ${OPENSSL_LIBRARIES})
 endif()
 
 # Install rules
@@ -69,12 +64,12 @@ install (DIRECTORY "${PROJECT_SOURCE_DIR}/src/include/"
 
 # Ignore kty04 and cpy06 until I adapt them to the new pbc and join
 if(ALL)
-add_subdirectory(bbs04)
-#add_subdirectory(cpy06)
-add_subdirectory(gl19)
-add_subdirectory(ps16)
-add_subdirectory(klap20)
-add_subdirectory(dl21)
-add_subdirectory(dl21seq)
+    add_subdirectory(bbs04)
+    #add_subdirectory(cpy06)
+    add_subdirectory(gl19)
+    add_subdirectory(ps16)
+    add_subdirectory(klap20)
+    add_subdirectory(dl21)
+    add_subdirectory(dl21seq)
 endif()
 add_subdirectory(kty04)

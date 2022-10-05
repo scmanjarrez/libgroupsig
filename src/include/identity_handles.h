@@ -22,10 +22,12 @@
 
 #include "identity.h"
 #include "groupsig/kty04/identity.h"
+#ifdef ALL
 /* #include "groupsig/cpy06/identity.h" */
 #include "groupsig/gl19/identity.h"
 #include "groupsig/dl21/identity.h"
 #include "groupsig/dl21seq/identity.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,7 +37,11 @@ extern "C" {
  * @def IDENTITY_HANDLES_N
  * @brief Number of supported identity handles.
  */
+#ifdef ALL
 #define IDENTITY_HANDLES_N 4
+#else
+#define IDENTITY_HANDLES_N 1
+#endif
 
 /**
  * @var IDENTITY_HANDLES
@@ -43,10 +49,12 @@ extern "C" {
  */
 static const identity_handle_t *IDENTITY_HANDLES[IDENTITY_HANDLES_N] = {
   &kty04_identity_handle,
+#ifdef ALL
   /* &cpy06_identity_handle, */
   &gl19_identity_handle,
   &dl21_identity_handle,
   &dl21seq_identity_handle,
+#endif
 };
 
 #ifdef __cplusplus

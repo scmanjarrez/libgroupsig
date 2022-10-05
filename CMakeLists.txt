@@ -42,10 +42,12 @@ option (
   USE_GCOV
   "Build with GCov for coverage reporting.")
 
-option (
-  USE_MCL
-  "Build a local version of MCL for pairing based crypto."
-  ON)
+if(ALL)
+    option (
+      USE_MCL
+      "Build a local version of MCL for pairing based crypto."
+      ON)
+endif()
 
 ## Google Test
 if (USE_GTEST)

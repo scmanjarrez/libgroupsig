@@ -15,13 +15,13 @@ if(ALL)
     target_link_libraries (pbcext
       ${MCL384_256_LIBRARY}
       ${MCL_LIBRARY})
+    # libhash
+    add_library (hash hash.c)
+    target_include_directories (hash
+      PUBLIC
+      ${OPENSSL_INCLUDE_DIR})
+    target_link_libraries (hash
+      misc
+      ${OPENSSL_LIBRARIES})
 endif()
 
-# libhash
-add_library (hash hash.c)
-target_include_directories (hash
-  PUBLIC
-  ${OPENSSL_INCLUDE_DIR})
-target_link_libraries (hash
-  misc
-  ${OPENSSL_LIBRARIES})
