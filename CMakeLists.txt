@@ -42,12 +42,12 @@ option (
   USE_GCOV
   "Build with GCov for coverage reporting.")
 
-if(ALL)
+if (ALL)
     option (
       USE_MCL
       "Build a local version of MCL for pairing based crypto."
       ON)
-endif()
+endif ()
 
 ## Google Test
 if (USE_GTEST)
@@ -66,8 +66,10 @@ if (USE_MCL)
   include (mcl)
 #  link_directories("${CMAKE_BINARY_DIR}/external/kk/lib")
 else ()
-  find_package (MCL REQUIRED)
-  include_directories(${MCL_INCLUDE_DIRS})
+  if (ALL)
+    find_package (MCL REQUIRED)
+    include_directories(${MCL_INCLUDE_DIRS})
+  endif ()
 endif (USE_MCL)
 
 ## @TODO Is this needed/used?
