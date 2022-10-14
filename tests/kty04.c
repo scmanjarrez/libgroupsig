@@ -19,24 +19,25 @@ void print_gml(byte_t *bytes, uint32_t size) {
 
 int main () {
   int rc = 255;
+  uint8_t code = GROUPSIG_KTY04_CODE;
 
   printf("***** Testing mgr_key_init *****\n");
   groupsig_key_t *mgrkey;
-  mgrkey = groupsig_mgr_key_init(GROUPSIG_KTY04_CODE);
+  mgrkey = groupsig_mgr_key_init(code);
   printf("mgr_key_to_string:\n%s", groupsig_mgr_key_to_string(mgrkey));
 
   printf("\n***** Testing grp_key_init *****\n");
   groupsig_key_t *grpkey;
-  grpkey = groupsig_grp_key_init(GROUPSIG_KTY04_CODE);
+  grpkey = groupsig_grp_key_init(code);
   printf("grp_key_to_string:\n%s", groupsig_grp_key_to_string(grpkey));
 
   printf("\n***** Testing gml_init *****\n");
   gml_t *gml;
-  gml = gml_init(GROUPSIG_KTY04_CODE);
+  gml = gml_init(code);
 
   /* printf("\n***** Testing gml_entry_init *****\n"); */
   /* gml_entry_t *entry; */
-  /* entry = gml_entry_init(GROUPSIG_KTY04_CODE); */
+  /* entry = gml_entry_init(code); */
 
   /* printf("\n***** Testing gml_insert *****\n"); */
   /* rc = gml_insert(gml, entry); */
@@ -52,7 +53,7 @@ int main () {
 
   /* printf("\n***** Testing gml_import *****\n"); */
   /* gml_t *gml2; */
-  /* gml2 = gml_import(GROUPSIG_KTY04_CODE, bytes, size); */
+  /* gml2 = gml_import(code, bytes, size); */
 
   /* printf("\n***** Testing gml_export (after import) *****\n"); */
   /* gml_export(&bytes2, &size2, gml2); */
@@ -60,11 +61,11 @@ int main () {
 
   printf("\n***** Testing crl_init *****\n");
   crl_t *crl;
-  crl = crl_init(GROUPSIG_KTY04_CODE);
+  crl = crl_init(code);
   // TODO crl export and import
 
   printf("\n***** Testing groupsig_setup *****\n");
-  rc = groupsig_setup(GROUPSIG_KTY04_CODE, grpkey, mgrkey, gml);
+  rc = groupsig_setup(code, grpkey, mgrkey, gml);
   printf("groupsig_setup rc: %d\n", rc);
 
   printf("\n***** Testing mem_key_init *****\n");
@@ -86,7 +87,7 @@ int main () {
   printf("join_mgr rc: %d\n", rc);
 
   printf("\n***** Testing mem_key_import *****\n");
-  memkey = groupsig_mem_key_import(GROUPSIG_KTY04_CODE, m2->bytes, m2->length);
+  memkey = groupsig_mem_key_import(code, m2->bytes, m2->length);
   printf("mem_key_to_string:\n%s", groupsig_mem_key_to_string(memkey));
 
   printf("\n***** Testing sign & verify - correct message *****\n");
