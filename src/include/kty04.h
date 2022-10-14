@@ -68,7 +68,7 @@ static const groupsig_description_t kty04_description = {
 #define KTY04_JOIN_START 1
 
 /* Number of exchanged messages */
-#define KTY04_JOIN_SEQ 1
+#define KTY04_JOIN_SEQ 2
 
 #define KTY04_DEFAULT_SECURITY 10
 #define KTY04_DEFAULT_PRIMESIZE 256 // Actually, we set primesize/4
