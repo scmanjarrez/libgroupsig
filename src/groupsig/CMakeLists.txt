@@ -12,6 +12,11 @@ set(src
   gml.c
   crl.c)
 
+if (ALL)
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DALL")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DALL")
+endif ()
+
 # this is the "object library" target: compiles the sources only once
 add_library(objlib OBJECT ${src})
 

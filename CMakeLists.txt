@@ -43,10 +43,10 @@ option (
   "Build with GCov for coverage reporting.")
 
 if (ALL)
-    option (
-      USE_MCL
-      "Build a local version of MCL for pairing based crypto."
-      ON)
+  option (
+    USE_MCL
+    "Build a local version of MCL for pairing based crypto."
+    ON)
 endif ()
 
 ## Google Test

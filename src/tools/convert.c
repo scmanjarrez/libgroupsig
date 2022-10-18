@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -25,6 +25,7 @@
 #include "groupsig.h"
 #include "gml.h"
 #include "crl.h"
+#include "bld_key.h"
 #include "sysenv.h"
 #include "message.h"
 #include "logger.h"
@@ -80,7 +81,7 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Error: failed to import group key.\n");
     return IERROR;
   }
-  
+
   if(!(grpkey = groupsig_grp_key_import(scheme, b_grpkey, (uint32_t) b_len))) {
     fprintf(stderr, "Error: invalid group key %s.\n", s_grpkey);
     return IERROR;
@@ -90,31 +91,31 @@ int main(int argc, char *argv[]) {
   /* Parse manager key */
   s_mgrkey = argv[argnum];
   argnum++;
-  
+
   /* Import the manager key */
   b_mgrkey = NULL;
   if(misc_read_file_to_bytestring(s_mgrkey, &b_mgrkey, &b_len) == IERROR) {
     fprintf(stderr, "Error: failed to read manager key.\n");
     return IERROR;
   }
-  
+
   if(!(mgrkey = groupsig_mgr_key_import(scheme, b_mgrkey, (uint32_t) b_len))) {
     fprintf(stderr, "Error: invalid manager key %s.\n", s_mgrkey);
     return IERROR;
   }
-  mem_free(b_mgrkey); b_mgrkey = NULL;  
+  mem_free(b_mgrkey); b_mgrkey = NULL;
 
   /* Parse filename for blinding key */
   s_bldkey = argv[argnum];
   argnum++;
-  
+
   /* Import the blinding key */
   b_bldkey = NULL;
   if(misc_read_file_to_bytestring(s_bldkey, &b_bldkey, &b_len) == IERROR) {
     fprintf(stderr, "Error: failed to import blinding key.\n");
     return IERROR;
   }
-    
+
   if(!(bldkey = groupsig_bld_key_import(scheme, b_bldkey, (uint32_t) b_len))) {
     fprintf(stderr, "Error: invalid blinding key %s.\n", s_bldkey);
     return IERROR;
@@ -125,7 +126,7 @@ int main(int argc, char *argv[]) {
   n_sigs = argc - argnum;
   sig1 = argnum;
   bsigs = (groupsig_blindsig_t **) mem_malloc(sizeof(groupsig_blindsig_t *)*n_sigs);
-  csigs = (groupsig_blindsig_t **) mem_malloc(sizeof(groupsig_blindsig_t *)*n_sigs);  
+  csigs = (groupsig_blindsig_t **) mem_malloc(sizeof(groupsig_blindsig_t *)*n_sigs);
 
   for(i=argnum;i<argnum+n_sigs; i++) {
 
@@ -135,7 +136,7 @@ int main(int argc, char *argv[]) {
       fprintf(stderr, "Error: failed to import blinded signature from %s.\n", argv[i]);
       return IERROR;
     }
-    
+
     if(!(bsigs[i-argnum] = groupsig_blindsig_import(scheme, b_bsig, (uint32_t) b_len))) {
       fprintf(stderr, "Error: failed to import blinded signature.\n");
       return IERROR;
@@ -147,9 +148,9 @@ int main(int argc, char *argv[]) {
       fprintf(stderr, "Error: failed to initialize converted signature.\n");
       return IERROR;
     }
-    
+
   }
-  
+
   /* Convert signatures and messages */
   if(groupsig_convert(csigs, bsigs, n_sigs, grpkey, mgrkey, bldkey, NULL) ==
      IERROR) {
@@ -164,7 +165,7 @@ int main(int argc, char *argv[]) {
     if(!(s_csig = (char *) mem_malloc(sizeof(char)*(strlen(argv[i])+5)))) {
       return IERROR;
     }
-    
+
     sprintf(s_csig, "%s.cnv", argv[i]);
 
     b_bsig = NULL;
@@ -176,10 +177,10 @@ int main(int argc, char *argv[]) {
       fprintf(stderr, "Error: Could not export converted signature to %s.\n", s_csig);
       return IERROR;
     }
-    mem_free(b_bsig); b_bsig = NULL;     
+    mem_free(b_bsig); b_bsig = NULL;
     mem_free(s_csig); s_csig = NULL;
-      
-  }  
+
+  }
 
   /* Free resources */
   for(i=0; i<n_sigs; i++) {
@@ -193,9 +194,9 @@ int main(int argc, char *argv[]) {
   if(bldkey) { groupsig_bld_key_free(bldkey); bldkey = NULL; }
   if(grpkey) { groupsig_grp_key_free(grpkey); grpkey = NULL; }
   if(mgrkey) { groupsig_mgr_key_free(mgrkey); mgrkey = NULL; }
-  
+
   return IOK;
-  
+
 }
 
 /* revoke.c ends here */

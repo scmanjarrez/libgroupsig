@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -25,6 +25,7 @@
 #include "groupsig.h"
 #include "gml.h"
 #include "crl.h"
+#include "bld_key.h"
 #include "sysenv.h"
 #include "message.h"
 #include "logger.h"
@@ -82,13 +83,13 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Error: failed to import blinding key.\n");
     return IERROR;
   }
-    
+
   if(!(bldkey = groupsig_bld_key_import(scheme, b_bldkey, (uint32_t) b_len))) {
     fprintf(stderr, "Error: invalid blinding key %s.\n", s_bldkey);
     return IERROR;
   }
   mem_free(b_bldkey); b_bldkey = NULL;
-    
+
   /* Load group signatures and messages, and blind them */
   n_sigs = argc - argnum;
   bsigs = (groupsig_blindsig_t **) mem_malloc(sizeof(groupsig_blindsig_t *)*n_sigs);
@@ -111,7 +112,7 @@ int main(int argc, char *argv[]) {
       fprintf(stderr, "Error: failed to import blinded signature key.\n");
       return IERROR;
     }
-    
+
     if(!(bsigs[i-argnum] = groupsig_blindsig_import(scheme, b_sig, b_len))) {
       fprintf(stderr, "Error: failed to import blinded signature %s.\n", argv[i]);
       return IERROR;
@@ -134,15 +135,15 @@ int main(int argc, char *argv[]) {
       fprintf(stderr, "Error: failed to stringify message.\n");
       return IERROR;
     }
-    
+
     fprintf(stdout, "Unblinded nym and message: %d\n\tnym: %s\n\tmsg: %s\n",
     	    i-argnum, s_nym, s_msg);
-    
+
     if (nym) { identity_free(nym); nym = NULL; }
     if (msg) { message_free(msg); msg = NULL; }
     if (s_nym) { mem_free(s_nym); s_nym = NULL; }
     if (s_msg) { mem_free(s_msg); s_msg = NULL; }
-    
+
   }
 
   /* Free resources */
@@ -153,9 +154,9 @@ int main(int argc, char *argv[]) {
 
   groupsig_clear(scheme);
   if (bldkey) { groupsig_bld_key_free(bldkey); bldkey = NULL; }
-  
+
   return IOK;
-  
+
 }
 
 /* revoke.c ends here */
