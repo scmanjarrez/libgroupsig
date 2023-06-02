@@ -85,4 +85,9 @@ add_subdirectory (${CMAKE_SOURCE_DIR}/src/crypto)
 add_subdirectory (${CMAKE_SOURCE_DIR}/src/math)
 add_subdirectory (${CMAKE_SOURCE_DIR}/src/misc)
 add_subdirectory (${CMAKE_SOURCE_DIR}/src/groupsig)
-add_subdirectory (${PROJECT_SOURCE_DIR}/src/tools)
+add_subdirectory (${CMAKE_SOURCE_DIR}/src/tools)
+
+# create an executable test_kty04 located in tests/kty04.c that links all the libraries compiled
+add_executable(test_kty04 tests/kty04.c)
+link_directories(${CMAKE_SOURCE_DIR}/lib)
+target_link_libraries(test_kty04 base64 big kty04 logger math msg sys misc groupsig)
