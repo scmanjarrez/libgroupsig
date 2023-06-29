@@ -1,6 +1,6 @@
 # CMake requirements
 cmake_minimum_required (VERSION 3.13)
-set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
+set (CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}")
 
 # Generic library information
 project (libgroupsig)
@@ -20,10 +20,8 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 add_link_options("LINKER:--allow-multiple-definition")
 
 # Add the binary tree to the search path for include files
-include_directories("${CMAKE_SOURCE_DIR}/src")
-include_directories("${CMAKE_SOURCE_DIR}/src/include")
-include_directories("${CMAKE_BINARY_DIR}/external/include")
-link_directories("${CMAKE_BINARY_DIR}/external/lib")
+include_directories("${PROJECT_SOURCE_DIR}/src")
+include_directories("${PROJECT_SOURCE_DIR}/src/include")
 
 # Check dependencies
 
@@ -31,7 +29,7 @@ link_directories("${CMAKE_BINARY_DIR}/external/lib")
 find_package (OpenSSL REQUIRED)
 
 # Add modules
-list (APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_modules)
+list (APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
 ## Configure options
 option (

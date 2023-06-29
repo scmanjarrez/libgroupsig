@@ -207,16 +207,6 @@ else()
   target_link_libraries (unblind
     groupsig
     ${OPENSSL_LIBRARIES})
-
-  # benchmarks
-  add_executable (benchmarks benchmarks.c)
-  target_include_directories (benchmarks
-    PRIVATE
-    ${OPENSSL_INCLUDE_DIR})
-  target_link_libraries (benchmarks
-    groupsig
-    base64
-    ${OPENSSL_LIBRARIES})
 endif()
 # print_key
 #add_executable (print_key print_key.c)
