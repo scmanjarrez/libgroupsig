@@ -59,6 +59,15 @@ else()
     PUBLIC msg
     PUBLIC logger
     PUBLIC ${OPENSSL_LIBRARIES})
+  target_link_libraries (groupsig-static
+    PUBLIC kty04
+    PUBLIC sys
+    PUBLIC math
+    PUBLIC base64
+    PUBLIC misc
+    PUBLIC msg
+    PUBLIC logger
+    PUBLIC ${OPENSSL_LIBRARIES})
 endif()
 
 # Install rules

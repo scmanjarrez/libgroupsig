@@ -1,10 +1,10 @@
 # libbig
-add_library (big bigz.c)
+add_library (big STATIC bigz.c)
 target_link_libraries(big
   ${OPENSSL_LIBRARIES})
 
 # libbase64
-add_library (base64 base64.c)
+add_library (base64 STATIC base64.c)
 
 if (ALL)
   # libpbcext

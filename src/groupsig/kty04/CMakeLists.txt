@@ -1,7 +1,7 @@
 include_directories ("${PROJECT_SOURCE_DIR}/src/include"
                      "${PROJECT_SOURCE_DIR}/src/global")
 
-add_library (kty04 grp_key.c grp_key.h mgr_key.c mgr_key.h mem_key.c
+add_library (kty04 STATIC grp_key.c grp_key.h mgr_key.c mgr_key.h mem_key.c
         mem_key.h signature.c signature.h sphere.c sphere.h setup.c
         join_mem.c join_mgr.c sign.c verify.c open.c reveal.c trace.c claim.c
         claim_verify.c prove_equality.c prove_equality_verify.c gml.c gml.h
