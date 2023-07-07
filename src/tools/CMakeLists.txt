@@ -135,18 +135,20 @@ if (ALL)
     ${MCL_LIBRARY}
     ${MCL384_256_LIBRARY})
 
-  # benchmarks
-  add_executable (benchmarks benchmarks.c)
-  target_include_directories (benchmarks
-    PRIVATE
-    ${MCL_INCLUDE_DIRS}
-    ${OPENSSL_INCLUDE_DIR})
-  target_link_libraries (benchmarks
-    groupsig
-    base64
-    ${OPENSSL_LIBRARIES}
-    ${MCL_LIBRARY}
-    ${MCL384_256_LIBRARY})
+  if (BENCHMARK)
+    # benchmarks
+    add_executable (benchmarks benchmarks.c)
+    target_include_directories (benchmarks
+      PRIVATE
+      ${MCL_INCLUDE_DIRS}
+      ${OPENSSL_INCLUDE_DIR})
+    target_link_libraries (benchmarks
+      groupsig
+      base64
+      ${OPENSSL_LIBRARIES}
+      ${MCL_LIBRARY}
+      ${MCL384_256_LIBRARY})
+  endif()
 else()
   # group_create
   add_executable (group_create group_create.c)
@@ -207,6 +209,18 @@ else()
   target_link_libraries (unblind
     groupsig
     ${OPENSSL_LIBRARIES})
+
+  if (BENCHMARK)
+    # benchmarks
+    add_executable (benchmarks benchmarks.c)
+    target_include_directories (benchmarks
+      PRIVATE
+      ${OPENSSL_INCLUDE_DIR})
+    target_link_libraries (benchmarks
+      groupsig
+      base64
+      ${OPENSSL_LIBRARIES})
+  endif()
 endif()
 # print_key
 #add_executable (print_key print_key.c)
