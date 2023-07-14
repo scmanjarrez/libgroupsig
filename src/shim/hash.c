@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -46,7 +46,7 @@ static char* _get_name_by_code(uint8_t type) {
   }
 
   return NULL;
-  
+
 }
 
 static hash_t* _hash_sha1(byte_t *bytes, uint32_t size) {
@@ -63,17 +63,17 @@ static hash_t* _hash_sha1(byte_t *bytes, uint32_t size) {
     LOG_ERRORCODE(&logger, __FILE__, "_hash_sha1", __LINE__, errno, LOGERROR);
     return NULL;
   }
-  
+
   EVP_DigestUpdate(hash->mdctx, bytes, size);
 
   _size = EVP_MD_size(hash->md);
   if(!(hash->hash = (byte_t *) mem_malloc(sizeof(byte_t)*_size))) {
     LOG_ERRORCODE(&logger, __FILE__, "_hash_sha1", __LINE__, errno, LOGERROR);
     return NULL;
-  }  
-  
+  }
+
   EVP_DigestFinal_ex(hash->mdctx, hash->hash, &hash->length);
-  
+
   return hash;
 
 }
@@ -92,17 +92,17 @@ static hash_t* _hash_blake2(byte_t *bytes, uint32_t size) {
     LOG_ERRORCODE(&logger, __FILE__, "_hash_blake2", __LINE__, errno, LOGERROR);
     return NULL;
   }
-  
+
   EVP_DigestUpdate(hash->mdctx, bytes, size);
 
   _size = EVP_MD_size(hash->md);
   if(!(hash->hash = (byte_t *) mem_malloc(sizeof(byte_t)*_size))) {
     LOG_ERRORCODE(&logger, __FILE__, "_hash_blake2", __LINE__, errno, LOGERROR);
     return NULL;
-  }  
-  
+  }
+
   EVP_DigestFinal_ex(hash->mdctx, hash->hash, &hash->length);
-  
+
   return hash;
 
 }
@@ -111,7 +111,7 @@ hash_t* hash_init(uint8_t type) {
 
   hash_t *hash;
   char *name;
-  
+
   if(!(hash = (hash_t *) mem_malloc(sizeof(hash_t)))) {
     LOG_ERRORCODE(&logger, __FILE__, "hash_init", __LINE__, errno, LOGERROR);
     return NULL;
@@ -128,7 +128,7 @@ hash_t* hash_init(uint8_t type) {
   }
 
   /* Set OpenSSL's MD object */
-  if(!(hash->md = (EVP_MD *) EVP_get_digestbyname(name))) {
+  if(!(hash->md = (EVP_MD *) EVP_MD_fetch(NULL, name, NULL))) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "hash_init", __LINE__, EDQUOT,
 		      "OpenSSL: Unknown hash algorithm", LOGERROR);
     return NULL;
@@ -139,13 +139,13 @@ hash_t* hash_init(uint8_t type) {
   EVP_DigestInit_ex(hash->mdctx, hash->md, NULL);
 
   return hash;
-  
+
 }
 
 int hash_free(hash_t *hash) {
 
   if(!hash) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "hash_free", __LINE__, 
+    LOG_EINVAL_MSG(&logger, __FILE__, "hash_free", __LINE__,
 		   "Nothing to free.", LOGWARN);
     return IOK;
   }
@@ -166,7 +166,7 @@ hash_t* hash_get(uint8_t type, byte_t *bytes, uint32_t size) {
   }
 
   if(!_is_supported_hash(type)) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "hash_get", __LINE__, 
+    LOG_EINVAL_MSG(&logger, __FILE__, "hash_get", __LINE__,
 		   "Unsupported hash algorithm.", LOGERROR);
     return NULL;
   }
@@ -174,7 +174,7 @@ hash_t* hash_get(uint8_t type, byte_t *bytes, uint32_t size) {
   /* For now, we just use SHA1, this switch approach may be easy to handle while
      the number of supported schemes is not very large, otherwise, another approach
      should be taken... */
-  
+
   switch(type) {
   case HASH_SHA1:
     return _hash_sha1(bytes, size);
@@ -185,7 +185,7 @@ hash_t* hash_get(uint8_t type, byte_t *bytes, uint32_t size) {
 		   "Unexpected execution flow.", LOGERROR);
     return NULL;
   }
-  
+
   LOG_EINVAL_MSG(&logger, __FILE__, "hash_get", __LINE__,
 		 "Unexpected execution flow.", LOGERROR);
   return NULL;
@@ -202,20 +202,20 @@ int hash_update(hash_t *hash, byte_t *bytes, uint32_t size) {
   EVP_DigestUpdate(hash->mdctx, bytes, size);
 
   return IOK;
-  
+
 }
 
 int hash_finalize(hash_t *hash) {
 
   int size;
-  
+
   if(!hash) {
     LOG_EINVAL(&logger, __FILE__, "hash_finalize", __LINE__, LOGERROR);
     return IERROR;
   }
 
   if(!_is_supported_hash(hash->type)) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "hash_finalize", __LINE__, 
+    LOG_EINVAL_MSG(&logger, __FILE__, "hash_finalize", __LINE__,
 		   "Unsupported hash algorithm.", LOGERROR);
     return IERROR;
   }
@@ -229,7 +229,7 @@ int hash_finalize(hash_t *hash) {
   EVP_DigestFinal_ex(hash->mdctx, hash->hash, &hash->length);
 
   return IOK;
-  
+
 }
 
 int hash_get_hex(char **s, hash_t *hash) {

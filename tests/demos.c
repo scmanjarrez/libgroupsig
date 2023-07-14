@@ -1,4 +1,7 @@
 #include <string.h>
+#include <stdio.h>
+
+#include "utils.h"
 
 int main(int argc, char **argv) {
   int err = 0;
@@ -10,6 +13,8 @@ int main(int argc, char **argv) {
       kty04_test();
     } else if (!strcmp(argv[1], "ps16")) {
       ps16_test();
+    /* } else if (!strcmp(argv[1], "dl21seq")) { */
+      /* dl21seq_test(); */
     } else {
       err++;
     }

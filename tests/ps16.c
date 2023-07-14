@@ -81,7 +81,7 @@ void ps16_test() {
   print_time("", start, end);
 
   printf("\n##### Testing msg_init\n");
-  message_t *msg0, *msg1, *msg2, *msg3;
+  message_t *msg0, *msg1, *msg2, *msg3, *msg4;
   start = clock();
   msg0 = message_init();
   end = clock();
@@ -106,30 +106,36 @@ void ps16_test() {
   print_exp_ptr("msg3", msg3);
   print_time("", start, end);
 
+  start = clock();
+  msg4 = message_init();
+  end = clock();
+  print_exp_ptr("msg4", msg4);
+  print_time("", start, end);
+
   printf("\n##### Testing join_mgr (0)\n");
   start = clock();
-  rc = groupsig_join_mgr(&msg0, gml, mgrkey, 0, NULL, grpkey);
+  rc = groupsig_join_mgr(&msg1, gml, mgrkey, 0, msg0, grpkey);
   end = clock();
   print_exp_rc("", rc);
   print_time("", start, end);
 
   printf("\n##### Testing join_mem (1)\n");
   start = clock();
-  rc = groupsig_join_mem(&msg1, memkey, 1, msg0, grpkey);
+  rc = groupsig_join_mem(&msg2, memkey, 1, msg1, grpkey);
   end = clock();
   print_exp_rc("", rc);
   print_time("", start, end);
 
   printf("\n##### Testing join_mgr (2)\n");
   start = clock();
-  rc = groupsig_join_mgr(&msg2, gml, mgrkey, 2, msg1, grpkey);
+  rc = groupsig_join_mgr(&msg3, gml, mgrkey, 2, msg2, grpkey);
   end = clock();
   print_exp_rc("", rc);
   print_time("", start, end);
 
   printf("\n##### Testing join_mem (3)\n");
   start = clock();
-  rc = groupsig_join_mem(&msg3, memkey, 3, msg2, grpkey);
+  rc = groupsig_join_mem(&msg4, memkey, 3, msg3, grpkey);
   end = clock();
   print_exp_rc("", rc);
   print_time("", start, end);
@@ -172,9 +178,9 @@ void ps16_test() {
   print_time("import ", start, end);
 
   printf("\n##### Testing sign & verify - correct message\n");
-  message_t *msg4;
+  message_t *msg5;
   groupsig_signature_t *sig0;
-  msg4 = message_from_string((char *) "Hello, World!");
+  msg5 = message_from_string((char *) "Hello, World!");
   start = clock();
   sig0 = groupsig_signature_init(grpkey->scheme);
   end = clock();
@@ -182,23 +188,23 @@ void ps16_test() {
   print_time("init ", start, end);
 
   start = clock();
-  rc = groupsig_sign(sig0, msg4, memkey_imp, grpkey, UINT_MAX);
+  rc = groupsig_sign(sig0, msg5, memkey_imp, grpkey, UINT_MAX);
   end = clock();
   print_exp_rc("sign ", rc);
   print_time("sign ", start, end);
 
   uint8_t ret0 = 255;
   start = clock();
-  rc = groupsig_verify(&ret0, sig0, msg4, grpkey);
+  rc = groupsig_verify(&ret0, sig0, msg5, grpkey);
   end = clock();
   print_exp_rc("verify ", rc);
   print_exp_ret("verify ", ret0, 1);
   print_time("verify ", start, end);
 
   printf("\n##### Testing sign & verify - incorrect message\n");
-  message_t *msg5;
+  message_t *msg6;
   groupsig_signature_t *sig1;
-  msg5 = message_from_string((char *) "Hello, Worlds!");
+  msg6 = message_from_string((char *) "Hello, Worlds!");
   start = clock();
   sig1 = groupsig_signature_init(grpkey->scheme);
   end = clock();
@@ -206,7 +212,7 @@ void ps16_test() {
   print_time("init ", start, end);
 
   start = clock();
-  rc = groupsig_sign(sig1, msg5, memkey_imp, grpkey, UINT_MAX);
+  rc = groupsig_sign(sig1, msg6, memkey_imp, grpkey, UINT_MAX);
   end = clock();
   print_exp_rc("sign ", rc);
   print_time("sign ", start, end);
@@ -214,7 +220,7 @@ void ps16_test() {
   // verify using incorrect signature (sig0)
   uint8_t ret1 = 255;
   start = clock();
-  rc = groupsig_verify(&ret1, sig0, msg5, grpkey);
+  rc = groupsig_verify(&ret1, sig0, msg6, grpkey);
   end = clock();
   print_exp_rc("verify ", rc);
   print_exp_ret("verify ", ret1, 0);
@@ -261,6 +267,7 @@ void ps16_test() {
   groupsig_mem_key_free(memkey); memkey = NULL;
   gml_free(gml_imp); gml_imp = NULL;
   gml_free(gml); gml = NULL;
+  message_free(msg6); msg6 = NULL;
   message_free(msg5); msg5 = NULL;
   message_free(msg4); msg4 = NULL;
   message_free(msg3); msg3 = NULL;
