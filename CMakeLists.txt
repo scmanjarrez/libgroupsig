@@ -22,6 +22,10 @@ add_link_options("LINKER:--allow-multiple-definition")
 # Add the binary tree to the search path for include files
 include_directories("${PROJECT_SOURCE_DIR}/src")
 include_directories("${PROJECT_SOURCE_DIR}/src/include")
+# Compiler headers path for mcl
+include_directories("${PROJECT_BINARY_DIR}/external/include")
+# Compiler library path for mcl
+link_directories("${PROJECT_BINARY_DIR}/external/lib")
 
 # Check dependencies
 
@@ -86,6 +90,7 @@ add_subdirectory (${PROJECT_SOURCE_DIR}/src/groupsig)
 add_subdirectory (${PROJECT_SOURCE_DIR}/src/tools)
 
 # create an executable test_kty04 located in tests/kty04.c that links all the libraries compiled
-add_executable(test_kty04 tests/kty04.c)
-link_directories(${PROJECT_SOURCE_DIR}/lib)
-target_link_libraries(test_kty04 base64 big kty04 logger math msg sys misc groupsig)
+add_executable(demos tests/demos.c tests/kty04.c tests/ps16.c tests/utils.c)
+target_include_directories(demos PUBLIC tests)
+# We need to export LD_LIBRARY_PATH with the path to mcl -> export LD_LIBRARY_PATH=$PWD/external/lib/:$LD_LIBRARY_PATH
+target_link_libraries(demos kty04 ps16 groupsig)

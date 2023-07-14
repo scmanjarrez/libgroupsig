@@ -8,7 +8,7 @@ add_library (base64 STATIC base64.c)
 
 if (ALL)
   # libpbcext
-  add_library (pbcext pbc_ext.c)
+  add_library (pbcext STATIC pbc_ext.c)
   target_include_directories (pbcext
     PUBLIC
     ${MCL_INCLUDE_DIR})
@@ -16,7 +16,7 @@ if (ALL)
     ${MCL384_256_LIBRARY}
     ${MCL_LIBRARY})
   # libhash
-  add_library (hash hash.c)
+  add_library (hash STATIC hash.c)
   target_include_directories (hash
     PUBLIC
     ${OPENSSL_INCLUDE_DIR})
