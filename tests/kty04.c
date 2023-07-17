@@ -109,7 +109,7 @@ void kty04_test() {
   print_exp_rc("", rc);
   print_time("", start, end);
 
-    printf("\n##### Testing grp_key_export & grp_key_import\n");
+  printf("\n##### Testing grp_key_export & grp_key_import\n");
   byte_t *bytes_grpkey = NULL;
   uint32_t size_grpkey;
   int len0;

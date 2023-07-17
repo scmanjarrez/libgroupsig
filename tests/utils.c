@@ -16,7 +16,8 @@ void print_time(char *prefix, clock_t start, clock_t end) {
 }
 
 void print_exp_rc(char *prefix, int value) {
-  printf("rc expected (%d)?: %s\n", value, correct_value(value == IOK));
+  printf("%src expected (v:%d==e:%d)?: %s\n",
+         prefix, value, IOK, correct_value(value == IOK));
 }
 
 void print_exp_ptr(char *prefix, void *pointer) {
@@ -24,8 +25,8 @@ void print_exp_ptr(char *prefix, void *pointer) {
 }
 
 void print_exp_ret(char *prefix, uint8_t value, int expected) {
-  printf("%sreturn expected (%d)?: %s\n",
-         prefix, value, correct_value(value == expected));
+  printf("%sreturn expected (v:%d==e:%d)?: %s\n",
+         prefix, value, expected, correct_value(value == expected));
 }
 
 void print_to_str(char *prefix, char *str) {
