@@ -15,7 +15,7 @@ void print_exp_rc(char *prefix, int value);
 
 void print_exp_ptr(char *prefix, void *pointer);
 
-void print_exp_ret(char *prefix, uint8_t value, int expected);
+void print_exp_ret(char *prefix, uint32_t value, int expected);
 
 void print_to_str(char *prefix, char *str);
 

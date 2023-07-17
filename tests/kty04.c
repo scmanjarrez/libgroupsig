@@ -212,7 +212,7 @@ void kty04_test() {
   rc = groupsig_verify(&ret0, sig0, msg2, grpkey_imp);
   end = clock();
   print_exp_rc("verify ", rc);
-  print_exp_ret("verify ", ret0, 1);
+  print_exp_ret("verify ", (uint32_t) ret0, 1);
   print_time("verify ", start, end);
 
   printf("\n##### Testing sign & verify - incorrect message\n");
@@ -237,7 +237,7 @@ void kty04_test() {
   rc = groupsig_verify(&ret1, sig0, msg3, grpkey_imp);
   end = clock();
   print_exp_rc("verify ", rc);
-  print_exp_ret("verify ", ret1, 0);
+  print_exp_ret("verify ", (uint32_t) ret1, 0);
   print_time("verify ", start, end);
 
   printf("\n##### Testing proof_init\n");
@@ -263,7 +263,7 @@ void kty04_test() {
   rc = groupsig_prove_equality_verify(&ret2, proof0, grpkey_imp, sigs, 1);
   end = clock();
   print_exp_rc("", rc);
-  print_exp_ret("", ret2, 1);
+  print_exp_ret("", (uint32_t) ret2, 1);
   print_time("", start, end);
 
   printf("\n##### Testing prove_equality_verify - incorrect signature\n");
@@ -273,7 +273,7 @@ void kty04_test() {
   rc = groupsig_prove_equality_verify(&ret3, proof0, grpkey_imp, sigs, 1);
   end = clock();
   print_exp_rc("", rc);
-  print_exp_ret("", ret3, 0);
+  print_exp_ret("", (uint32_t) ret3, 0);
   print_time("", start, end);
 
   printf("\n##### Testing trace - not revealed user\n");
@@ -283,7 +283,7 @@ void kty04_test() {
   rc = groupsig_trace(&ret4, sig0, grpkey_imp, crl, mgrkey_imp, gml_imp);
   end = clock();
   print_exp_rc("", rc);
-  print_exp_ret("", ret4, 0);
+  print_exp_ret("", (uint32_t) ret4, 0);
   print_time("", start, end);
 
   printf("\n##### Testing open\n");
@@ -319,7 +319,7 @@ void kty04_test() {
   rc = groupsig_trace(&ret5, sig0, grpkey_imp, crl, mgrkey_imp, gml_imp);
   end = clock();
   print_exp_rc("", rc);
-  print_exp_ret("", ret5, 1);
+  print_exp_ret("", (uint32_t) ret5, 1);
   print_time("", start, end);
 
   printf("\n##### Testing claim\n");
@@ -338,7 +338,7 @@ void kty04_test() {
   rc = groupsig_claim_verify(&ret6, proof1, sig0, grpkey_imp);
   end = clock();
   print_exp_rc("", rc);
-  print_exp_ret("", ret6, 1);
+  print_exp_ret("", (uint32_t) ret6, 1);
   print_time("", start, end);
 
   printf("\n##### Testing claim_verify - incorrect signature\n");
@@ -347,7 +347,7 @@ void kty04_test() {
   rc = groupsig_claim_verify(&ret7, proof1, sig1, grpkey_imp);
   end = clock();
   print_exp_rc("", rc);
-  print_exp_ret("", ret7, 0);
+  print_exp_ret("", (uint32_t) ret7, 0);
   print_time("", start, end);
 
   groupsig_mgr_key_free(mgrkey_imp); mgrkey_imp = NULL;

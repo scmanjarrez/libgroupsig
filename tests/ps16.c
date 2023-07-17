@@ -240,7 +240,7 @@ void ps16_test() {
   rc = groupsig_verify(&ret0, sig0, msg5, grpkey_imp);
   end = clock();
   print_exp_rc("verify ", rc);
-  print_exp_ret("verify ", ret0, 1);
+  print_exp_ret("verify ", (uint32_t) ret0, 1);
   print_time("verify ", start, end);
 
   printf("\n##### Testing sign & verify - incorrect message\n");
@@ -265,7 +265,7 @@ void ps16_test() {
   rc = groupsig_verify(&ret1, sig0, msg6, grpkey_imp);
   end = clock();
   print_exp_rc("verify ", rc);
-  print_exp_ret("verify ", ret1, 0);
+  print_exp_ret("verify ", (uint32_t) ret1, 0);
   print_time("verify ", start, end);
 
   printf("\n##### Testing proof_init\n");
@@ -291,7 +291,7 @@ void ps16_test() {
   rc = groupsig_open_verify(&ret2, proof0, sig0, grpkey_imp);
   end = clock();
   print_exp_rc("", rc);
-  print_exp_ret("", ret2, 1);
+  print_exp_ret("", (uint32_t) ret2, 1);
   print_time("", start, end);
 
   printf("\n##### Testing open_verify - not opened signature\n");
@@ -300,7 +300,7 @@ void ps16_test() {
   rc = groupsig_open_verify(&ret3, proof0, sig1, grpkey_imp);
   end = clock();
   print_exp_rc("", rc);
-  print_exp_ret("", ret3, 0);
+  print_exp_ret("", (uint32_t) ret3, 0);
   print_time("", start, end);
 
   groupsig_mgr_key_free(mgrkey_imp); mgrkey_imp = NULL;

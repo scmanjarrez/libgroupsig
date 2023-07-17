@@ -24,7 +24,7 @@ void print_exp_ptr(char *prefix, void *pointer) {
   printf("%s expected?: %s\n", prefix, correct_value(pointer != NULL));
 }
 
-void print_exp_ret(char *prefix, uint8_t value, int expected) {
+void print_exp_ret(char *prefix, uint32_t value, int expected) {
   printf("%sreturn expected (v:%d==e:%d)?: %s\n",
          prefix, value, expected, correct_value(value == expected));
 }
