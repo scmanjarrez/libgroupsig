@@ -241,7 +241,7 @@ void kty04_test() {
   print_time("verify ", start, end);
 
   printf("\n##### Testing proof_init\n");
-  groupsig_signature_t *sigs[1];
+  groupsig_signature_t *sigs[2];
   groupsig_proof_t *proof0;
   start = clock();
   proof0 = groupsig_proof_init(grpkey_imp->scheme);
@@ -251,8 +251,9 @@ void kty04_test() {
 
   printf("\n##### Testing prove_equality\n");
   sigs[0] = sig0;
+  sigs[1] = sig1;
   start = clock();
-  rc = groupsig_prove_equality(proof0, memkey_imp, grpkey_imp, sigs, 1);
+  rc = groupsig_prove_equality(proof0, memkey_imp, grpkey_imp, sigs, 2);
   end = clock();
   print_exp_rc("", rc);
   print_time("", start, end);
@@ -260,7 +261,7 @@ void kty04_test() {
   printf("\n##### Testing prove_equality_verify - correct signature\n");
   uint8_t ret2 = 255;
   start = clock();
-  rc = groupsig_prove_equality_verify(&ret2, proof0, grpkey_imp, sigs, 1);
+  rc = groupsig_prove_equality_verify(&ret2, proof0, grpkey_imp, sigs, 2);
   end = clock();
   print_exp_rc("", rc);
   print_exp_ret("", (uint32_t) ret2, 1);
