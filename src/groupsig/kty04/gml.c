@@ -399,10 +399,10 @@ char* kty04_gml_entry_to_string(gml_entry_t *entry) {
     return NULL;
   }
 
-  /* Calculate the length of the entry, adding a tab and a \n */
-  sentry_len = strlen(sid)+strlen(sA)+strlen(strapdoor)+strlen("\t\t");
+  /* Calculate the length of the entry, adding the size of 3 separators + \0 */
+  sentry_len = strlen(sid)+strlen(sA)+strlen(strapdoor)+strlen("\t\t\t") + 1;
 
-  if(!(sentry = (char *) malloc(sizeof(char)*sentry_len+1))) {
+  if(!(sentry = (char *) malloc(sizeof(char)*sentry_len))) {
     LOG_ERRORCODE(&logger, __FILE__, "kty04_gml_entry_to_string", __LINE__, errno,
 		  LOGERROR);
     free(strapdoor); strapdoor = NULL;
@@ -412,7 +412,7 @@ char* kty04_gml_entry_to_string(gml_entry_t *entry) {
   }
 
   memset(sentry, 0, sentry_len*sizeof(char));
-  sprintf(sentry, "%s\t%s\t%s", sid, sA, strapdoor);
+  int sz = sprintf(sentry, "%s\t%s\t%s\t", sid, sA, strapdoor);
 
   mem_free(sid);
   mem_free(sA);
