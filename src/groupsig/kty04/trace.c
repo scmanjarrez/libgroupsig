@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -61,19 +61,19 @@ int kty04_trace(uint8_t *ok, groupsig_signature_t *sig, groupsig_key_t *grpkey, 
       bigz_free(a3t);
       return IERROR;
     }
-  
+
     errno = 0;
     if(!bigz_cmp(a3t, kty04_sig->A[11])) {
       if(errno) {
-	bigz_free(a3t);
-	return IERROR;
+        bigz_free(a3t);
+        return IERROR;
       }
       revoked = 1;
       break;
     } else {
       if(errno) {
-	bigz_free(a3t);
-	return IERROR;
+        bigz_free(a3t);
+        return IERROR;
       }
     }
 

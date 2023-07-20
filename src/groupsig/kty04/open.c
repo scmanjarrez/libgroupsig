@@ -32,11 +32,11 @@
 #include "groupsig/kty04/identity.h"
 
 int kty04_open(uint64_t *id, groupsig_proof_t *proof,
-	       crl_t *crl, groupsig_signature_t *sig,
-	       groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
+               crl_t *crl, groupsig_signature_t *sig,
+               groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
 
   kty04_signature_t *kty04_sig;
-	gml_entry_t *aux_entry;
+  gml_entry_t *aux_entry;
   kty04_mgr_key_t *mkey;
   kty04_grp_key_t *gkey;
   bigz_t Ai, T1;
@@ -93,18 +93,18 @@ int kty04_open(uint64_t *id, groupsig_proof_t *proof,
     if(!bigz_cmp(((kty04_gml_entry_data_t *)((gml_entry_t *) gml_get(gml, i))->data)->A, Ai)) {
 
       if(errno) {
-	bigz_free(Ai);
-	return IERROR;
+        bigz_free(Ai);
+        return IERROR;
       }
 
       /* Get the identity from the matched entry. */
-			aux_entry = gml_get(gml, i);
-  //     if(kty04_identity_copy((identity_t)id, aux_entry->data->id) == IERROR) {
-	// bigz_free(Ai);
-	// return IERROR;
-  //     }
+      aux_entry = gml_get(gml, i);
+      //     if(kty04_identity_copy((identity_t)id, aux_entry->data->id) == IERROR) {
+      // bigz_free(Ai);
+      // return IERROR;
+      //     }
 
-			*id = *(uint64_t *)(((identity_t *)aux_entry->data)->id);
+      *id = *(uint64_t *)((kty04_gml_entry_data_t *) aux_entry->data)->id->id;
 
       match = 1;
       break;
