@@ -392,12 +392,72 @@ groupsig_key_t* ps16_mem_key_import(byte_t *source, uint32_t size) {
 
 char* ps16_mem_key_to_string(groupsig_key_t *key) {
 
+  ps16_mem_key_t* ps16_key = (ps16_mem_key_t*) key->key;
+  
+  char *sk = NULL, *sigma1 = NULL, *sigma2 = NULL, *e = NULL, *mem_key = NULL; 
+  size_t sk_size = 0, sigma1_size = 0, sigma2_size = 0, e_size = 0, memkey_size = 0;
+
   if(!key || key->scheme != GROUPSIG_PS16_CODE) {
     LOG_EINVAL(&logger, __FILE__, "ps16_mem_key_to_string", __LINE__, LOGERROR);
     return NULL;
   }
 
-  return NULL;
+  if(pbcext_element_Fr_to_string(&sk,
+                                 &sk_size,
+                                 10,
+                                 ps16_key->sk) == IERROR) {
+    LOG_EINVAL(&logger, __FILE__, "ps16_mem_key_to_string", __LINE__, LOGERROR);                              
+    goto mem_key_to_string_error;
+  }
+  if(pbcext_element_G1_to_string(&sigma1,
+                                 &sigma1_size,
+                                 10,
+                                 ps16_key->sigma1) == IERROR) {
+    LOG_EINVAL(&logger, __FILE__, "ps16_mem_key_to_string", __LINE__, LOGERROR);
+    goto mem_key_to_string_error;
+  }  
+  if(pbcext_element_G1_to_string(&sigma2,
+                                 &sigma2_size,
+                                 10,
+                                 ps16_key->sigma2) == IERROR) {
+    LOG_EINVAL(&logger, __FILE__, "ps16_mem_key_to_string", __LINE__, LOGERROR);
+    goto mem_key_to_string_error;
+  }
+  if(pbcext_element_GT_to_string(&e,
+                                 &e_size,
+                                 10,
+                                 ps16_key->e) == IERROR) {
+    // TODO: e may not be defined sometimes.
+    //LOG_EINVAL(&logger, __FILE__, "ps16_mem_key_to_string", __LINE__, LOGERROR);
+    //goto mem_key_to_string_error;
+  }
+
+  memkey_size = sk_size + sigma1_size + sigma2_size + e_size + strlen("sk: \nsigma1: \nsigma2: \ne: \n") + 1;
+
+  if (!(mem_key = (char*) calloc(memkey_size, sizeof(char)))){
+    LOG_EINVAL(&logger, __FILE__, "ps16_mem_key_to_string", __LINE__, LOGERROR);
+    goto mem_key_to_string_error;
+  }
+
+  sprintf(mem_key,
+	  "sk: %s\n"
+    "sigma1: %s\n"
+    "sigma2: %s\n"
+	  "e: %s\n",
+	  sk, sigma1, sigma2, e);
+
+  printf("[>] MEMKEY: %s\n", mem_key);
+
+  mem_key_to_string_error:
+
+  if (sk){free(sk), sk = NULL;}
+  if (sigma1){free(sigma1), sigma1 = NULL;}
+  if (sigma2){free(sigma2), sigma2 = NULL;}
+  if (e){free(e), e = NULL;}
+
+  return mem_key;
+
+
 
 }
 

@@ -282,12 +282,49 @@ groupsig_key_t* ps16_mgr_key_import(byte_t *source, uint32_t size) {
 
 char* ps16_mgr_key_to_string(groupsig_key_t *key) {
 
-  if(!key || key->scheme != GROUPSIG_PS16_CODE) {
+  ps16_mgr_key_t* ps16_key = (ps16_mgr_key_t*) key->key;
+  char *x = NULL, *y = NULL, *mgr_key = NULL;
+  size_t x_size = 0, y_size = 0, mgr_key_size = 0;
+
+  if(!key || !ps16_key ||key->scheme != GROUPSIG_PS16_CODE) {
     LOG_EINVAL(&logger, __FILE__, "ps16_mgr_key_to_string", __LINE__, LOGERROR);
     return NULL;
   }
 
-  return NULL;
+  if(pbcext_element_Fr_to_string(&x,
+                                 &x_size,
+                                 10,
+                                 ps16_key->x) == IERROR) {
+    LOG_EINVAL(&logger, __FILE__, "ps16_mgr_key_to_string", __LINE__, LOGERROR);
+    goto mgr_key_to_string_error;
+  }
+
+  if(pbcext_element_Fr_to_string(&y,
+                                 &y_size,
+                                 10,
+                                 ps16_key->y) == IERROR) {
+    LOG_EINVAL(&logger, __FILE__, "ps16_mgr_key_to_string", __LINE__, LOGERROR);
+    goto mgr_key_to_string_error;
+  }
+
+  mgr_key_size = x_size + y_size + strlen("x: \ny: \n\n") + 1;
+  if (!(mgr_key = (char*) calloc(mgr_key_size, sizeof(char)))){
+    LOG_EINVAL(&logger, __FILE__, "ps16_mgr_key_to_string", __LINE__, LOGERROR);
+    goto mgr_key_to_string_error;
+  }
+
+  sprintf(mgr_key,
+	  "x: %s\n"
+	  "y: %s\n",
+	  x, y);
+
+  printf("[>] MGRKEY: %s\n", mgr_key);
+  mgr_key_to_string_error:
+
+  if(x){free(x), y = NULL;}
+  if(y){free(y), y = NULL;}
+
+  return mgr_key;
 
 }
 
