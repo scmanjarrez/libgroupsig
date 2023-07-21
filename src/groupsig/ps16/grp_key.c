@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -56,9 +56,9 @@ groupsig_key_t* ps16_grp_key_init() {
   ps16_key->gg = NULL;
   ps16_key->X = NULL;
   ps16_key->Y = NULL;
-  
+
   return key;
-  
+
 }
 
 int ps16_grp_key_free(groupsig_key_t *key) {
@@ -66,14 +66,14 @@ int ps16_grp_key_free(groupsig_key_t *key) {
   ps16_grp_key_t *ps16_key;
 
   if(!key) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "ps16_grp_key_free", __LINE__, 
-		   "Nothing to free.", LOGWARN);
-    return IOK;  
+    LOG_EINVAL_MSG(&logger, __FILE__, "ps16_grp_key_free", __LINE__,
+                   "Nothing to free.", LOGWARN);
+    return IOK;
   }
 
   if(key->scheme != GROUPSIG_PS16_CODE) {
     LOG_EINVAL(&logger, __FILE__, "ps16_grp_key_free", __LINE__, LOGERROR);
-    return IERROR;	       
+    return IERROR;
   }
 
   if(key->key) {
@@ -95,7 +95,7 @@ int ps16_grp_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
 
   ps16_grp_key_t *ps16_dst, *ps16_src;
   int rc;
-  
+
   if(!dst || dst->scheme != GROUPSIG_PS16_CODE ||
      !src || src->scheme != GROUPSIG_PS16_CODE) {
     LOG_EINVAL(&logger, __FILE__, "ps16_grp_key_copy", __LINE__, LOGERROR);
@@ -112,17 +112,17 @@ int ps16_grp_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
   if(pbcext_element_G1_set(ps16_dst->g, ps16_src->g) == IERROR)
     GOTOENDRC(IERROR, ps16_grp_key_copy);
   if(!(ps16_dst->gg = pbcext_element_G2_init()))
-    GOTOENDRC(IERROR, ps16_grp_key_copy);  
+    GOTOENDRC(IERROR, ps16_grp_key_copy);
   if(pbcext_element_G2_set(ps16_dst->gg, ps16_src->gg) == IERROR)
     GOTOENDRC(IERROR, ps16_grp_key_copy);
   if(!(ps16_dst->X = pbcext_element_G2_init()))
-    GOTOENDRC(IERROR, ps16_grp_key_copy);  
+    GOTOENDRC(IERROR, ps16_grp_key_copy);
   if(pbcext_element_G2_set(ps16_dst->X, ps16_src->X) == IERROR)
     GOTOENDRC(IERROR, ps16_grp_key_copy);
   if(!(ps16_dst->Y = pbcext_element_G2_init()))
-    GOTOENDRC(IERROR, ps16_grp_key_copy);  
+    GOTOENDRC(IERROR, ps16_grp_key_copy);
   if(pbcext_element_G2_set(ps16_dst->Y, ps16_src->Y) == IERROR)
-    GOTOENDRC(IERROR, ps16_grp_key_copy);  
+    GOTOENDRC(IERROR, ps16_grp_key_copy);
 
  ps16_grp_key_copy_end:
 
@@ -132,7 +132,7 @@ int ps16_grp_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
     if (ps16_dst->X) { pbcext_element_G2_free(ps16_dst->X); ps16_dst->X = NULL; }
     if (ps16_dst->Y) { pbcext_element_G2_free(ps16_dst->Y); ps16_dst->Y = NULL; }
   }
-  
+
   return rc;
 
 }
@@ -141,7 +141,7 @@ int ps16_grp_key_get_size(groupsig_key_t *key) {
 
   ps16_grp_key_t *ps16_key;
   uint64_t size64, sg, sgg, sX, sY;
-  
+
   if(!key || key->scheme != GROUPSIG_PS16_CODE) {
     LOG_EINVAL(&logger, __FILE__, "ps16_grp_key_get_size", __LINE__, LOGERROR);
     return -1;
@@ -158,20 +158,20 @@ int ps16_grp_key_get_size(groupsig_key_t *key) {
 
   size64 = sizeof(uint8_t)*2 + sizeof(int)*4 + sg + sgg + sX + sY;
   if (size64 > INT_MAX) return -1;
-  
-  return (int) size64;  
+
+  return (int) size64;
 
 }
 
 int ps16_grp_key_export(byte_t **bytes,
-			 uint32_t *size,
-			 groupsig_key_t *key) {
+                        uint32_t *size,
+                        groupsig_key_t *key) {
 
   ps16_grp_key_t *ps16_key;
   byte_t *_bytes, *__bytes;
   uint64_t len;
   int _size, ctr, rc;
-  uint8_t code, type;  
+  uint8_t code, type;
 
   if(!bytes ||
      !size ||
@@ -183,7 +183,7 @@ int ps16_grp_key_export(byte_t **bytes,
   rc = IOK;
   ctr = 0;
   ps16_key = key->key;
-  
+
   /* Get the number of bytes to represent the key */
   if ((_size = ps16_grp_key_get_size(key)) == -1) {
     return IERROR;
@@ -192,7 +192,7 @@ int ps16_grp_key_export(byte_t **bytes,
   if(!(_bytes = mem_malloc(sizeof(byte_t)*_size))) {
     return IERROR;
   }
-  
+
   /* Dump GROUPSIG_PS16_CODE */
   code = GROUPSIG_PS16_CODE;
   _bytes[ctr++] = code;
@@ -203,16 +203,16 @@ int ps16_grp_key_export(byte_t **bytes,
 
   /* Dump g */
   __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_G1_bytes(&__bytes, &len, ps16_key->g) == IERROR) 
+  if(pbcext_dump_element_G1_bytes(&__bytes, &len, ps16_key->g) == IERROR)
     GOTOENDRC(IERROR, ps16_grp_key_export);
   ctr += len;
-  
+
   /* Dump gg */
-  __bytes = &_bytes[ctr];  
+  __bytes = &_bytes[ctr];
   if(pbcext_dump_element_G2_bytes(&__bytes, &len, ps16_key->gg) == IERROR)
     GOTOENDRC(IERROR, ps16_grp_key_export);
   ctr += len;
-  
+
   /* Dump X */
   __bytes = &_bytes[ctr];
   if(pbcext_dump_element_G2_bytes(&__bytes, &len, ps16_key->X) == IERROR)
@@ -220,8 +220,8 @@ int ps16_grp_key_export(byte_t **bytes,
   ctr += len;
 
   /* Dump Y */
-  __bytes = &_bytes[ctr];  
-  if(pbcext_dump_element_G2_bytes(&__bytes, &len, ps16_key->Y) == IERROR)    
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_G2_bytes(&__bytes, &len, ps16_key->Y) == IERROR)
     GOTOENDRC(IERROR, ps16_grp_key_export);
   ctr += len;
 
@@ -235,21 +235,21 @@ int ps16_grp_key_export(byte_t **bytes,
 
   /* Sanity check */
   if (ctr != _size) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "ps16_grp_key_export", __LINE__, 
-		      EDQUOT, "Unexpected size.", LOGERROR);
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "ps16_grp_key_export", __LINE__,
+                      EDQUOT, "Unexpected size.", LOGERROR);
     GOTOENDRC(IERROR, ps16_grp_key_export);
   }
 
-  *size = ctr;  
-  
+  *size = ctr;
+
  ps16_grp_key_export_end:
 
   if (rc == IERROR) {
     if(_bytes) { mem_free(_bytes); _bytes = NULL; }
   }
-  
+
   return rc;
-  
+
 }
 
 groupsig_key_t* ps16_grp_key_import(byte_t *source, uint32_t size) {
@@ -259,7 +259,7 @@ groupsig_key_t* ps16_grp_key_import(byte_t *source, uint32_t size) {
   uint64_t len;
   byte_t scheme, type;
   int rc, ctr;
-  
+
   if(!source || !size) {
     LOG_EINVAL(&logger, __FILE__, "ps16_grp_key_import", __LINE__, LOGERROR);
     return NULL;
@@ -267,7 +267,7 @@ groupsig_key_t* ps16_grp_key_import(byte_t *source, uint32_t size) {
 
   rc = IOK;
   ctr = 0;
-  
+
   if(!(key = ps16_grp_key_init())) {
     return NULL;
   }
@@ -277,8 +277,8 @@ groupsig_key_t* ps16_grp_key_import(byte_t *source, uint32_t size) {
   /* First byte: scheme */
   scheme = source[ctr++];
   if(scheme != key->scheme) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "ps16_grp_key_import", __LINE__, 
-		      EDQUOT, "Unexpected key scheme.", LOGERROR);
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "ps16_grp_key_import", __LINE__,
+                      EDQUOT, "Unexpected key scheme.", LOGERROR);
     GOTOENDRC(IERROR, ps16_grp_key_import);
   }
 
@@ -286,7 +286,7 @@ groupsig_key_t* ps16_grp_key_import(byte_t *source, uint32_t size) {
   type = source[ctr++];
   if(type != GROUPSIG_KEY_GRPKEY) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "ps16_grp_key_import", __LINE__,
-		      EDQUOT, "Unexpected key scheme.", LOGERROR);
+                      EDQUOT, "Unexpected key scheme.", LOGERROR);
     GOTOENDRC(IERROR, ps16_grp_key_import);
   }
 
@@ -295,40 +295,93 @@ groupsig_key_t* ps16_grp_key_import(byte_t *source, uint32_t size) {
     GOTOENDRC(IERROR, ps16_grp_key_import);
   if(pbcext_get_element_G1_bytes(ps16_key->g, &len, &source[ctr]) == IERROR)
     GOTOENDRC(IERROR, ps16_grp_key_import);
-  ctr += len;  
+  ctr += len;
 
   /* Get gg */
   if(!(ps16_key->gg = pbcext_element_G2_init()))
     GOTOENDRC(IERROR, ps16_grp_key_import);
   if(pbcext_get_element_G2_bytes(ps16_key->gg, &len, &source[ctr]) == IERROR)
     GOTOENDRC(IERROR, ps16_grp_key_import);
-  ctr += len;  
+  ctr += len;
 
   /* Get X */
   if(!(ps16_key->X = pbcext_element_G2_init()))
     GOTOENDRC(IERROR, ps16_grp_key_import);
   if(pbcext_get_element_G2_bytes(ps16_key->X, &len, &source[ctr]) == IERROR)
     GOTOENDRC(IERROR, ps16_grp_key_import);
-  ctr += len;  
+  ctr += len;
 
   /* Get Y */
   if(!(ps16_key->Y = pbcext_element_G2_init()))
     GOTOENDRC(IERROR, ps16_grp_key_import);
   if(pbcext_get_element_G2_bytes(ps16_key->Y, &len, &source[ctr]) == IERROR)
     GOTOENDRC(IERROR, ps16_grp_key_import);
-  ctr += len;  
-  
+  ctr += len;
+
  ps16_grp_key_import_end:
-  
+
   if(rc == IERROR && key) { ps16_grp_key_free(key); key = NULL; }
   if(rc == IOK) return key;
-  
-  return NULL; 
-  
+
+  return NULL;
+
 }
 
-char* ps16_grp_key_to_string(groupsig_key_t *key) { 
-  return NULL;
+char* ps16_grp_key_to_string(groupsig_key_t *key) {
+  char *g, *gg, *X, *Y, *skey;
+  uint64_t g_len, gg_len, X_len, Y_len;
+  uint32_t skey_len;
+  g = NULL; gg = NULL; X = NULL; Y = NULL; skey=NULL;
+  ps16_grp_key_t *gkey = (ps16_grp_key_t *) key->key;
+  if(pbcext_element_G1_to_string(&g,
+                                 &g_len,
+                                 10,
+                                 gkey->g) == IERROR) {
+    return NULL;
+  }
+  if(pbcext_element_G2_to_string(&gg,
+                                 &gg_len,
+                                 10,
+                                 gkey->gg) == IERROR) {
+    return NULL;
+  }
+  if(pbcext_element_G2_to_string(&X,
+                                 &X_len,
+                                 10,
+                                 gkey->X) == IERROR) {
+    return NULL;
+  }
+  if(pbcext_element_G2_to_string(&Y,
+                                 &Y_len,
+                                 10,
+                                 gkey->Y) == IERROR) {
+    return NULL;
+  }
+
+  if (!g || !gg || !X || !Y) {
+   goto grp_key_to_string_error;
+  }
+
+  skey_len = strlen(g)+strlen(gg)+strlen(X)+strlen(Y)+strlen("g: \ngg: \nX: \nY: \n")+1;
+  if (!(skey = (char *) malloc(sizeof(char)*skey_len))) {
+    goto grp_key_to_string_error;
+  }
+
+  memset(skey, 0, sizeof(char)*skey_len);
+
+  sprintf(skey,
+          "g: %s\n"
+          "gg: %s\n"
+          "X: %s\n"
+          "Y: %s\n",
+          g, gg, X, Y);
+
+  grp_key_to_string_error:
+  if (g) { free(g); g = NULL; }
+  if (gg) { free(gg); gg = NULL; }
+  if (X) { free(X); X = NULL; }
+  if (Y) { free(Y); Y = NULL; }
+  return skey;
 }
 
 /* grp_key.c ends here */
