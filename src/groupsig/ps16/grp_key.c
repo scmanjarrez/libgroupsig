@@ -337,29 +337,29 @@ char* ps16_grp_key_to_string(groupsig_key_t *key) {
                                  &g_len,
                                  10,
                                  gkey->g) == IERROR) {
-    return NULL;
+    goto grp_key_to_string_error;
   }
   if(pbcext_element_G2_to_string(&gg,
                                  &gg_len,
                                  10,
                                  gkey->gg) == IERROR) {
-    return NULL;
+    goto grp_key_to_string_error;
   }
   if(pbcext_element_G2_to_string(&X,
                                  &X_len,
                                  10,
                                  gkey->X) == IERROR) {
-    return NULL;
+    goto grp_key_to_string_error;
   }
   if(pbcext_element_G2_to_string(&Y,
                                  &Y_len,
                                  10,
                                  gkey->Y) == IERROR) {
-    return NULL;
+    goto grp_key_to_string_error;
   }
 
   if (!g || !gg || !X || !Y) {
-   goto grp_key_to_string_error;
+    goto grp_key_to_string_error;
   }
 
   skey_len = strlen(g)+strlen(gg)+strlen(X)+strlen(Y)+strlen("g: \ngg: \nX: \nY: \n")+1;
