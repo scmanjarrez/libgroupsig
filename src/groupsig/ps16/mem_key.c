@@ -394,8 +394,8 @@ char* ps16_mem_key_to_string(groupsig_key_t *key) {
 
   ps16_mem_key_t* ps16_key = (ps16_mem_key_t*) key->key;
   
-  char *sk = NULL, *sigma1 = NULL, *sigma2 = NULL, *e = NULL, *mem_key = NULL; 
-  size_t sk_size = 0, sigma1_size = 0, sigma2_size = 0, e_size = 0, memkey_size = 0;
+  char *sk = NULL, *sigma1 = NULL, *sigma2 = NULL, *e = NULL, *mem_key = NULL;
+  size_t sk_size = 0, sigma1_size = 0, sigma2_size = 0, e_size = strlen("(null)"), memkey_size = 0;
 
   if(!key || key->scheme != GROUPSIG_PS16_CODE) {
     LOG_EINVAL(&logger, __FILE__, "ps16_mem_key_to_string", __LINE__, LOGERROR);
