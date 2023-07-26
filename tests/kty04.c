@@ -354,8 +354,10 @@ void kty04_test() {
 
   printf("\n##### Testing open (u1)\n");
   uint64_t mem1_idx = 255;
+  groupsig_proof_t *proof_op;
+  proof_op = groupsig_proof_init(grpkey_imp->scheme);
   start = clock();
-  rc = groupsig_open(&mem1_idx, proof_peq, crl, sig2, grpkey_imp, mgrkey_imp, gml_imp);
+  rc = groupsig_open(&mem1_idx, proof_op, crl, sig2, grpkey_imp, mgrkey_imp, gml_imp);
   end = clock();
   print_exp_rc("", rc);
   printf("index: %lu\n", mem1_idx);
@@ -414,9 +416,10 @@ void kty04_test() {
   message_free(msg1_mem0); msg1_mem0 = NULL;
   message_free(msg0_mem1); msg0_mem1 = NULL;
   message_free(msg0_mem0); msg0_mem0 = NULL;
-  trapdoor_free(trapdoor_mem1);
-  groupsig_proof_free(proof_cl);
-  groupsig_proof_free(proof_peq);
+  trapdoor_free(trapdoor_mem1); trapdoor_mem1 = NULL;
+  groupsig_proof_free(proof_cl); proof_cl = NULL;
+  groupsig_proof_free(proof_peq); proof_peq = NULL;
+  groupsig_proof_free(proof_op); proof_op = NULL;
   groupsig_signature_free(sig3); sig3 = NULL;
   groupsig_signature_free(sig2); sig2 = NULL;
   groupsig_signature_free(sig1); sig1 = NULL;

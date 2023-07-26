@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -35,7 +35,7 @@
 #include "sys/mem.h"
 
 groupsig_key_t* ps16_mem_key_init() {
-  
+
   groupsig_key_t *key;
   ps16_mem_key_t *ps16_key;
 
@@ -50,12 +50,12 @@ groupsig_key_t* ps16_mem_key_init() {
 
   key->scheme = GROUPSIG_PS16_CODE;
   ps16_key = key->key;
-  
+
   ps16_key->sk = NULL;
   ps16_key->sigma1 = NULL;
   ps16_key->sigma2 = NULL;
   ps16_key->e = NULL;
-  
+
   return key;
 
 }
@@ -65,14 +65,14 @@ int ps16_mem_key_free(groupsig_key_t *key) {
   ps16_mem_key_t *ps16_key;
 
   if(!key) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "ps16_mem_key_free", __LINE__, 
-		   "Nothing to free.", LOGWARN);
-    return IOK;  
+    LOG_EINVAL_MSG(&logger, __FILE__, "ps16_mem_key_free", __LINE__,
+                   "Nothing to free.", LOGWARN);
+    return IOK;
   }
 
   if(key->scheme != GROUPSIG_PS16_CODE) {
     LOG_EINVAL(&logger, __FILE__, "ps16_mem_key_free", __LINE__, LOGERROR);
-    return IERROR;	       
+    return IERROR;
   }
 
   if(key->key) {
@@ -96,7 +96,7 @@ int ps16_mem_key_free(groupsig_key_t *key) {
     mem_free(key->key); key->key = NULL;
     key->key = NULL;
   }
-  
+
   mem_free(key); key = NULL;
 
   return IOK;
@@ -107,7 +107,7 @@ int ps16_mem_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
 
   ps16_mem_key_t *ps16_dst, *ps16_src;
   int rc;
-  
+
   if(!dst || dst->scheme != GROUPSIG_PS16_CODE ||
      !src || src->scheme != GROUPSIG_PS16_CODE) {
     LOG_EINVAL(&logger, __FILE__, "ps16_mem_key_copy", __LINE__, LOGERROR);
@@ -128,7 +128,7 @@ int ps16_mem_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
 
   if(ps16_src->sigma1) {
     if(!(ps16_dst->sigma1 = pbcext_element_G1_init()))
-      GOTOENDRC(IERROR, ps16_mem_key_copy); 
+      GOTOENDRC(IERROR, ps16_mem_key_copy);
     if(pbcext_element_G1_set(ps16_dst->sigma1, ps16_src->sigma1) == IERROR)
       GOTOENDRC(IERROR, ps16_mem_key_copy);
   }
@@ -144,9 +144,9 @@ int ps16_mem_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
     if(!(ps16_dst->e = pbcext_element_GT_init()))
       GOTOENDRC(IERROR, ps16_mem_key_copy);
     if(pbcext_element_GT_set(ps16_dst->e, ps16_src->e) == IERROR)
-      GOTOENDRC(IERROR, ps16_mem_key_copy);    
+      GOTOENDRC(IERROR, ps16_mem_key_copy);
   }
-  
+
  ps16_mem_key_copy_end:
 
   if(rc == IERROR) {
@@ -176,7 +176,7 @@ int ps16_mem_key_get_size(groupsig_key_t *key) {
 
   ps16_mem_key_t *ps16_key;
   uint64_t size64, ssk, ssigma1, ssigma2, se;
-  
+
   if(!key || key->scheme != GROUPSIG_PS16_CODE) {
     LOG_EINVAL(&logger, __FILE__, "ps16_mem_key_get_size", __LINE__, LOGERROR);
     return -1;
@@ -184,7 +184,7 @@ int ps16_mem_key_get_size(groupsig_key_t *key) {
 
   ssk = ssigma1 = ssigma2 = se = 0;
   ps16_key = key->key;
-  
+
   if(ps16_key->sk) { if(pbcext_element_Fr_byte_size(&ssk) == IERROR) return -1; }
   if(ps16_key->sigma1) { if(pbcext_element_G1_byte_size(&ssigma1) == IERROR) return -1; }
   if(ps16_key->sigma2) { if(pbcext_element_G1_byte_size(&ssigma2) == IERROR) return -1; }
@@ -198,15 +198,15 @@ int ps16_mem_key_get_size(groupsig_key_t *key) {
 }
 
 int ps16_mem_key_export(byte_t **bytes,
-			uint32_t *size,
-			groupsig_key_t *key) {
+                        uint32_t *size,
+                        groupsig_key_t *key) {
 
   ps16_mem_key_t *ps16_key;
   byte_t *_bytes, *__bytes;
   uint64_t len;
   int _size, ctr, rc;
-  uint8_t code, type;  
-  
+  uint8_t code, type;
+
   if(!bytes ||
      !size ||
      !key || key->scheme != GROUPSIG_PS16_CODE) {
@@ -217,7 +217,7 @@ int ps16_mem_key_export(byte_t **bytes,
   rc = IOK;
   ctr = 0;
   ps16_key = key->key;
-  
+
   /* Get the number of bytes to represent the key */
   if ((_size = ps16_mem_key_get_size(key)) == -1) {
     return IERROR;
@@ -226,7 +226,7 @@ int ps16_mem_key_export(byte_t **bytes,
   if(!(_bytes = mem_malloc(sizeof(byte_t)*_size))) {
     return IERROR;
   }
-  
+
   /* Dump GROUPSIG_PS16_CODE */
   code = GROUPSIG_PS16_CODE;
   _bytes[ctr++] = code;
@@ -234,11 +234,11 @@ int ps16_mem_key_export(byte_t **bytes,
   /* Dump key type */
   type = GROUPSIG_KEY_MEMKEY;
   _bytes[ctr++] = GROUPSIG_KEY_MEMKEY;
-  
+
   /* Dump sk */
   if (ps16_key->sk) {
     __bytes = &_bytes[ctr];
-    if(pbcext_dump_element_Fr_bytes(&__bytes, &len, ps16_key->sk) == IERROR) 
+    if(pbcext_dump_element_Fr_bytes(&__bytes, &len, ps16_key->sk) == IERROR)
       GOTOENDRC(IERROR, ps16_mem_key_export);
     ctr += len;
   } else { ctr += sizeof(int); }
@@ -258,22 +258,22 @@ int ps16_mem_key_export(byte_t **bytes,
       GOTOENDRC(IERROR, ps16_mem_key_export);
     ctr += len;
   } else { ctr += sizeof(int); }
-  
+
 
   /* Dump e */
   if (ps16_key->e) {
     __bytes = &_bytes[ctr];
-    if(pbcext_dump_element_GT_bytes(&__bytes, &len, ps16_key->e) == IERROR) 
+    if(pbcext_dump_element_GT_bytes(&__bytes, &len, ps16_key->e) == IERROR)
       GOTOENDRC(IERROR, ps16_mem_key_export);
     ctr += len;
   } else { ctr += sizeof(int); }
 
   /* Sanity check */
   if (ctr != _size) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "ps16_mem_key_export", __LINE__, 
-		      EDQUOT, "Unexpected size.", LOGERROR);
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "ps16_mem_key_export", __LINE__,
+                      EDQUOT, "Unexpected size.", LOGERROR);
     GOTOENDRC(IERROR, ps16_mem_key_export);
-  }  
+  }
 
   /* Prepare the return */
   if(!*bytes) {
@@ -282,17 +282,17 @@ int ps16_mem_key_export(byte_t **bytes,
     memcpy(*bytes, _bytes, ctr);
     mem_free(_bytes); _bytes = NULL;
   }
-  
-  *size = ctr;  
-  
+
+  *size = ctr;
+
  ps16_mem_key_export_end:
-  
+
   if (rc == IERROR) {
     if(_bytes) { mem_free(_bytes); _bytes = NULL; }
-  }  
+  }
 
   return rc;
-  
+
 }
 
 groupsig_key_t* ps16_mem_key_import(byte_t *source, uint32_t size) {
@@ -302,7 +302,7 @@ groupsig_key_t* ps16_mem_key_import(byte_t *source, uint32_t size) {
   uint64_t len;
   byte_t scheme, type;
   int rc, ctr;
-  
+
   if(!source || !size) {
     LOG_EINVAL(&logger, __FILE__, "ps16_mem_key_import", __LINE__, LOGERROR);
     return NULL;
@@ -310,7 +310,7 @@ groupsig_key_t* ps16_mem_key_import(byte_t *source, uint32_t size) {
 
   rc = IOK;
   ctr = 0;
-  
+
   if(!(key = ps16_mem_key_init())) {
     return NULL;
   }
@@ -320,8 +320,8 @@ groupsig_key_t* ps16_mem_key_import(byte_t *source, uint32_t size) {
   /* First byte: scheme */
   scheme = source[ctr++];
   if(scheme != key->scheme) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "ps16_mem_key_import", __LINE__, 
-		      EDQUOT, "Unexpected key scheme.", LOGERROR);
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "ps16_mem_key_import", __LINE__,
+                      EDQUOT, "Unexpected key scheme.", LOGERROR);
     GOTOENDRC(IERROR, ps16_mem_key_import);
   }
 
@@ -329,7 +329,7 @@ groupsig_key_t* ps16_mem_key_import(byte_t *source, uint32_t size) {
   type = source[ctr++];
   if(type != GROUPSIG_KEY_MEMKEY) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "ps16_mem_key_import", __LINE__,
-		      EDQUOT, "Unexpected key scheme.", LOGERROR);
+                      EDQUOT, "Unexpected key scheme.", LOGERROR);
     GOTOENDRC(IERROR, ps16_mem_key_import);
   }
 
@@ -357,7 +357,7 @@ groupsig_key_t* ps16_mem_key_import(byte_t *source, uint32_t size) {
     ctr += len;
   }
 
-  /* Get sigma2 */  
+  /* Get sigma2 */
   if(!(ps16_key->sigma2 = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, ps16_mem_key_import);
   if(pbcext_get_element_G1_bytes(ps16_key->sigma2, &len, &source[ctr]) == IERROR)
@@ -367,7 +367,7 @@ groupsig_key_t* ps16_mem_key_import(byte_t *source, uint32_t size) {
     pbcext_element_G1_free(ps16_key->sigma2); ps16_key->sigma2 = NULL;
   } else {
     ctr += len;
-  }  
+  }
 
   /* Get e */
   if(!(ps16_key->e = pbcext_element_GT_init()))
@@ -379,21 +379,21 @@ groupsig_key_t* ps16_mem_key_import(byte_t *source, uint32_t size) {
     pbcext_element_GT_free(ps16_key->e); ps16_key->e = NULL;
   } else {
     ctr += len;
-  }  
- 
+  }
+
 
  ps16_mem_key_import_end:
-  
+
   if(rc == IERROR && key) { ps16_mem_key_free(key); key = NULL; }
   if(rc == IOK) return key;
-  
-  return NULL; 
+
+  return NULL;
 }
 
 char* ps16_mem_key_to_string(groupsig_key_t *key) {
 
   ps16_mem_key_t* ps16_key = (ps16_mem_key_t*) key->key;
-  
+
   char *sk = NULL, *sigma1 = NULL, *sigma2 = NULL, *e = NULL, *mem_key = NULL;
   size_t sk_size = 0, sigma1_size = 0, sigma2_size = 0, e_size = strlen("(null)"), memkey_size = 0;
 
@@ -406,7 +406,7 @@ char* ps16_mem_key_to_string(groupsig_key_t *key) {
                                  &sk_size,
                                  10,
                                  ps16_key->sk) == IERROR) {
-    LOG_EINVAL(&logger, __FILE__, "ps16_mem_key_to_string", __LINE__, LOGERROR);                              
+    LOG_EINVAL(&logger, __FILE__, "ps16_mem_key_to_string", __LINE__, LOGERROR);
     goto mem_key_to_string_error;
   }
   if(pbcext_element_G1_to_string(&sigma1,
@@ -415,7 +415,7 @@ char* ps16_mem_key_to_string(groupsig_key_t *key) {
                                  ps16_key->sigma1) == IERROR) {
     LOG_EINVAL(&logger, __FILE__, "ps16_mem_key_to_string", __LINE__, LOGERROR);
     goto mem_key_to_string_error;
-  }  
+  }
   if(pbcext_element_G1_to_string(&sigma2,
                                  &sigma2_size,
                                  10,
@@ -440,15 +440,13 @@ char* ps16_mem_key_to_string(groupsig_key_t *key) {
   }
 
   sprintf(mem_key,
-	  "sk: %s\n"
-    "sigma1: %s\n"
-    "sigma2: %s\n"
-	  "e: %s\n",
-	  sk, sigma1, sigma2, e);
+          "sk: %s\n"
+          "sigma1: %s\n"
+          "sigma2: %s\n"
+          "e: %s\n",
+          sk, sigma1, sigma2, e);
 
-  printf("[>] MEMKEY: %s\n", mem_key);
-
-  mem_key_to_string_error:
+ mem_key_to_string_error:
 
   if (sk){free(sk), sk = NULL;}
   if (sigma1){free(sigma1), sigma1 = NULL;}
@@ -456,9 +454,6 @@ char* ps16_mem_key_to_string(groupsig_key_t *key) {
   if (e){free(e), e = NULL;}
 
   return mem_key;
-
-
-
 }
 
 /* mem_key.c ends here */

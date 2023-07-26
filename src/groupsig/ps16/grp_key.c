@@ -376,7 +376,7 @@ char* ps16_grp_key_to_string(groupsig_key_t *key) {
           "Y: %s\n",
           g, gg, X, Y);
 
-  grp_key_to_string_error:
+ grp_key_to_string_error:
   if (g) { free(g); g = NULL; }
   if (gg) { free(gg); gg = NULL; }
   if (X) { free(X); X = NULL; }

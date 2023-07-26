@@ -38,15 +38,6 @@ void ps16_test() {
   print_exp_rc("", rc);
   print_time("", start, end);
 
-  printf("\n##### Testing mgr_key_init\n");
-  groupsig_key_t *mgrkey;
-  start = clock();
-  mgrkey = groupsig_mgr_key_init(code);
-  end = clock();
-  print_exp_ptr("mgrkey", mgrkey);
-  print_to_str("mgrkey", groupsig_mgr_key_to_string(mgrkey));
-  print_time("", start, end);
-
   printf("\n##### Testing grp_key_init\n");
   groupsig_key_t *grpkey;
   start = clock();
@@ -54,6 +45,15 @@ void ps16_test() {
   end = clock();
   print_exp_ptr("grpkey", grpkey);
   print_to_str("grpkey", groupsig_grp_key_to_string(grpkey));
+  print_time("", start, end);
+
+  printf("\n##### Testing mgr_key_init\n");
+  groupsig_key_t *mgrkey;
+  start = clock();
+  mgrkey = groupsig_mgr_key_init(code);
+  end = clock();
+  print_exp_ptr("mgrkey", mgrkey);
+  print_to_str("mgrkey", groupsig_mgr_key_to_string(mgrkey));
   print_time("", start, end);
 
   printf("\n##### Testing gml_init\n");
@@ -71,85 +71,79 @@ void ps16_test() {
   print_exp_rc("", rc);
   print_time("", start, end);
 
-  printf("\n##### Testing mem_key_init\n");
-  groupsig_key_t *memkey;
-  start = clock();
-  memkey = groupsig_mem_key_init(grpkey->scheme);
-  end = clock();
-  print_exp_ptr("memkey", memkey);
-  print_to_str("memkey", groupsig_mem_key_to_string(memkey));
-  print_time("", start, end);
-
   printf("\n##### Testing msg_init\n");
-  message_t *msg0, *msg1, *msg2, *msg3, *msg4;
+  message_t *msg0_mem0, *msg1_mem0, *msg2_mem0, *msg3_mem0, *msg4_mem0;
   start = clock();
-  msg0 = message_init();
+  msg0_mem0 = message_init();
   end = clock();
-  print_exp_ptr("msg0", msg0);
+  print_exp_ptr("msg0_mem0", msg0_mem0);
   print_time("", start, end);
 
-  start = clock();
-  msg1 = message_init();
-  end = clock();
-  print_exp_ptr("msg1", msg1);
-  print_time("", start, end);
+  msg1_mem0 = message_init();
+  msg2_mem0 = message_init();
+  msg3_mem0 = message_init();
+  msg4_mem0 = message_init();
 
+  printf("\n##### Testing mem_key_init\n");
+  groupsig_key_t *memkey0;
   start = clock();
-  msg2 = message_init();
+  memkey0 = groupsig_mem_key_init(grpkey->scheme);
   end = clock();
-  print_exp_ptr("msg2", msg2);
-  print_time("", start, end);
-
-  start = clock();
-  msg3 = message_init();
-  end = clock();
-  print_exp_ptr("msg3", msg3);
-  print_time("", start, end);
-
-  start = clock();
-  msg4 = message_init();
-  end = clock();
-  print_exp_ptr("msg4", msg4);
+  print_exp_ptr("memkey0", memkey0);
+  print_to_str("memkey0", groupsig_mem_key_to_string(memkey0));
   print_time("", start, end);
 
   printf("\n##### Testing join_mgr (0)\n");
   start = clock();
-  rc = groupsig_join_mgr(&msg1, gml, mgrkey, 0, msg0, grpkey);
+  rc = groupsig_join_mgr(&msg1_mem0, gml, mgrkey, 0, msg0_mem0, grpkey);
   end = clock();
   print_exp_rc("", rc);
   print_time("", start, end);
 
   printf("\n##### Testing join_mem (1)\n");
   start = clock();
-  rc = groupsig_join_mem(&msg2, memkey, 1, msg1, grpkey);
+  rc = groupsig_join_mem(&msg2_mem0, memkey0, 1, msg1_mem0, grpkey);
   end = clock();
   print_exp_rc("", rc);
   print_time("", start, end);
 
   printf("\n##### Testing join_mgr (2)\n");
   start = clock();
-  rc = groupsig_join_mgr(&msg3, gml, mgrkey, 2, msg2, grpkey);
+  rc = groupsig_join_mgr(&msg3_mem0, gml, mgrkey, 2, msg2_mem0, grpkey);
   end = clock();
   print_exp_rc("", rc);
   print_time("", start, end);
 
   printf("\n##### Testing join_mem (3)\n");
   start = clock();
-  rc = groupsig_join_mem(&msg4, memkey, 3, msg3, grpkey);
+  rc = groupsig_join_mem(&msg4_mem0, memkey0, 3, msg3_mem0, grpkey);
   end = clock();
   print_exp_rc("", rc);
   print_time("", start, end);
 
+  message_t *msg0_mem1, *msg1_mem1, *msg2_mem1, *msg3_mem1, *msg4_mem1;
+  msg0_mem1 = message_init();
+  msg1_mem1 = message_init();
+  msg2_mem1 = message_init();
+  msg3_mem1 = message_init();
+  msg4_mem1 = message_init();
+  groupsig_key_t *memkey1;
+  memkey1 = groupsig_mem_key_init(grpkey->scheme);
+  groupsig_join_mgr(&msg1_mem1, gml, mgrkey, 0, msg0_mem1, grpkey);
+  groupsig_join_mem(&msg2_mem1, memkey1, 1, msg1_mem1, grpkey);
+  groupsig_join_mgr(&msg3_mem1, gml, mgrkey, 2, msg2_mem1, grpkey);
+  groupsig_join_mem(&msg4_mem1, memkey1, 3, msg3_mem1, grpkey);
+
   printf("\n##### Testing grp_key_export & grp_key_import\n");
   byte_t *bytes_grpkey = NULL;
   uint32_t size_grpkey;
-  int len0;
-  len0 = groupsig_grp_key_get_size(grpkey);
+  int len_grpkey;
+  len_grpkey = groupsig_grp_key_get_size(grpkey);
   start = clock();
   rc = groupsig_grp_key_export(&bytes_grpkey, &size_grpkey, grpkey);
   end = clock();
   print_exp_rc("export ", rc);
-  print_exp_ret("export ", size_grpkey, len0);
+  print_exp_ret("export ", size_grpkey, len_grpkey);
   print_time("export ", start, end);
 
   groupsig_key_t *grpkey_imp;
@@ -164,13 +158,13 @@ void ps16_test() {
   printf("\n##### Testing mgr_key_export & mgr_key_import\n");
   byte_t *bytes_mgrkey = NULL;
   uint32_t size_mgrkey;
-  int len1;
-  len1 = groupsig_mgr_key_get_size(mgrkey);
+  int len_mgrkey;
+  len_mgrkey = groupsig_mgr_key_get_size(mgrkey);
   start = clock();
   rc = groupsig_mgr_key_export(&bytes_mgrkey, &size_mgrkey, mgrkey);
   end = clock();
   print_exp_rc("export ", rc);
-  print_exp_ret("export ", size_mgrkey, len1);
+  print_exp_ret("export ", size_mgrkey, len_mgrkey);
   print_time("export ", start, end);
 
   groupsig_key_t *mgrkey_imp;
@@ -185,22 +179,22 @@ void ps16_test() {
   printf("\n##### Testing mem_key_export & mem_key_import\n");
   byte_t *bytes_memkey = NULL;
   uint32_t size_memkey;
-  int len2;
-  len2 = groupsig_mem_key_get_size(memkey);
+  int len_memkey;
+  len_memkey = groupsig_mem_key_get_size(memkey0);
   start = clock();
-  rc = groupsig_mem_key_export(&bytes_memkey, &size_memkey, memkey);
+  rc = groupsig_mem_key_export(&bytes_memkey, &size_memkey, memkey0);
   end = clock();
   print_exp_rc("export ", rc);
-  print_exp_ret("export ", size_memkey, len2);
+  print_exp_ret("export ", size_memkey, len_memkey);
   print_time("export ", start, end);
 
-  groupsig_key_t *memkey_imp;
+  groupsig_key_t *memkey0_imp;
   start = clock();
-  memkey_imp = groupsig_mem_key_import(code, bytes_memkey, size_memkey);
+  memkey0_imp = groupsig_mem_key_import(code, bytes_memkey, size_memkey);
   end = clock();
-  print_exp_ptr("memkey_imp", memkey_imp);
-  print_to_str("memkey", groupsig_mem_key_to_string(memkey));
-  print_to_str("memkey_imp", groupsig_mem_key_to_string(memkey_imp));
+  print_exp_ptr("memkey0_imp", memkey0_imp);
+  print_to_str("memkey0", groupsig_mem_key_to_string(memkey0));
+  print_to_str("memkey0_imp", groupsig_mem_key_to_string(memkey0_imp));
   print_time("", start, end);
 
   printf("\n##### Testing gml_export & gml_import\n");
@@ -219,10 +213,10 @@ void ps16_test() {
   print_exp_ptr("gml_imp", gml_imp);
   print_time("import ", start, end);
 
-  printf("\n##### Testing sign & verify - correct message\n");
-  message_t *msg5;
+  printf("\n##### Testing sign & verify (u0) - correct message\n");
+  message_t *text0;
   groupsig_signature_t *sig0;
-  msg5 = message_from_string((char *) "Hello, World!");
+  text0 = message_from_string((char *) "Hello, World!");
   start = clock();
   sig0 = groupsig_signature_init(grpkey_imp->scheme);
   end = clock();
@@ -230,23 +224,23 @@ void ps16_test() {
   print_time("init ", start, end);
 
   start = clock();
-  rc = groupsig_sign(sig0, msg5, memkey_imp, grpkey_imp, UINT_MAX);
+  rc = groupsig_sign(sig0, text0, memkey0_imp, grpkey_imp, UINT_MAX);
   end = clock();
   print_exp_rc("sign ", rc);
   print_time("sign ", start, end);
 
   uint8_t ret0 = 255;
   start = clock();
-  rc = groupsig_verify(&ret0, sig0, msg5, grpkey_imp);
+  rc = groupsig_verify(&ret0, sig0, text0, grpkey_imp);
   end = clock();
   print_exp_rc("verify ", rc);
   print_exp_ret("verify ", (uint32_t) ret0, 1);
   print_time("verify ", start, end);
 
-  printf("\n##### Testing sign & verify - incorrect message\n");
-  message_t *msg6;
+  printf("\n##### Testing sign & verify (u0) - incorrect message\n");
+  message_t *text1;
   groupsig_signature_t *sig1;
-  msg6 = message_from_string((char *) "Hello, Worlds!");
+  text1 = message_from_string((char *) "Hello, Worlds!");
   start = clock();
   sig1 = groupsig_signature_init(grpkey_imp->scheme);
   end = clock();
@@ -254,7 +248,7 @@ void ps16_test() {
   print_time("init ", start, end);
 
   start = clock();
-  rc = groupsig_sign(sig1, msg6, memkey_imp, grpkey_imp, UINT_MAX);
+  rc = groupsig_sign(sig1, text1, memkey0_imp, grpkey_imp, UINT_MAX);
   end = clock();
   print_exp_rc("sign ", rc);
   print_time("sign ", start, end);
@@ -262,63 +256,117 @@ void ps16_test() {
   // verify using incorrect signature (sig0)
   uint8_t ret1 = 255;
   start = clock();
-  rc = groupsig_verify(&ret1, sig0, msg6, grpkey_imp);
+  rc = groupsig_verify(&ret1, sig0, text1, grpkey_imp);
+  end = clock();
+  print_exp_rc("verify ", rc);
+  print_exp_ret("verify ", (uint32_t) ret1, 0);
+  print_time("verify ", start, end);
+
+  printf("\n##### Testing sign & verify (u1) - correct message\n");
+  groupsig_signature_t *sig2;
+  start = clock();
+  sig2 = groupsig_signature_init(grpkey_imp->scheme);
+  end = clock();
+  print_exp_ptr("sig2", sig2);
+  print_time("init ", start, end);
+
+  start = clock();
+  rc = groupsig_sign(sig2, text0, memkey1, grpkey_imp, UINT_MAX);
+  end = clock();
+  print_exp_rc("sign ", rc);
+  print_time("sign ", start, end);
+
+  uint8_t ret2 = 255;
+  start = clock();
+  rc = groupsig_verify(&ret2, sig2, text0, grpkey_imp);
+  end = clock();
+  print_exp_rc("verify ", rc);
+  print_exp_ret("verify ", (uint32_t) ret2, 1);
+  print_time("verify ", start, end);
+
+  printf("\n##### Testing sign & verify (u1) - incorrect message\n");
+  groupsig_signature_t *sig3;
+  start = clock();
+  sig3 = groupsig_signature_init(grpkey_imp->scheme);
+  end = clock();
+  print_exp_ptr("sig3", sig3);
+  print_time("init ", start, end);
+
+  start = clock();
+  rc = groupsig_sign(sig3, text1, memkey1, grpkey_imp, UINT_MAX);
+  end = clock();
+  print_exp_rc("sign ", rc);
+  print_time("sign ", start, end);
+
+  // verify using incorrect signature (sig0)
+  uint8_t ret3 = 255;
+  start = clock();
+  rc = groupsig_verify(&ret3, sig0, text1, grpkey_imp);
   end = clock();
   print_exp_rc("verify ", rc);
   print_exp_ret("verify ", (uint32_t) ret1, 0);
   print_time("verify ", start, end);
 
   printf("\n##### Testing proof_init\n");
-  groupsig_proof_t *proof0;
+  groupsig_proof_t *proof_op;
   start = clock();
-  proof0 = groupsig_proof_init(grpkey_imp->scheme);
+  proof_op = groupsig_proof_init(grpkey_imp->scheme);
   end = clock();
-  print_exp_ptr("proof0", proof0);
+  print_exp_ptr("proof_op", proof_op);
   print_time("", start, end);
 
   printf("\n##### Testing open\n");
-  uint64_t idx = 255;
+  uint64_t mem1_idx = 255;
   start = clock();
-  rc = groupsig_open(&idx, proof0, NULL, sig0, grpkey_imp, mgrkey_imp, gml_imp);
+  rc = groupsig_open(&mem1_idx, proof_op, NULL, sig2, grpkey_imp, mgrkey_imp, gml_imp);
   end = clock();
   print_exp_rc("", rc);
-  printf("index: %lu\n", idx);
+  printf("index: %lu\n", mem1_idx);
+  print_exp_ret("index ", mem1_idx, 1);
   print_time("", start, end);
 
   printf("\n##### Testing open_verify - opened signature\n");
-  uint8_t ret2 = 255;
+  uint8_t ret4 = 255;
   start = clock();
-  rc = groupsig_open_verify(&ret2, proof0, sig0, grpkey_imp);
+  rc = groupsig_open_verify(&ret4, proof_op, sig2, grpkey_imp);
   end = clock();
   print_exp_rc("", rc);
-  print_exp_ret("", (uint32_t) ret2, 1);
+  print_exp_ret("", (uint32_t) ret4, 1);
   print_time("", start, end);
 
   printf("\n##### Testing open_verify - not opened signature\n");
-  uint8_t ret3 = 255;
+  uint8_t ret5 = 255;
   start = clock();
-  rc = groupsig_open_verify(&ret3, proof0, sig1, grpkey_imp);
+  rc = groupsig_open_verify(&ret5, proof_op, sig1, grpkey_imp);
   end = clock();
   print_exp_rc("", rc);
-  print_exp_ret("", (uint32_t) ret3, 0);
+  print_exp_ret("", (uint32_t) ret5, 0);
   print_time("", start, end);
 
   groupsig_mgr_key_free(mgrkey_imp); mgrkey_imp = NULL;
   groupsig_mgr_key_free(mgrkey); mgrkey = NULL;
   groupsig_grp_key_free(grpkey_imp); grpkey_imp = NULL;
   groupsig_grp_key_free(grpkey); grpkey = NULL;
-  groupsig_mem_key_free(memkey_imp); memkey_imp = NULL;
-  groupsig_mem_key_free(memkey); memkey = NULL;
+  groupsig_mem_key_free(memkey1); memkey1 = NULL;
+  groupsig_mem_key_free(memkey0_imp); memkey0_imp = NULL;
+  groupsig_mem_key_free(memkey0); memkey0 = NULL;
   gml_free(gml_imp); gml_imp = NULL;
   gml_free(gml); gml = NULL;
-  message_free(msg6); msg6 = NULL;
-  message_free(msg5); msg5 = NULL;
-  message_free(msg4); msg4 = NULL;
-  message_free(msg3); msg3 = NULL;
-  message_free(msg2); msg2 = NULL;
-  message_free(msg1); msg1 = NULL;
-  message_free(msg0); msg0 = NULL;
-  groupsig_proof_free(proof0);
+  message_free(text1); text1 = NULL;
+  message_free(text0); text0 = NULL;
+  message_free(msg4_mem1); msg4_mem1 = NULL;
+  message_free(msg3_mem1); msg3_mem1 = NULL;
+  message_free(msg2_mem1); msg2_mem1 = NULL;
+  message_free(msg1_mem1); msg1_mem1 = NULL;
+  message_free(msg0_mem1); msg0_mem1 = NULL;
+  message_free(msg4_mem0); msg4_mem0 = NULL;
+  message_free(msg3_mem0); msg3_mem0 = NULL;
+  message_free(msg2_mem0); msg2_mem0 = NULL;
+  message_free(msg1_mem0); msg1_mem0 = NULL;
+  message_free(msg0_mem0); msg0_mem0 = NULL;
+  groupsig_proof_free(proof_op); proof_op = NULL;
+  groupsig_signature_free(sig3); sig3 = NULL;
+  groupsig_signature_free(sig2); sig2 = NULL;
   groupsig_signature_free(sig1); sig1 = NULL;
   groupsig_signature_free(sig0); sig0 = NULL;
 }

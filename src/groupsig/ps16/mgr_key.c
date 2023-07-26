@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -61,14 +61,14 @@ int ps16_mgr_key_free(groupsig_key_t *key) {
   ps16_mgr_key_t *ps16_key;
 
   if(!key) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "ps16_mgr_key_free", __LINE__, 
-		   "Nothing to free.", LOGWARN);
-    return IOK;  
+    LOG_EINVAL_MSG(&logger, __FILE__, "ps16_mgr_key_free", __LINE__,
+                   "Nothing to free.", LOGWARN);
+    return IOK;
   }
 
   if(key->scheme != GROUPSIG_PS16_CODE) {
     LOG_EINVAL(&logger, __FILE__, "ps16_mgr_key_free", __LINE__, LOGERROR);
-    return IERROR;	       
+    return IERROR;
   }
 
   if(key->key) {
@@ -77,7 +77,7 @@ int ps16_mgr_key_free(groupsig_key_t *key) {
     if(ps16_key->y) { pbcext_element_Fr_free(ps16_key->y); ps16_key->y = NULL; }
     mem_free(key->key); key->key = NULL;
   }
-  
+
   mem_free(key); key = NULL;
 
   return IOK;
@@ -88,7 +88,7 @@ int ps16_mgr_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
 
   ps16_mgr_key_t *ps16_dst, *ps16_src;
   int rc;
-  
+
   if(!dst || dst->scheme != GROUPSIG_PS16_CODE ||
      !src || src->scheme != GROUPSIG_PS16_CODE) {
     LOG_EINVAL(&logger, __FILE__, "ps16_mgr_key_copy", __LINE__, LOGERROR);
@@ -98,7 +98,7 @@ int ps16_mgr_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
   ps16_dst = dst->key;
   ps16_src = src->key;
   rc = IOK;
-  
+
   /* Copy the elements */
   if(!(ps16_dst->x = pbcext_element_Fr_init()))
     GOTOENDRC(IERROR, ps16_mgr_key_copy);
@@ -124,7 +124,7 @@ int ps16_mgr_key_get_size(groupsig_key_t *key) {
 
   ps16_mgr_key_t *ps16_key;
   uint64_t size64, sx, sy;
-  
+
   if(!key || key->scheme != GROUPSIG_PS16_CODE) {
     LOG_EINVAL(&logger, __FILE__, "ps16_mgr_key_get_size", __LINE__, LOGERROR);
     return -1;
@@ -143,14 +143,14 @@ int ps16_mgr_key_get_size(groupsig_key_t *key) {
 }
 
 int ps16_mgr_key_export(byte_t **bytes,
-			 uint32_t *size,
-			 groupsig_key_t *key) {
+                        uint32_t *size,
+                        groupsig_key_t *key) {
 
   ps16_mgr_key_t *ps16_key;
   byte_t *_bytes, *__bytes;
   uint64_t len;
   int _size, ctr, rc;
-  uint8_t code, type;  
+  uint8_t code, type;
 
   if(!bytes ||
      !size ||
@@ -162,7 +162,7 @@ int ps16_mgr_key_export(byte_t **bytes,
   rc = IOK;
   ctr = 0;
   ps16_key = key->key;
-  
+
   /* Get the number of bytes to represent the key */
   if ((_size = ps16_mgr_key_get_size(key)) == -1) {
     return IERROR;
@@ -171,7 +171,7 @@ int ps16_mgr_key_export(byte_t **bytes,
   if(!(_bytes = mem_malloc(sizeof(byte_t)*_size))) {
     return IERROR;
   }
-  
+
   /* Dump GROUPSIG_PS16_CODE */
   code = GROUPSIG_PS16_CODE;
   _bytes[ctr++] = code;
@@ -182,13 +182,13 @@ int ps16_mgr_key_export(byte_t **bytes,
 
   /* Dump x */
   __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, ps16_key->x) == IERROR) 
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, ps16_key->x) == IERROR)
     GOTOENDRC(IERROR, ps16_mgr_key_export);
   ctr += len;
 
   /* Dump y */
   __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, ps16_key->y) == IERROR) 
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, ps16_key->y) == IERROR)
     GOTOENDRC(IERROR, ps16_mgr_key_export);
   ctr += len;
 
@@ -202,21 +202,21 @@ int ps16_mgr_key_export(byte_t **bytes,
 
   /* Sanity check */
   if (ctr != _size) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "ps16_mgr_key_export", __LINE__, 
-		      EDQUOT, "Unexpected size.", LOGERROR);
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "ps16_mgr_key_export", __LINE__,
+                      EDQUOT, "Unexpected size.", LOGERROR);
     GOTOENDRC(IERROR, ps16_mgr_key_export);
   }
 
-  *size = ctr;  
+  *size = ctr;
 
  ps16_mgr_key_export_end:
-  
+
   if (rc == IERROR) {
     if(_bytes) { mem_free(_bytes); _bytes = NULL; }
-  }  
+  }
 
   return rc;
-  
+
 }
 
 groupsig_key_t* ps16_mgr_key_import(byte_t *source, uint32_t size) {
@@ -226,7 +226,7 @@ groupsig_key_t* ps16_mgr_key_import(byte_t *source, uint32_t size) {
   uint64_t len;
   byte_t scheme, type;
   int rc, ctr;
-  
+
   if(!source || !size) {
     LOG_EINVAL(&logger, __FILE__, "ps16_mgr_key_import", __LINE__, LOGERROR);
     return NULL;
@@ -234,7 +234,7 @@ groupsig_key_t* ps16_mgr_key_import(byte_t *source, uint32_t size) {
 
   rc = IOK;
   ctr = 0;
-  
+
   if(!(key = ps16_mgr_key_init())) {
     return NULL;
   }
@@ -244,8 +244,8 @@ groupsig_key_t* ps16_mgr_key_import(byte_t *source, uint32_t size) {
   /* First byte: scheme */
   scheme = source[ctr++];
   if(scheme != key->scheme) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "ps16_mgr_key_import", __LINE__, 
-		      EDQUOT, "Unexpected key scheme.", LOGERROR);
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "ps16_mgr_key_import", __LINE__,
+                      EDQUOT, "Unexpected key scheme.", LOGERROR);
     GOTOENDRC(IERROR, ps16_mgr_key_import);
   }
 
@@ -253,7 +253,7 @@ groupsig_key_t* ps16_mgr_key_import(byte_t *source, uint32_t size) {
   type = source[ctr++];
   if(type != GROUPSIG_KEY_MGRKEY) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "ps16_mgr_key_import", __LINE__,
-		      EDQUOT, "Unexpected key scheme.", LOGERROR);
+                      EDQUOT, "Unexpected key scheme.", LOGERROR);
     GOTOENDRC(IERROR, ps16_mgr_key_import);
   }
 
@@ -272,12 +272,12 @@ groupsig_key_t* ps16_mgr_key_import(byte_t *source, uint32_t size) {
   ctr += len;
 
  ps16_mgr_key_import_end:
-  
+
   if(rc == IERROR && key) { ps16_mgr_key_free(key); key = NULL; }
   if(rc == IOK) return key;
-  
-  return NULL; 
-  
+
+  return NULL;
+
 }
 
 char* ps16_mgr_key_to_string(groupsig_key_t *key) {
@@ -314,18 +314,16 @@ char* ps16_mgr_key_to_string(groupsig_key_t *key) {
   }
 
   sprintf(mgr_key,
-	  "x: %s\n"
-	  "y: %s\n",
-	  x, y);
+          "x: %s\n"
+          "y: %s\n",
+          x, y);
 
-  printf("[>] MGRKEY: %s\n", mgr_key);
-  mgr_key_to_string_error:
+ mgr_key_to_string_error:
 
   if(x){free(x), y = NULL;}
   if(y){free(y), y = NULL;}
 
   return mgr_key;
-
 }
 
 /* mgr_key.c ends here */
