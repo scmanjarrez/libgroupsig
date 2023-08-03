@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
     err++;
   } else {
     if (!strcmp(argv[1], "kty04")) {
-      kty04_test();
+      kty04_benchmark();
     } else if (!strcmp(argv[1], "ps16")) {
       ps16_test();
     /* } else if (!strcmp(argv[1], "dl21seq")) { */
