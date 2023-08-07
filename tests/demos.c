@@ -3,6 +3,9 @@
 
 #include "utils.h"
 
+void kty04_benchmark(void);
+void ps16_benchmark(void);
+
 int main(int argc, char **argv) {
   int err = 0;
 
@@ -10,9 +13,17 @@ int main(int argc, char **argv) {
     err++;
   } else {
     if (!strcmp(argv[1], "kty04")) {
-      kty04_benchmark();
+      kty04_test();
     } else if (!strcmp(argv[1], "ps16")) {
       ps16_test();
+    /* } else if (!strcmp(argv[1], "dl21seq")) { */
+      /* dl21seq_test(); */
+    } else if (!strcmp(argv[1], "kty04_benchmark")) {
+      kty04_benchmark();
+    /* } else if (!strcmp(argv[1], "dl21seq")) { */
+      /* dl21seq_test(); */
+    } else if (!strcmp(argv[1], "ps16_benchmark")) {
+      ps16_benchmark();
     /* } else if (!strcmp(argv[1], "dl21seq")) { */
       /* dl21seq_test(); */
     } else {
@@ -21,7 +32,7 @@ int main(int argc, char **argv) {
   }
 
   if (err) {
-    printf("Usage: %s [kty04|ps16]\n", argv[0]);
+    printf("Usage: %s [kty04|ps16|kty04_benchmark|ps16_benchmark]\n", argv[0]);
     return -1;
   }
 

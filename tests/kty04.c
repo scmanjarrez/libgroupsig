@@ -426,157 +426,6 @@ void kty04_test() {
   groupsig_signature_free(sig0); sig0 = NULL;
 }
 
-groupsig_key_t* new_member_key( groupsig_key_t *grpkey,
-                          groupsig_key_t *mgrkey,
-                          gml_t *gml, 
-                          crl_t *crl){
-
-  uint8_t rc=255; 
-  groupsig_key_t *memkey = NULL;
-
-
-  memkey = groupsig_mem_key_init(grpkey->scheme);
-
-
-  print_exp_ptr("memkey", memkey);
-  print_to_str("memkey", groupsig_mem_key_to_string(memkey));
-  print_to_str("grpkey", groupsig_grp_key_to_string(grpkey));
-
-  printf("\n##### Testing msg_init\n");
-  message_t *msg0, *msg1;
-  msg0 = message_init();
-  msg1 = message_init();
-
-  print_exp_ptr("msg0", msg0);
-  print_exp_ptr("msg1", msg1);
-
-
-  printf("\n##### Testing join_mem (0)\n");
-
-  rc = groupsig_join_mem(&msg0, memkey, 0, NULL, grpkey);
-  
-  print_exp_rc("", rc);
-
-  printf("\n##### Testing join_mgr (1)\n");
-  
-  rc = groupsig_join_mgr(&msg1, gml, mgrkey, 1, msg0, grpkey);
-  groupsig_mem_key_free(memkey); memkey = NULL;
-
-  memkey = groupsig_mem_key_import(grpkey->scheme, msg1->bytes, msg1->length);
-
-  print_exp_rc("", rc);
-
-  message_free(msg0); msg0 = NULL;
-  message_free(msg1); msg1 = NULL;
-  print_to_str("memkey", groupsig_mem_key_to_string(memkey));
-  return memkey;
-}
-
-groupsig_signature_t* new_member_signature(char* str, groupsig_key_t *memkey, groupsig_key_t *grpkey){
-  message_t *msg = message_from_string(str);
-  groupsig_signature_t *sig;
-  int rc;
-
-  print_to_str("memkey", groupsig_mem_key_to_string(memkey));
-  print_to_str("grpkey", groupsig_grp_key_to_string(grpkey));
-  sig = groupsig_signature_init(memkey->scheme);
-  rc = groupsig_sign(sig, msg, memkey, grpkey, UINT_MAX);
-
-  print_exp_rc("", rc);
-
-  message_free(msg); msg = NULL;
-  return sig;
-}
-
-uint8_t verify_member_signature(groupsig_signature_t *sig,  char *str, groupsig_key_t *grpkey){
-  uint8_t ret = 0, rc = 0;
-  message_t *msg = message_from_string(str);
-  rc = groupsig_verify(&ret, sig, msg, grpkey);
-  print_exp_rc("", rc);
-
-  message_free(msg); msg = NULL;
-  return ret;
-}
-
-groupsig_proof_t* prove_equality(groupsig_signature_t *sig0, groupsig_signature_t *sig1, groupsig_key_t *memkey, groupsig_key_t *grpkey){
-  groupsig_proof_t *proof;
-  groupsig_signature_t *sigs[2];
-  uint8_t rc = 255;
-
-  proof = groupsig_proof_init(grpkey->scheme);
-
-  sigs[0] = sig0;
-  sigs[1] = sig1;
-
-  rc = groupsig_prove_equality(proof, memkey, grpkey, sigs, 2);
-  print_exp_rc("", rc);
-
-  return proof;
-
-}
-
-uint8_t verify_proof_equality(groupsig_proof_t *proof, groupsig_signature_t *sig0, groupsig_signature_t *sig1, groupsig_key_t *grpkey){
-  uint8_t ret = 255, rc = 255;
-
-  groupsig_signature_t *sigs[2];
-  sigs[0] = sig0;
-  sigs[1] = sig1;
-
-  rc = groupsig_prove_equality_verify(&ret, proof, grpkey, sigs, 2);
-  print_exp_rc("", rc);
-
-  return ret;
-}
-
-uint8_t trace_signature(groupsig_signature_t *sig, groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml, crl_t *crl){
-  uint8_t ret = 255, rc = 255;
-  rc = groupsig_trace(&ret, sig, grpkey, crl, mgrkey, gml);
-  print_exp_rc("", rc);
-
-  return ret;
-}
-
-int open_signature(groupsig_proof_t *proof, groupsig_signature_t *sig, groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml, crl_t *crl){
-  uint8_t ret = 255, rc = 255;
-  uint64_t idx = -1;
-  rc = groupsig_open(&idx, proof, crl, sig, grpkey, mgrkey, gml);
-  print_exp_rc("", rc);
-
-  return idx;
-}
-
-char* reveal_signature(groupsig_key_t *memkey,  gml_t *gml, crl_t *crl, int i){
-  uint8_t ret = 255, rc = 255;
-  trapdoor_t *trapdoor = NULL;
-  trapdoor = trapdoor_init(memkey->scheme);
-  rc = groupsig_reveal(trapdoor, crl, gml, i);
-  print_exp_rc("", rc);
-
-  char *str_aux;
-  str_aux = bigz_get_str16(*(bigz_t *)trapdoor->trap);
-  trapdoor_free(trapdoor);
-  return str_aux;
-}
-
-groupsig_proof_t* claim_signatures(groupsig_signature_t *sig, groupsig_key_t *memkey, groupsig_key_t* grpkey){
-  groupsig_proof_t *proof;
-  uint8_t rc = 255;
-  proof = groupsig_proof_init(grpkey->scheme);
-
-  rc = groupsig_claim(proof, memkey, grpkey, sig);
-  print_exp_rc("", rc);
-
-  return proof;
-}
-
-uint8_t claim_verify_signatures(groupsig_proof_t *proof, groupsig_signature_t *sig, groupsig_key_t* grpkey){
-  uint8_t ret = 255, rc = 255;
-  rc = groupsig_claim_verify(&ret, proof, sig, grpkey);
-  print_exp_rc("", rc);
-
-  return ret;
-}
-
 void kty04_benchmark_members(int num_members){
   /* Setting seed */
   unsigned char buffer[2048];
@@ -598,6 +447,8 @@ void kty04_benchmark_members(int num_members){
   }
 
   clock_t start, end;
+  clock_t times[B_NUM];
+  memset(times, 0, B_NUM * sizeof(clock_t));
   int rc = 255;
   uint8_t code = GROUPSIG_KTY04_CODE;
 
@@ -609,6 +460,7 @@ void kty04_benchmark_members(int num_members){
   print_exp_ptr("mgrkey", mgrkey);
   print_to_str("mgrkey", groupsig_mgr_key_to_string(mgrkey));
   print_time("", start, end);
+  times[B_NEW_MGRKEY] = end - start;
 
   printf("\n##### Testing grp_key_init\n");
   groupsig_key_t *grpkey;
@@ -618,6 +470,7 @@ void kty04_benchmark_members(int num_members){
   print_exp_ptr("grpkey", grpkey);
   print_to_str("grpkey", groupsig_grp_key_to_string(grpkey));
   print_time("", start, end);
+  times[B_NEW_GRPKEY] = end - start;
 
   printf("\n##### Testing gml_init\n");
   gml_t *gml;
@@ -626,6 +479,7 @@ void kty04_benchmark_members(int num_members){
   end = clock();
   print_exp_ptr("gml", gml);
   print_time("", start, end);
+  times[B_NEW_GML] = end - start;
 
   printf("\n##### Testing crl_init\n");
   crl_t *crl;
@@ -634,6 +488,7 @@ void kty04_benchmark_members(int num_members){
   end = clock();
   print_exp_ptr("crl", crl);
   print_time("", start, end);
+  times[B_NEW_CRL] = end - start;
 
   printf("\n##### Testing groupsig_setup\n");
   start = clock();
@@ -642,13 +497,17 @@ void kty04_benchmark_members(int num_members){
   end = clock();
   print_exp_rc("", rc);
   print_time("", start, end);
+  times[B_GRP_SETUP] = end - start;
 
+  start = clock();
   groupsig_key_t **member_keys = (groupsig_key_t**) calloc(num_members, sizeof(groupsig_key_t*));
   
   for(int i = 0; i < num_members; i++){
     member_keys[i] = new_member_key(grpkey, mgrkey, gml, crl);
   }
   
+  end = clock();
+  times[B_NEW_MEMKEY] = end - start;
   print_to_str("grpkey", groupsig_grp_key_to_string(grpkey));
 
   char *test_message = "Message to Sign";
@@ -662,6 +521,7 @@ void kty04_benchmark_members(int num_members){
   end = clock();
   print_exp_rc("sign ", rc);
   print_time("sign ", start, end);
+  times[B_NEW_SIGN] = end - start;
 
   uint8_t ret0 = 255;
   start = clock();
@@ -673,7 +533,7 @@ void kty04_benchmark_members(int num_members){
   }
   end = clock();
   print_time("verify ", start, end);
-
+  times[B_NEW_SIGN_VERIFY] = end - start;
   groupsig_signature_t **signatures2 = (groupsig_signature_t**) calloc(num_members, sizeof(groupsig_signature_t*));
   for(int i = 0; i < num_members; i++){    
     signatures2[i] = new_member_signature(test_message, member_keys[i], grpkey);
@@ -689,6 +549,8 @@ void kty04_benchmark_members(int num_members){
   }
   end = clock();
   print_time("", start, end);
+  times[B_PROVE_EQ] = end - start;
+
 
   printf("\n##### Testing prove_equality_verify\n");
   start = clock();
@@ -696,10 +558,11 @@ void kty04_benchmark_members(int num_members){
     if (verify_proof_equality(proofs[i], signatures[i], signatures2[i], grpkey) != 1){
       printf("verify equality wrong: %d\n", i);
     }
-    groupsig_proof_free(proofs[i]);
+    //groupsig_proof_free(proofs[i]);
   }
   end = clock();
   print_time("", start, end);
+  times[B_PROVE_EQ_VERIFY] = end - start;
 
   printf("\n##### Testing trace - not revealed user\n");
   start = clock();
@@ -710,18 +573,21 @@ void kty04_benchmark_members(int num_members){
   }
   end = clock();
   print_time("", start, end);
+  times[B_TRACE] = end - start;
 
   printf("\n##### Testing open\n");
   uint64_t idx = 255;
   start = clock();
   for(int i = 0; i < num_members; i++){
-    idx = open_signature(proofs[i], signatures[i], grpkey, mgrkey, gml, crl);
+    idx = open_signature(&proofs[i], signatures[i], grpkey, mgrkey, gml, crl);
     if (idx != i){
       printf("ERROR open signature");
     }
   }  
   end = clock();
   print_time("", start, end);
+  times[B_OPEN] = end - start;
+  
   printf("\n##### Testing reveal\n");
   start = clock();
   for(int i = 0; i < num_members; i++){
@@ -729,6 +595,8 @@ void kty04_benchmark_members(int num_members){
   }
   end = clock();
   print_time("", start, end);
+  times[B_REVEAL] = end - start;
+
   printf("\n##### Testing trace - revealed user\n");
   start = clock();
   for(int i = 0; i < num_members; i++){
@@ -738,6 +606,7 @@ void kty04_benchmark_members(int num_members){
   }
   end = clock();
   print_time("", start, end);
+  times[B_TRACE] = end - start;
 
 
   printf("\n##### Testing claim\n");
@@ -752,6 +621,8 @@ void kty04_benchmark_members(int num_members){
   end = clock();
 
   print_time("", start, end);
+  times[B_CLAIM] = end - start;
+
 
   printf("\n##### Testing claim_verify - correct signature\n");
   start = clock();
@@ -761,7 +632,7 @@ void kty04_benchmark_members(int num_members){
   end = clock();
 
   print_time("", start, end);
-
+  times[B_CLAIM_VERIFY] = end - start;
 
   printf("FREE MEMORY 1\n");
   groupsig_mgr_key_free(mgrkey); mgrkey = NULL;
@@ -770,14 +641,22 @@ void kty04_benchmark_members(int num_members){
   crl_free(crl); crl = NULL;
 
   printf("FREE MEMORY 2\n");
+  printf("--------------------\n");
   for(int i = 0; i < num_members; i++){
+    printf("a\n");
     groupsig_mem_key_free(member_keys[i]); member_keys[i] = NULL;
+    printf("ab\n");
     groupsig_proof_free(proofs[i]); proofs[i] = NULL;
+    printf("abc\n");
     groupsig_proof_free(proofs2[i]); proofs2[i] = NULL;
+    printf("abcd\n");
     groupsig_signature_free(signatures[i]); signatures[i] = NULL;
+    printf("abcde\n");
     groupsig_signature_free(signatures2[i]); signatures2[i] = NULL;
+    printf("abcdef\n");
   }
   
+  printf("--------------------\n");
   printf("FREE MEMORY 3\n");
   free(proofs);
   printf("FREE MEMORY 3a\n");
@@ -789,13 +668,14 @@ void kty04_benchmark_members(int num_members){
   printf("FREE MEMORY 3d\n");
   free(signatures2);
   printf("FREE MEMORY 3e\n");
+
+  b_write_csv(num_members, times, GROUPSIG_KTY04_CODE);
 }
 
 void kty04_benchmark() {
-  printf("Testing benchmark 1 member\n");
-  kty04_benchmark_members(1);
-  printf("Testing benchmark 5 members\n");
-  kty04_benchmark_members(5);
-  printf("Testing benchmark 10 members\n");
-  kty04_benchmark_members(10);
+  for (int i=0; i < 100; i ++){
+    printf("Testing benchmark %d member\n", i * 10);
+    kty04_benchmark_members(i * 10);
+  } 
+  
 }
