@@ -48,6 +48,10 @@ void kty04_test(void);
 
 void ps16_test(void);
 
+void kty04_benchmark(void);
+
+void ps16_benchmark(void);
+
 int b_write_csv(int num_members, clock_t* times, uint8_t scheme);
 
 groupsig_key_t* new_member_key( groupsig_key_t *grpkey,

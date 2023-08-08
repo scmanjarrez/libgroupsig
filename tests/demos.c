@@ -3,9 +3,6 @@
 
 #include "utils.h"
 
-void kty04_benchmark(void);
-void ps16_benchmark(void);
-
 int main(int argc, char **argv) {
   int err = 0;
 
