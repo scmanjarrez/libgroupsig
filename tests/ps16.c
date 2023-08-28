@@ -509,14 +509,9 @@ void ps16_benchmark_members(int num_members) {
 }
 
 void ps16_benchmark() {
-
-  for (int i=0; i < 100; i ++){
-    printf("Testing benchmark %d member\n", i * 10);
+  for (int i=0; i < 10; i ++){
+    printf("Testing benchmark %d member\n", i * 10 + 1);
     ps16_benchmark_members(i * 10);
   }
 
-  //printf("Testing benchmark 5 members\n");
-  //ps16_benchmark_members(5);
-  //printf("Testing benchmark 10 members\n");
-  //ps16_benchmark_members(10);
 }

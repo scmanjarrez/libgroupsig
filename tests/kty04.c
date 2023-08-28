@@ -637,8 +637,8 @@ void kty04_benchmark_members(int num_members){
 }
 
 void kty04_benchmark() {
-  for (int i=0; i < 100; i ++){
-    printf("Testing benchmark %d member\n", i * 10);
+  for (int i=0; i < 10; i ++){
+    printf("Testing benchmark %d member\n", i * 10 + 1);
     kty04_benchmark_members(i * 10);
   }
 

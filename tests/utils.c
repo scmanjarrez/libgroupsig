@@ -140,12 +140,14 @@ groupsig_key_t* new_member_key( groupsig_key_t *grpkey,
 
     memkey = groupsig_mem_key_init(grpkey->scheme);
 
-    groupsig_join_mgr(&msg1_mem1, gml, mgrkey, 0, msg0_mem1, grpkey);
-    groupsig_join_mem(&msg2_mem1, memkey, 1, msg1_mem1, grpkey);
-    groupsig_join_mgr(&msg3_mem1, gml, mgrkey, 2, msg2_mem1, grpkey);
-    groupsig_join_mem(&msg4_mem1, memkey, 3, msg3_mem1, grpkey);
-
-    print_exp_rc("", rc);
+    rc = groupsig_join_mgr(&msg1_mem1, gml, mgrkey, 0, msg0_mem1, grpkey);
+    print_exp_rc("PS16-A: ", rc);
+    rc = groupsig_join_mem(&msg2_mem1, memkey, 1, msg1_mem1, grpkey);
+    print_exp_rc("PS16-B: ", rc);
+    rc = groupsig_join_mgr(&msg3_mem1, gml, mgrkey, 2, msg2_mem1, grpkey);
+    print_exp_rc("PS16-C: ", rc);
+    rc = groupsig_join_mem(&msg4_mem1, memkey, 3, msg3_mem1, grpkey);
+    print_exp_rc("PS16-D: ", rc);
 
     message_free(msg0_mem1); msg0_mem1 = NULL;
     message_free(msg1_mem1); msg1_mem1 = NULL;
