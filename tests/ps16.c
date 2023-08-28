@@ -1,31 +1,11 @@
-#include <openssl/bn.h>
-#include <openssl/rand.h>
 #include <time.h>
-#include <stdbool.h>
 
 #include "groupsig.h"
 #include "ps16.h"
 #include "utils.h"
 
 void ps16_test() {
-  /* Setting seed */
-  unsigned char buffer[2048];
-  FILE* fd = fopen("/dev/urandom", "r");
-  fread(buffer, 1, 2048, fd);
-  fclose(fd);
-
-  RAND_seed(buffer, 2048);
-  BIGNUM *rnd = BN_new();
-  int bits = 10, _rc = 255;
-  printf("##### Testing OpenSSL randomness\n");
-  for (int i=0; i<5; i++) {
-    printf("Iteration[%d] rc: ", i);
-    _rc = BN_rand(rnd, bits, -1, false);
-    printf("%d ", _rc);
-    char *chr = BN_bn2dec(rnd);
-
-    printf("BIGNUM: %s\n", chr);
-  }
+  check_randomness();
 
   clock_t start, end;
   int rc = 255;
@@ -373,23 +353,7 @@ void ps16_test() {
 
 
 void ps16_benchmark_members(int num_members) {
-  unsigned char buffer[2048];
-  FILE* fd = fopen("/dev/urandom", "r");
-  fread(buffer, 1, 2048, fd);
-  fclose(fd);
-
-  RAND_seed(buffer, 2048);
-  BIGNUM *rnd = BN_new();
-  int bits = 10, _rc = 255;
-  printf("##### Testing OpenSSL randomness\n");
-  for (int i=0; i<5; i++) {
-    printf("Iteration[%d] rc: ", i);
-    _rc = BN_rand(rnd, bits, -1, false);
-    printf("%d ", _rc);
-    char *chr = BN_bn2dec(rnd);
-
-    printf("BIGNUM: %s\n", chr);
-  }
+  check_randomness();
 
   clock_t start, end;
   clock_t times[B_NUM];
@@ -445,7 +409,7 @@ void ps16_benchmark_members(int num_members) {
   printf("\n##### Testing member keys\n");
   start = clock();
   groupsig_key_t **member_keys = (groupsig_key_t**) calloc(num_members, sizeof(groupsig_key_t*));
-  
+
   for(int i = 0; i < num_members; i++){
     member_keys[i] = new_member_key(grpkey, mgrkey, gml, NULL);
   }
@@ -458,7 +422,7 @@ void ps16_benchmark_members(int num_members) {
   printf("\n##### Testing sign & verify - correct message\n");
   start = clock();
   groupsig_signature_t **signatures = (groupsig_signature_t**) calloc(num_members, sizeof(groupsig_signature_t*));
-  for(int i = 0; i < num_members; i++){    
+  for(int i = 0; i < num_members; i++){
     signatures[i] = new_member_signature(test_message, member_keys[i], grpkey);
   }
   end = clock();
@@ -466,7 +430,7 @@ void ps16_benchmark_members(int num_members) {
   times[B_NEW_SIGN] = end - start;
   uint8_t ret0 = 255;
   start = clock();
-  
+
   for(int i = 0; i < num_members; i++){
     if (!verify_member_signature(signatures[i], test_message, grpkey)){
       printf("verify wrong: %d\n", i);
@@ -482,9 +446,9 @@ void ps16_benchmark_members(int num_members) {
 
   start = clock();
   groupsig_proof_t **proofs = (groupsig_proof_t**) calloc(num_members, sizeof(groupsig_proof_t*));
-  
+
   for(int i = 0; i < num_members; i++){
-    
+
     //printf("0x: %p\n", proofs[i]);
     idx = open_signature(&proofs[i], signatures[i], grpkey, mgrkey, gml, NULL);
     if (idx != i){
@@ -493,7 +457,7 @@ void ps16_benchmark_members(int num_members) {
     printf("Bp: 0x: %p\n", &proofs[i]);
     printf("Bv: 0x: %p\n", proofs[i]);
     print_exp_ptr("B: proof_op:", proofs[i]);
-  }  
+  }
   end = clock();
   print_time("", start, end);
   times[B_OPEN] = end - start;
@@ -507,17 +471,17 @@ void ps16_benchmark_members(int num_members) {
     if (open_verify(proofs[i], signatures[i], grpkey) != (uint64_t) 1){
       printf("ERROR open verify signature [%d]\n\n", i);
     }
-    
+
   }
   end = clock();
   times[B_OPEN_VERIFY] = end - start;
-  
+
   print_time("", start, end);
 
-  
+
 
   printf("FREE MEMORY 1\n");
-  
+
   groupsig_grp_key_free(grpkey); grpkey = NULL;
   groupsig_mgr_key_free(mgrkey); mgrkey = NULL;
   gml_free(gml); gml = NULL;
@@ -530,7 +494,7 @@ void ps16_benchmark_members(int num_members) {
     groupsig_proof_free(proofs[i]); proofs[i] = NULL;
     groupsig_signature_free(signatures[i]); signatures[i] = NULL;
   }
-  
+
   printf("FREE MEMORY 3\n");
   free(proofs);
   printf("FREE MEMORY 3b\n");
@@ -538,7 +502,7 @@ void ps16_benchmark_members(int num_members) {
   printf("FREE MEMORY 3c\n");
   free(signatures);
   printf("FREE MEMORY 3d\n");
-  
+
 
   b_write_csv(num_members, times, GROUPSIG_PS16_CODE);
 
@@ -549,12 +513,10 @@ void ps16_benchmark() {
   for (int i=0; i < 100; i ++){
     printf("Testing benchmark %d member\n", i * 10);
     ps16_benchmark_members(i * 10);
-  } 
+  }
 
   //printf("Testing benchmark 5 members\n");
   //ps16_benchmark_members(5);
   //printf("Testing benchmark 10 members\n");
   //ps16_benchmark_members(10);
 }
-
-

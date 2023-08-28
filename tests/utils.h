@@ -13,7 +13,6 @@
 #include "kty04.h"
 #endif
 
-#define B_NUM 17
 #define B_GRP_INIT 0
 #define B_NEW_GRPKEY 1
 #define B_NEW_MGRKEY 2
@@ -31,8 +30,12 @@
 #define B_REVEAL 14
 #define B_CLAIM 15
 #define B_CLAIM_VERIFY 16
+#define B_NUM 17
 
-const char* correct_value(int val);
+
+const char *correct_value(int val);
+
+void check_randomness(void);
 
 void print_time(char *prefix, clock_t start, clock_t end);
 
@@ -56,7 +59,7 @@ int b_write_csv(int num_members, clock_t* times, uint8_t scheme);
 
 groupsig_key_t* new_member_key( groupsig_key_t *grpkey,
                           groupsig_key_t *mgrkey,
-                          gml_t *gml, 
+                          gml_t *gml,
                           crl_t *crl);
 
 groupsig_signature_t* new_member_signature(char* str, groupsig_key_t *memkey, groupsig_key_t *grpkey);

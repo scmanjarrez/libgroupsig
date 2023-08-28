@@ -1,31 +1,12 @@
-#include <openssl/bn.h>
-#include <openssl/rand.h>
 #include <time.h>
-#include <stdbool.h>
 
 #include "groupsig.h"
 #include "kty04.h"
 #include "utils.h"
 
+
 void kty04_test() {
-  /* Setting seed */
-  unsigned char buffer[2048];
-  FILE* fd = fopen("/dev/urandom", "r");
-  fread(buffer, 1, 2048, fd);
-  fclose(fd);
-
-  RAND_seed(buffer, 2048);
-  BIGNUM *rnd = BN_new();
-  int bits = 10, _rc = 255;
-  printf("##### Testing OpenSSL randomness\n");
-  for (int i=0; i<5; i++) {
-    printf("Iteration[%d] rc: ", i);
-    _rc = BN_rand(rnd, bits, -1, false);
-    printf("%d ", _rc);
-    char *chr = BN_bn2dec(rnd);
-
-    printf("BIGNUM: %s\n", chr);
-  }
+  check_randomness();
 
   clock_t start, end;
   int rc = 255;
@@ -427,24 +408,7 @@ void kty04_test() {
 }
 
 void kty04_benchmark_members(int num_members){
-  /* Setting seed */
-  unsigned char buffer[2048];
-  FILE* fd = fopen("/dev/urandom", "r");
-  fread(buffer, 1, 2048, fd);
-  fclose(fd);
-
-  RAND_seed(buffer, 2048);
-  BIGNUM *rnd = BN_new();
-  int bits = 10, _rc = 255;
-  printf("##### Testing OpenSSL randomness\n");
-  for (int i=0; i<5; i++) {
-    printf("Iteration[%d] rc: ", i);
-    _rc = BN_rand(rnd, bits, -1, false);
-    printf("%d ", _rc);
-    char *chr = BN_bn2dec(rnd);
-
-    printf("BIGNUM: %s\n", chr);
-  }
+  check_randomness();
 
   clock_t start, end;
   clock_t times[B_NUM];
@@ -493,7 +457,7 @@ void kty04_benchmark_members(int num_members){
   printf("\n##### Testing groupsig_setup\n");
   start = clock();
   rc = groupsig_setup(code, grpkey, mgrkey, gml);
-  
+
   end = clock();
   print_exp_rc("", rc);
   print_time("", start, end);
@@ -501,11 +465,11 @@ void kty04_benchmark_members(int num_members){
 
   start = clock();
   groupsig_key_t **member_keys = (groupsig_key_t**) calloc(num_members, sizeof(groupsig_key_t*));
-  
+
   for(int i = 0; i < num_members; i++){
     member_keys[i] = new_member_key(grpkey, mgrkey, gml, crl);
   }
-  
+
   end = clock();
   times[B_NEW_MEMKEY] = end - start;
   print_to_str("grpkey", groupsig_grp_key_to_string(grpkey));
@@ -515,7 +479,7 @@ void kty04_benchmark_members(int num_members){
   printf("\n##### Testing sign & verify - correct message\n");
   start = clock();
   groupsig_signature_t **signatures = (groupsig_signature_t**) calloc(num_members, sizeof(groupsig_signature_t*));
-  for(int i = 0; i < num_members; i++){    
+  for(int i = 0; i < num_members; i++){
     signatures[i] = new_member_signature(test_message, member_keys[i], grpkey);
   }
   end = clock();
@@ -525,7 +489,7 @@ void kty04_benchmark_members(int num_members){
 
   uint8_t ret0 = 255;
   start = clock();
-  
+
   for(int i = 0; i < num_members; i++){
     if (verify_member_signature(signatures[i], test_message, grpkey) != 0){
       printf("verify wrong: %d\n", i);
@@ -535,7 +499,7 @@ void kty04_benchmark_members(int num_members){
   print_time("verify ", start, end);
   times[B_NEW_SIGN_VERIFY] = end - start;
   groupsig_signature_t **signatures2 = (groupsig_signature_t**) calloc(num_members, sizeof(groupsig_signature_t*));
-  for(int i = 0; i < num_members; i++){    
+  for(int i = 0; i < num_members; i++){
     signatures2[i] = new_member_signature(test_message, member_keys[i], grpkey);
   }
 
@@ -583,11 +547,11 @@ void kty04_benchmark_members(int num_members){
     if (idx != i){
       printf("ERROR open signature");
     }
-  }  
+  }
   end = clock();
   print_time("", start, end);
   times[B_OPEN] = end - start;
-  
+
   printf("\n##### Testing reveal\n");
   start = clock();
   for(int i = 0; i < num_members; i++){
@@ -655,7 +619,7 @@ void kty04_benchmark_members(int num_members){
     groupsig_signature_free(signatures2[i]); signatures2[i] = NULL;
     printf("abcdef\n");
   }
-  
+
   printf("--------------------\n");
   printf("FREE MEMORY 3\n");
   free(proofs);
@@ -676,6 +640,6 @@ void kty04_benchmark() {
   for (int i=0; i < 100; i ++){
     printf("Testing benchmark %d member\n", i * 10);
     kty04_benchmark_members(i * 10);
-  } 
-  
+  }
+
 }

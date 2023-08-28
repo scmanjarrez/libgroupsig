@@ -1,14 +1,41 @@
+#include <openssl/bn.h>
+#include <openssl/rand.h>
+#include <stdbool.h>
 #include <time.h>
 #include <stdint.h>
 #include <stdio.h>
 #include "utils.h"
 
-const char* correct_value(int val)
-{
+
+const char* correct_value(int val) {
   if (val == 1)
     return "✔";
   return "𐄂";
 }
+
+void check_randomness() {
+  /* Setting seed */
+  unsigned char buffer[2048];
+  FILE* fd = fopen("/dev/urandom", "r");
+  fread(buffer, 1, 2048, fd);
+  fclose(fd);
+
+  RAND_seed(buffer, 2048);
+  BIGNUM *rnd = BN_new();
+  int bits = 10, _rc = 255;
+  printf("##### Testing OpenSSL randomness\n");
+  for (int i=0; i<5; i++) {
+    printf("Iteration[%d] rc: ", i);
+    _rc = BN_rand(rnd, bits, -1, false);
+    printf("%d ", _rc);
+    char *chr = BN_bn2dec(rnd);
+
+    printf("BIGNUM: %s\n", chr);
+    free(chr);
+  }
+  BN_free(rnd);
+}
+
 
 void print_time(char *prefix, clock_t start, clock_t end) {
   printf("%stime: %.8f sec\n", prefix,
@@ -53,10 +80,10 @@ int b_write_csv(int num_members, clock_t* times, uint8_t scheme){
 
 groupsig_key_t* new_member_key( groupsig_key_t *grpkey,
                           groupsig_key_t *mgrkey,
-                          gml_t *gml, 
+                          gml_t *gml,
                           crl_t *crl){
 
-  uint8_t rc=255; 
+  uint8_t rc=255;
   groupsig_key_t *memkey = NULL;
 
   if (grpkey->scheme == GROUPSIG_KTY04_CODE){
@@ -82,11 +109,11 @@ groupsig_key_t* new_member_key( groupsig_key_t *grpkey,
     printf("\n##### Testing join_mem (0)\n");
 
     rc = groupsig_join_mem(&msg0, memkey, 0, NULL, grpkey);
-    
+
     print_exp_rc("", rc);
 
     printf("\n##### Testing join_mgr (1)\n");
-    
+
     rc = groupsig_join_mgr(&msg1, gml, mgrkey, 1, msg0, grpkey);
     groupsig_mem_key_free(memkey); memkey = NULL;
 
@@ -101,7 +128,7 @@ groupsig_key_t* new_member_key( groupsig_key_t *grpkey,
 
 
 
-    uint8_t rc=255; 
+    uint8_t rc=255;
 
     message_t *msg0_mem1, *msg1_mem1, *msg2_mem1, *msg3_mem1, *msg4_mem1;
 
@@ -126,7 +153,7 @@ groupsig_key_t* new_member_key( groupsig_key_t *grpkey,
     message_free(msg3_mem1); msg3_mem1 = NULL;
     message_free(msg4_mem1); msg4_mem1 = NULL;
 
- 
+
 
     } else {
       printf("ERROR: KEY NOT MATCHED SCHEME");
@@ -206,7 +233,7 @@ uint8_t trace_signature(groupsig_signature_t *sig, groupsig_key_t *grpkey, group
 uint64_t open_signature(groupsig_proof_t **proof_p, groupsig_signature_t *sig, groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml, crl_t *crl){
   uint8_t ret = 255, rc = 255;
   uint64_t idx = -1;
-  
+
   *proof_p = groupsig_proof_init(grpkey->scheme);
   printf("Z: 0x: %p\n", *proof_p);
   rc = groupsig_open(&idx, *proof_p, crl, sig, grpkey, mgrkey, gml);
