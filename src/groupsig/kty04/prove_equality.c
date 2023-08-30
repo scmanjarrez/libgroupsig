@@ -171,7 +171,7 @@ int kty04_prove_equality(groupsig_proof_t *proof, groupsig_key_t *memkey,
 
   /* Free resources and exit */
  kty04_prove_equality_end:
-
+  if (mdctx) EVP_MD_CTX_free(mdctx);
   if(r) bigz_free(r);
   if(t7r) bigz_free(t7r);
 

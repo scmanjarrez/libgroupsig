@@ -76,10 +76,8 @@ int kty04_join_mgr(message_t **mout, gml_t *gml,
   kty04_grp_key_t *gkey;
   gkey = (kty04_grp_key_t *) grpkey->key;
 
-  bigz_t e, einv, x, p1, q1, phin;
-  e = NULL; einv = NULL; x = NULL; p1 = NULL; q1 = NULL; phin = NULL;
-  int rc;
-  rc = IOK;
+  bigz_t e = NULL, einv = NULL, x = NULL, p1 = NULL, q1 = NULL, phin = NULL;
+  int rc = IOK;
 
   /* Select a random prime e in the inner sphere of Gamma */
   if(!(e = bigz_init())) {
@@ -137,7 +135,9 @@ int kty04_join_mgr(message_t **mout, gml_t *gml,
 
   if ((message_set_bytes(*mout, bytes, size)) == IERROR)
     return IERROR;
-
+  
+  free(bytes); // bytes are never freed otherwise
+  
   gml_entry_t *entry;
   /* Update the gml, if any */
   if(gml) {
@@ -170,6 +170,7 @@ int kty04_join_mgr(message_t **mout, gml_t *gml,
   if(p1) bigz_free(p1);
   if(q1) bigz_free(q1);
   if(phin) bigz_free(phin);
+  if(memkey) kty04_mem_key_free(memkey); memkey = NULL;
 
   return rc;
 

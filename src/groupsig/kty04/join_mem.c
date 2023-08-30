@@ -90,6 +90,7 @@ int kty04_join_mem(message_t **mout, groupsig_key_t *memkey,
   if ((message_set_bytes(*mout, bytes, size)) == IERROR)
     return IERROR;
 
+  free(bytes); // The bytes are copied in message_set bytes to a new buffer, thus we need to remove it.
   return IOK;
 
 }

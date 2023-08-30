@@ -151,6 +151,7 @@ int hash_free(hash_t *hash) {
   }
 
   mem_free(hash->hash); hash->hash = NULL;
+  EVP_MD_free(hash->md);
   EVP_MD_CTX_free(hash->mdctx); hash->mdctx = NULL;
   mem_free(hash);
 

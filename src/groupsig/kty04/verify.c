@@ -515,7 +515,7 @@ int kty04_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
   /* return _kty04_signature_check_relations(gkey, sig, fail); */
 
  kty04_verify_end:
-
+  if (mdctx) EVP_MD_CTX_free(mdctx);
   bigz_free(c);
   return rc;
 

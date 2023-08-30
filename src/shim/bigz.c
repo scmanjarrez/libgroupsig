@@ -518,8 +518,10 @@ int bigz_powm(bigz_t rop, bigz_t base, bigz_t exp, bigz_t mod) {
     /* It gets the correct result, but for some reason it returns IERROR */
     if(BN_mod_exp(rop, aux_inv, exp, mod, ctx) == IERROR) {
       // return IERROR;
+    
     }
     BN_set_negative(exp, 1);
+    bigz_free(aux_inv); aux_inv = NULL;
   } else {
     /* It gets the correct result, but for some reason it returns IERROR */
     if(BN_mod_exp(rop, base, exp, mod, ctx) == IERROR) {

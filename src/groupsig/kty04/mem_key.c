@@ -528,14 +528,11 @@ int kty04_mem_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   free(aux_bytes);
 
   /* Prepare the return */
-  if(!*bytes) {
-    *bytes = _bytes;
-  } else {
-    if (!(*bytes = malloc(sizeof(byte_t)*ctr)))
-      GOTOENDRC(IERROR, kty04_mem_key_export);
-    memcpy(*bytes, _bytes, ctr);
-    mem_free(_bytes); _bytes = NULL;
-  }
+
+  if (!(*bytes = malloc(sizeof(byte_t)*ctr))) GOTOENDRC(IERROR, kty04_mem_key_export);
+  memcpy(*bytes, _bytes, ctr);
+  mem_free(_bytes); _bytes = NULL;
+  
 
   /* Sanity check */
   if (ctr != _size) {
@@ -645,26 +642,31 @@ groupsig_key_t* kty04_mem_key_import(byte_t *source, uint32_t size) {
 
   /* Get A */
   len = source[ctr++];
+  if (kty04_key->A) bigz_free(kty04_key->A); kty04_key->A = NULL; // memory reallocation next
   kty04_key->A = bigz_import(&source[ctr], len);
   ctr += len;
 
   /* Get C */
   len = source[ctr++];
+  if (kty04_key->C) bigz_free(kty04_key->C); kty04_key->C = NULL; // memory reallocation next
   kty04_key->C = bigz_import(&source[ctr], len);
   ctr += len;
 
   /* Get x */
   len = source[ctr++];
+  if (kty04_key->x) bigz_free(kty04_key->x); kty04_key->x = NULL; // memory reallocation next
   kty04_key->x = bigz_import(&source[ctr], len);
   ctr += len;
 
   /* Get xx */
   len = source[ctr++];
+  if (kty04_key->xx) bigz_free(kty04_key->xx); kty04_key->xx = NULL; // memory reallocation next
   kty04_key->xx = bigz_import(&source[ctr], len);
   ctr += len;
 
   /* Get e */
   len = source[ctr++];
+  if (kty04_key->e) bigz_free(kty04_key->e); kty04_key->e = NULL; // memory reallocation next
   kty04_key->e = bigz_import(&source[ctr], len);
   ctr += len;
 

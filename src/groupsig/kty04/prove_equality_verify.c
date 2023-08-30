@@ -160,7 +160,7 @@ int kty04_prove_equality_verify(uint8_t *ok, groupsig_proof_t *proof,
 
   /* Free resources and exit */
  kty04_prove_equality_verify_end:
-
+  if (mdctx) EVP_MD_CTX_free(mdctx);
   if(c) bigz_free(c);
   if(t7r) bigz_free(t7r);
   if(t7s) bigz_free(t7s);

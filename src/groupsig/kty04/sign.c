@@ -738,6 +738,8 @@ int kty04_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
     free(sw); sw = NULL;
   }
 
+  if (mdctx) EVP_MD_CTX_free(mdctx);
+
   return rc;
 
 }
