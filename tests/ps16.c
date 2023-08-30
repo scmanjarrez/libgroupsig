@@ -374,8 +374,6 @@ void ps16_benchmark_members(int num_members) {
   start = clock();
   grpkey = groupsig_grp_key_init(code);
   end = clock();
-  print_exp_ptr("grpkey", grpkey);
-  print_to_str("grpkey", groupsig_grp_key_to_string(grpkey));
   print_time("", start, end);
   times[B_NEW_GRPKEY] = end - start;
 
@@ -384,8 +382,6 @@ void ps16_benchmark_members(int num_members) {
   start = clock();
   mgrkey = groupsig_mgr_key_init(code);
   end = clock();
-  print_exp_ptr("mgrkey", mgrkey);
-  print_to_str("mgrkey", groupsig_mgr_key_to_string(mgrkey));
   print_time("", start, end);
   times[B_NEW_MGRKEY] = end - start;
 
@@ -394,7 +390,6 @@ void ps16_benchmark_members(int num_members) {
   start = clock();
   gml = gml_init(code);
   end = clock();
-  print_exp_ptr("gml", gml);
   print_time("", start, end);
   times[B_NEW_GML] = end - start;
 
@@ -415,7 +410,6 @@ void ps16_benchmark_members(int num_members) {
   }
   end = clock();
   print_time("", start, end);
-  print_to_str("grpkey", groupsig_grp_key_to_string(grpkey));
   times[B_NEW_MEMKEY] = end - start;
   char *test_message = "Message to Sign";
 
@@ -440,7 +434,6 @@ void ps16_benchmark_members(int num_members) {
   print_time("verify ", start, end);
   times[B_NEW_SIGN_VERIFY] = end - start;
 
-
   printf("\n##### Testing open\n");
   uint64_t idx = -1;
 
@@ -449,14 +442,11 @@ void ps16_benchmark_members(int num_members) {
 
   for(int i = 0; i < num_members; i++){
 
-    //printf("0x: %p\n", proofs[i]);
     idx = open_signature(&proofs[i], signatures[i], grpkey, mgrkey, gml, NULL);
     if (idx != i){
        printf("ERROR open signature: i(%d) != idx(%ld)\n", i, idx);
     }
-    printf("Bp: 0x: %p\n", &proofs[i]);
-    printf("Bv: 0x: %p\n", proofs[i]);
-    print_exp_ptr("B: proof_op:", proofs[i]);
+
   }
   end = clock();
   print_time("", start, end);
@@ -465,9 +455,7 @@ void ps16_benchmark_members(int num_members) {
   printf("\n##### Testing open verify\n \n");
   start = clock();
   for(int i = 0; i < num_members; i++){
-    printf("Cp: 0x: %p\n", &proofs[i]);
-    printf("Cv: 0x: %p\n", proofs[i]);
-    print_exp_ptr("C: proof_op", proofs[i]);
+
     if (open_verify(proofs[i], signatures[i], grpkey) != (uint64_t) 1){
       printf("ERROR open verify signature [%d]\n\n", i);
     }
@@ -479,29 +467,21 @@ void ps16_benchmark_members(int num_members) {
   print_time("", start, end);
 
 
-
-  printf("FREE MEMORY 1\n");
-
   groupsig_grp_key_free(grpkey); grpkey = NULL;
   groupsig_mgr_key_free(mgrkey); mgrkey = NULL;
   gml_free(gml); gml = NULL;
 
 
 
-  printf("FREE MEMORY 2\n");
   for(int i = 0; i < num_members; i++){
     groupsig_mem_key_free(member_keys[i]); member_keys[i] = NULL;
     groupsig_proof_free(proofs[i]); proofs[i] = NULL;
     groupsig_signature_free(signatures[i]); signatures[i] = NULL;
   }
 
-  printf("FREE MEMORY 3\n");
   free(proofs);
-  printf("FREE MEMORY 3b\n");
   free(member_keys);
-  printf("FREE MEMORY 3c\n");
   free(signatures);
-  printf("FREE MEMORY 3d\n");
 
 
   b_write_csv(num_members, times, GROUPSIG_PS16_CODE);
@@ -509,9 +489,9 @@ void ps16_benchmark_members(int num_members) {
 }
 
 void ps16_benchmark() {
-  for (int i=0; i < 10; i ++){
-    printf("Testing benchmark %d member\n", i * 10 + 1);
-    ps16_benchmark_members(i * 10);
+  for (int i=1; i < 21; i ++){
+    printf("Testing benchmark %d member\n", i);
+    ps16_benchmark_members(i);
   }
 
 }

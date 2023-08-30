@@ -64,7 +64,7 @@ void print_to_str(char *prefix, char *str) {
 int b_write_csv(int num_members, clock_t* times, uint8_t scheme){
   FILE *fpt;
 
-  fpt = fopen("MyFile.csv", "a");
+  fpt = fopen("/root/MyFile.csv", "a");
   fprintf(fpt,"%d,%u,", num_members, scheme);
   for (int i = 0; i < B_NUM; i++){
     fprintf(fpt,"%ld", times[i]);
@@ -92,34 +92,24 @@ groupsig_key_t* new_member_key( groupsig_key_t *grpkey,
 
     memkey = groupsig_mem_key_init(grpkey->scheme);
 
-
     print_exp_ptr("memkey", memkey);
-    print_to_str("memkey", groupsig_mem_key_to_string(memkey));
-    print_to_str("grpkey", groupsig_grp_key_to_string(grpkey));
 
-    printf("\n##### Testing msg_init\n");
     message_t *msg0, *msg1;
     msg0 = message_init();
     msg1 = message_init();
 
-    print_exp_ptr("msg0", msg0);
-    print_exp_ptr("msg1", msg1);
 
 
-    printf("\n##### Testing join_mem (0)\n");
 
     rc = groupsig_join_mem(&msg0, memkey, 0, NULL, grpkey);
 
-    print_exp_rc("", rc);
 
-    printf("\n##### Testing join_mgr (1)\n");
 
     rc = groupsig_join_mgr(&msg1, gml, mgrkey, 1, msg0, grpkey);
     groupsig_mem_key_free(memkey); memkey = NULL;
 
-    memkey = groupsig_mem_key_import(grpkey->scheme, msg1->bytes, msg1->length);
 
-    print_exp_rc("", rc);
+    memkey = groupsig_mem_key_import(grpkey->scheme, msg1->bytes, msg1->length);
 
     message_free(msg0); msg0 = NULL;
     message_free(msg1); msg1 = NULL;
@@ -141,13 +131,13 @@ groupsig_key_t* new_member_key( groupsig_key_t *grpkey,
     memkey = groupsig_mem_key_init(grpkey->scheme);
 
     rc = groupsig_join_mgr(&msg1_mem1, gml, mgrkey, 0, msg0_mem1, grpkey);
-    print_exp_rc("PS16-A: ", rc);
+    //print_exp_rc("PS16-A: ", rc);
     rc = groupsig_join_mem(&msg2_mem1, memkey, 1, msg1_mem1, grpkey);
-    print_exp_rc("PS16-B: ", rc);
+    //print_exp_rc("PS16-B: ", rc);
     rc = groupsig_join_mgr(&msg3_mem1, gml, mgrkey, 2, msg2_mem1, grpkey);
-    print_exp_rc("PS16-C: ", rc);
+    //print_exp_rc("PS16-C: ", rc);
     rc = groupsig_join_mem(&msg4_mem1, memkey, 3, msg3_mem1, grpkey);
-    print_exp_rc("PS16-D: ", rc);
+    //print_exp_rc("PS16-D: ", rc);
 
     message_free(msg0_mem1); msg0_mem1 = NULL;
     message_free(msg1_mem1); msg1_mem1 = NULL;
@@ -161,7 +151,6 @@ groupsig_key_t* new_member_key( groupsig_key_t *grpkey,
       printf("ERROR: KEY NOT MATCHED SCHEME");
     }
 
-    print_to_str("memkey", groupsig_mem_key_to_string(memkey));
     return memkey;
 
   }
@@ -171,12 +160,10 @@ groupsig_signature_t* new_member_signature(char* str, groupsig_key_t *memkey, gr
   groupsig_signature_t *sig;
   int rc;
 
-  print_to_str("memkey", groupsig_mem_key_to_string(memkey));
-  print_to_str("grpkey", groupsig_grp_key_to_string(grpkey));
   sig = groupsig_signature_init(memkey->scheme);
   rc = groupsig_sign(sig, msg, memkey, grpkey, UINT_MAX);
 
-  print_exp_rc("A:", rc);
+  print_exp_rc("", rc);
 
   message_free(msg); msg = NULL;
   return sig;
@@ -237,22 +224,18 @@ uint64_t open_signature(groupsig_proof_t **proof_p, groupsig_signature_t *sig, g
   uint64_t idx = -1;
 
   *proof_p = groupsig_proof_init(grpkey->scheme);
-  printf("Z: 0x: %p\n", *proof_p);
   rc = groupsig_open(&idx, *proof_p, crl, sig, grpkey, mgrkey, gml);
   print_exp_rc("", rc);
 
-  print_exp_ptr("A: proof_op", *proof_p);
-  printf("Ap: 0x: %p\n", proof_p);
-  printf("Av: 0x: %p\n", *proof_p);
   return idx;
 }
 
 uint8_t open_verify(groupsig_proof_t *proof, groupsig_signature_t *sig, groupsig_key_t *grpkey){
   uint8_t ret = 255, rc = 255;
-  print_exp_ptr("D: proof_op:", proof);
-  printf("Dv: 0x: %p\n", proof);
+  //print_exp_ptr("D: proof_op:", proof);
+  //printf("Dv: 0x: %p\n", proof);
   rc = groupsig_open_verify(&ret, proof, sig, grpkey);
-  print_exp_rc("", rc);
+  //print_exp_rc("", rc);
   print_exp_ret("", (uint32_t) ret, 1);
   return ret;
 }
