@@ -1,8 +1,9 @@
 #!/bin/bash
 
 usage() {
-    echo "Usage: $0 [--keep-mcl]"
+    echo "Usage: $0 [--keep-mcl][--hw]"
     echo "  --keep-mcl: do not rebuild mcl"
+    echo "  --hw: compile using hw functions"
 }
 
 keep_mcl() {
@@ -16,19 +17,25 @@ rebuild() {
 }
 
 build() {
-    cd build && cmake -DCMAKE_BUILD_TYPE=DEBUG -DALL=1 .. && make VERBOSE=1
+    if [ -z $HW ]; then
+        local hw=
+    else
+        local hw="-DHW=1"
+    fi
+    cd build && cmake -DCMAKE_BUILD_TYPE=DEBUG -DALL=1 $hw .. && make VERBOSE=1
 }
 
-if [ $# -eq 1 ]; then
-    if [ "$1" != "--keep-mcl" ] \
+if [ $# -gt 1 ]; then
+    if [ "$1" != "--keep-mcl" ] && [ "$1" != "--hw" ] \
            && [ "$1" != "-h" ] && [ "$1" != "--help" ]; then
         usage
         exit 1
-    elif [ "$1" == "--keep-mcl" ]; then
+    fi
+    if [ "$1" == "--keep-mcl" ] || [ "$2" == "--keep-mcl" ]; then
         KEEPMCL=1
-    else
-        usage
-        exit
+    fi
+    if [ "$1" == "--hw" ] || [ "$2" == "--hw" ]; then
+        HW=1
     fi
 fi
 
