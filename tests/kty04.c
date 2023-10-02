@@ -620,10 +620,120 @@ void kty04_benchmark_members(int num_members){
   b_write_csv(num_members, times, GROUPSIG_KTY04_CODE);
 }
 
+void kty04_benchmark_members_sigverif(int num_members){
+  check_randomness();
+
+  clock_t start, end;
+  clock_t times[B_NUM];
+  memset(times, 0, B_NUM * sizeof(clock_t));
+  int rc = 255;
+  uint8_t code = GROUPSIG_KTY04_CODE;
+
+  printf("\n##### Testing mgr_key_init\n");
+  groupsig_key_t *mgrkey;
+  start = clock();
+  mgrkey = groupsig_mgr_key_init(code);
+  end = clock();
+  print_time("", start, end);
+  times[B_NEW_MGRKEY] = end - start;
+
+  printf("\n##### Testing grp_key_init\n");
+  groupsig_key_t *grpkey;
+  start = clock();
+  grpkey = groupsig_grp_key_init(code);
+  end = clock();
+  print_time("", start, end);
+  times[B_NEW_GRPKEY] = end - start;
+
+  printf("\n##### Testing gml_init\n");
+  gml_t *gml;
+  start = clock();
+  gml = gml_init(code);
+  end = clock();
+  print_time("", start, end);
+  times[B_NEW_GML] = end - start;
+
+  printf("\n##### Testing crl_init\n");
+  crl_t *crl;
+  start = clock();
+  crl = crl_init(code);
+  end = clock();
+  print_exp_ptr("crl", crl);
+  print_time("", start, end);
+  times[B_NEW_CRL] = end - start;
+
+  printf("\n##### Testing groupsig_setup\n");
+  start = clock();
+  rc = groupsig_setup(code, grpkey, mgrkey, gml);
+
+  end = clock();
+  print_exp_rc("", rc);
+  print_time("", start, end);
+  times[B_GRP_SETUP] = end - start;
+
+  start = clock();
+  groupsig_key_t **member_keys = (groupsig_key_t**) calloc(num_members, sizeof(groupsig_key_t*));
+
+  for(int i = 0; i < num_members; i++){
+    member_keys[i] = new_member_key(grpkey, mgrkey, gml, crl);
+  }
+
+  end = clock();
+  times[B_NEW_MEMKEY] = end - start;
+  
+  char *test_message = "Message to Sign";
+
+  printf("\n##### Testing sign & verify - correct message\n");
+  start = clock();
+  groupsig_signature_t **signatures = (groupsig_signature_t**) calloc(num_members, sizeof(groupsig_signature_t*));
+  for(int i = 0; i < num_members; i++){
+    signatures[i] = new_member_signature(test_message, member_keys[i], grpkey);
+  }
+  end = clock();
+  print_time("sign ", start, end);
+  times[B_NEW_SIGN] = end - start;
+  
+  uint8_t ret0 = 255;
+  start = clock();
+
+  for(int i = 0; i < num_members; i++){
+    if (verify_member_signature(signatures[i], test_message, grpkey) != 1){ // 1 Signature Correct 0 otherwise
+      printf("verify wrong: %d\n", i);
+    }
+  }
+  end = clock();
+  print_time("verify ", start, end);
+  times[B_NEW_SIGN_VERIFY] = end - start;
+
+  printf("FREE MEMORY\n");
+
+  groupsig_mgr_key_free(mgrkey); mgrkey = NULL;
+  groupsig_grp_key_free(grpkey); grpkey = NULL;
+  gml_free(gml); gml = NULL;
+  crl_free(crl); crl = NULL;
+
+
+  for(int i = 0; i < num_members; i++){
+    groupsig_mem_key_free(member_keys[i]); member_keys[i] = NULL;
+    groupsig_signature_free(signatures[i]); signatures[i] = NULL;
+
+  }
+
+  free(member_keys);
+  free(signatures);
+
+
+  b_write_csv(num_members, times, GROUPSIG_KTY04_CODE);
+}
+
 void kty04_benchmark() {
-  for (int i=1; i < 21; i ++){
+  for (int i=1; i < 100; i ++){
     printf("Testing benchmark %d member\n", i );
-    kty04_benchmark_members(i);
+    for (int j = 0; j < TEST_REPS; j ++){
+      kty04_benchmark_members(i);
+      kty04_benchmark_members_sigverif(i);
+    }
+    
   }
 
 }

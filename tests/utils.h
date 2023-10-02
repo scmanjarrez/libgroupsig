@@ -32,6 +32,7 @@
 #define B_CLAIM_VERIFY 16
 #define B_NUM 17
 
+#define TEST_REPS 5
 
 const char *correct_value(int val);
 
