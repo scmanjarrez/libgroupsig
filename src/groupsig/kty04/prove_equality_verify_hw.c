@@ -28,8 +28,8 @@
 #include "groupsig/kty04/signature.h"
 #include "bigz.h"
 #include "sys/mem.h"
-#include "functions_hw.h"
-#include "file_hw.h"
+#include "hw/functions_hw.h"
+#include "hw/file_hw.h"
 
 #define SHA256_DIGEST_LENGTH 32
 
@@ -175,7 +175,7 @@ int kty04_prove_equality_verify(uint8_t *ok, groupsig_proof_t *proof,
 
   /* Free resources and exit */
  kty04_prove_equality_verify_end:
-  if (mdctx) EVP_MD_CTX_free(mdctx);
+  /* if (mdctx) EVP_MD_CTX_free(mdctx); */
   if(c) bigz_free(c);
   if(t7r) bigz_free(t7r);
   if(t7s) bigz_free(t7s);

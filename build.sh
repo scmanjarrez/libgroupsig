@@ -17,26 +17,32 @@ rebuild() {
 }
 
 build() {
+    local hw
     if [ -z $HW ]; then
-        local hw=
+        hw=
     else
-        local hw="-DHW=1"
+        hw="-DHW=1"
     fi
-    cd build && cmake -DCMAKE_BUILD_TYPE=DEBUG -DALL=1 $hw .. && make VERBOSE=1
+    local arch=$(uname -m)
+    local comp
+    if [[ "$arch" == arm* ]] || [[ "$arch" == aarch* ]]; then
+        comp="-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++"
+    else
+        comp=
+    fi
+    cd build && cmake $comp -DCMAKE_BUILD_TYPE=DEBUG -DALL=1 $hw .. && make VERBOSE=1
 }
 
-if [ $# -gt 1 ]; then
-    if [ "$1" != "--keep-mcl" ] && [ "$1" != "--hw" ] \
-           && [ "$1" != "-h" ] && [ "$1" != "--help" ]; then
-        usage
-        exit 1
-    fi
-    if [ "$1" == "--keep-mcl" ] || [ "$2" == "--keep-mcl" ]; then
-        KEEPMCL=1
-    fi
-    if [ "$1" == "--hw" ] || [ "$2" == "--hw" ]; then
-        HW=1
-    fi
+if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+    usage
+    exit
+fi
+
+if [ "$1" == "--keep-mcl" ] || [ "$2" == "--keep-mcl" ]; then
+    KEEPMCL=1
+fi
+if [ "$1" == "--hw" ] || [ "$2" == "--hw" ]; then
+    HW=1
 fi
 
 if [ -n "$KEEPMCL" ]; then

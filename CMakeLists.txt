@@ -15,8 +15,13 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set (CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 
 # Global compiler flags
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm" OR CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w -fPIC")
+  set (CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -w -fPIC")
+else ()
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+  set (CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+endif ()
 add_link_options("LINKER:--allow-multiple-definition")
 
 # Add the binary tree to the search path for include files
@@ -30,7 +35,15 @@ link_directories("${PROJECT_BINARY_DIR}/external/lib")
 # Check dependencies
 
 ## OpenSSL
-find_package (OpenSSL REQUIRED)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm" OR CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+  set(OPENSSL_ROOT_DIR /home/xilinx/openssl-3.0.2)
+  include(FindOpenSSL)
+endif ()
+find_package(OpenSSL REQUIRED)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm" OR CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+  include_directories(${OPENSSL_INCLUDE_DIR})
+  link_directories(/home/xilinx/openssl-3.0.2)
+endif ()
 
 # Add modules
 list (APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
@@ -86,6 +99,9 @@ add_subdirectory (${PROJECT_SOURCE_DIR}/src/shim)
 add_subdirectory (${PROJECT_SOURCE_DIR}/src/crypto)
 add_subdirectory (${PROJECT_SOURCE_DIR}/src/math)
 add_subdirectory (${PROJECT_SOURCE_DIR}/src/misc)
+if (HW)
+  add_subdirectory (${PROJECT_SOURCE_DIR}/src/hw)
+endif ()
 add_subdirectory (${PROJECT_SOURCE_DIR}/src/groupsig)
 add_subdirectory (${PROJECT_SOURCE_DIR}/src/tools)
 
@@ -93,4 +109,8 @@ add_subdirectory (${PROJECT_SOURCE_DIR}/src/tools)
 add_executable(demos tests/demos.c tests/kty04.c tests/ps16.c tests/utils.c)
 target_include_directories(demos PUBLIC tests)
 # We need to export LD_LIBRARY_PATH with the path to mcl -> export LD_LIBRARY_PATH=$PWD/external/lib/:$LD_LIBRARY_PATH
-target_link_libraries(demos kty04 ps16 groupsig)
+if (HW)
+  target_link_libraries(demos kty04 ps16 crypto pynq groupsig cma pthread)
+else ()
+  target_link_libraries(demos kty04 ps16 groupsig)
+endif ()

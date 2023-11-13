@@ -1,16 +1,16 @@
-set(src
-  groupsig.c
-  grp_key.c
-  mgr_key.c
-  mem_key.c
-  bld_key.c
-  signature.c
-  blindsig.c
-  proof.c
-  identity.c
-  trapdoor.c
-  gml.c
-  crl.c)
+ set(src
+   groupsig.c
+   grp_key.c
+   mgr_key.c
+   mem_key.c
+   bld_key.c
+   signature.c
+   blindsig.c
+   proof.c
+   identity.c
+   trapdoor.c
+   gml.c
+   crl.c)
 
 if (ALL)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DALL")
@@ -49,6 +49,9 @@ if (ALL)
     PUBLIC ${OPENSSL_LIBRARIES}
     PUBLIC ${MCL_LIBRARY}
     PUBLIC ${MCL384_256_LIBRARY})
+  if (HW)
+    target_link_libraries (groupsig PUBLIC sha2hw)
+  endif()
 else()
   target_link_libraries (groupsig
     PUBLIC kty04
