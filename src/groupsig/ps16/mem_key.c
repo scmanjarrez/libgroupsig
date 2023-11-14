@@ -439,7 +439,7 @@ char* ps16_mem_key_to_string(groupsig_key_t *key) {
     goto mem_key_to_string_error;
   }
 
-  sprintf(mem_key,
+  snprintf(mem_key, memkey_size,
           "sk: %s\n"
           "sigma1: %s\n"
           "sigma2: %s\n"

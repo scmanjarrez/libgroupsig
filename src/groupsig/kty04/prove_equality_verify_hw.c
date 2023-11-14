@@ -117,7 +117,7 @@ int kty04_prove_equality_verify(uint8_t *ok, groupsig_proof_t *proof,
       GOTOENDRC(IERROR, kty04_prove_equality_verify);
 
     /* Put the i-th element of the array */
-    /* if(!(aux_t7r = bigz_get_str10(t7r))) GOTOENDRC(IERROR, kty04_prove_equality_verify); */
+    if(!(aux_t7r = bigz_get_str10(t7r))) GOTOENDRC(IERROR, kty04_prove_equality_verify);
 	/* 	if(EVP_DigestUpdate(mdctx, aux_t7r, strlen(aux_t7r)) != 1) { */
     /*   LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_prove_equality_verify", __LINE__, EDQUOT, */
  	/* 		"EVP_DigestUpdate", LOGERROR); */

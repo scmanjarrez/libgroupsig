@@ -596,7 +596,7 @@ void ps16_benchmark() {
       ps16_benchmark_members(i);
       ps16_benchmark_members_sigverif(i);
     }
-    
+
   }
 
 }

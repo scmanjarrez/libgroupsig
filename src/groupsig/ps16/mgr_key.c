@@ -307,20 +307,20 @@ char* ps16_mgr_key_to_string(groupsig_key_t *key) {
     goto mgr_key_to_string_error;
   }
 
-  mgr_key_size = x_size + y_size + strlen("x: \ny: \n\n") + 1;
+  mgr_key_size = x_size + y_size + strlen("x: \ny: \n") + 1;
   if (!(mgr_key = (char*) calloc(mgr_key_size, sizeof(char)))){
     LOG_EINVAL(&logger, __FILE__, "ps16_mgr_key_to_string", __LINE__, LOGERROR);
     goto mgr_key_to_string_error;
   }
 
-  sprintf(mgr_key,
+  snprintf(mgr_key, mgr_key_size,
           "x: %s\n"
           "y: %s\n",
           x, y);
 
  mgr_key_to_string_error:
 
-  if(x){free(x), y = NULL;}
+  if(x){free(x), x = NULL;}
   if(y){free(y), y = NULL;}
 
   return mgr_key;
