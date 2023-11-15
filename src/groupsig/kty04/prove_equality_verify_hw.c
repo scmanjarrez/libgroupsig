@@ -28,10 +28,15 @@
 #include "groupsig/kty04/signature.h"
 #include "bigz.h"
 #include "sys/mem.h"
-#include "hw/functions_hw.h"
 #include "hw/file_hw.h"
 
-#define SHA256_DIGEST_LENGTH 32
+#ifdef HW3
+#include "hw/params3.h"
+#define SHA_DIGEST_LENGTH SIZE_SHA3/8
+#else
+#include "hw/params.h"
+#define SHA_DIGEST_LENGTH SIZE_SHA2/8
+#endif
 
 /* Private functions */
 
@@ -45,7 +50,7 @@ int kty04_prove_equality_verify(uint8_t *ok, groupsig_proof_t *proof,
   kty04_grp_key_t *gkey;
   kty04_signature_t *sig;
   kty04_proof_t *kty04_proof;
-  /* byte_t aux_sc[SHA256_DIGEST_LENGTH+1]; */
+  /* byte_t aux_sc[SHA_DIGEST_LENGTH+1]; */
   byte_t *aux_sc;
   // SHA_CTX aux_sha;
   /* EVP_MD_CTX *mdctx; */
@@ -152,17 +157,17 @@ int kty04_prove_equality_verify(uint8_t *ok, groupsig_proof_t *proof,
   free(aux_n); aux_n = NULL;
 
   /* (2) Calculate c = hash(t7r[0] || t7[0] || ... || t7r[n-1] || t7[n-1] || mod ) */
-  /* memset(aux_sc, 0, SHA256_DIGEST_LENGTH+1); */
+  /* memset(aux_sc, 0, SHA_DIGEST_LENGTH+1); */
   /* if(EVP_DigestFinal_ex(mdctx, aux_sc, NULL) != 1) { */
   /*   LOG_ERRORCODE_MSG(&logger, __FILE__, "proof_equality_verify", __LINE__, EDQUOT, */
   /*   	      "EVP_DigestFinal_ex", LOGERROR); */
   /*   GOTOENDRC(IERROR, kty04_prove_equality_verify); */
   /* } */
 
-  aux_sc = hash_message_hw(to_be_hashed, msg_len * 8);  // bits
+  aux_sc = hash_message_hw(to_be_hashed, msg_len);
 
   /* Now, we have to get c as a bigz_t */
-  if(!(c = bigz_import(aux_sc, SHA256_DIGEST_LENGTH)))
+  if(!(c = bigz_import(aux_sc, SHA_DIGEST_LENGTH)))
     GOTOENDRC(IERROR, kty04_prove_equality_verify);
 
   /* Compare the obtained c with the c received in the proof, if there is a

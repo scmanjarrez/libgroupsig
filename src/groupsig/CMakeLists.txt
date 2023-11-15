@@ -50,7 +50,7 @@ if (ALL)
     PUBLIC ${MCL_LIBRARY}
     PUBLIC ${MCL384_256_LIBRARY})
   if (HW)
-    target_link_libraries (groupsig PUBLIC sha2hw)
+    target_link_libraries (groupsig PUBLIC shahw)
   endif()
 else()
   target_link_libraries (groupsig

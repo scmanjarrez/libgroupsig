@@ -28,11 +28,15 @@
 #include "groupsig/kty04/mem_key.h"
 #include "groupsig/kty04/signature.h"
 #include "bigz.h"
-#include "hw/functions_hw.h"
 #include "hw/file_hw.h"
 
-#define SHA256_DIGEST_LENGTH 32
-
+#ifdef HW3
+#include "hw/params3.h"
+#define SHA_DIGEST_LENGTH SIZE_SHA3/8
+#else
+#include "hw/params.h"
+#define SHA_DIGEST_LENGTH SIZE_SHA2/8
+#endif
 /* Private functions */
 
 /**
@@ -525,7 +529,7 @@ int kty04_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   kty04_grp_key_t *gkey;
   kty04_mem_key_t *mkey;
   kty04_signature_t *kty04_sig;
-  /* byte_t aux_sc[SHA256_DIGEST_LENGTH+1]; */
+  /* byte_t aux_sc[SHA_DIGEST_LENGTH+1]; */
   byte_t *aux_sc;
   bigz_t k, kk, r, hh, *A, *tw, *B, c, *sw;
   // SHA_CTX aux_sha;
@@ -673,14 +677,14 @@ int kty04_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   }
 
   /* Calculate the hash */
-  /* memset(aux_sc, 0, SHA256_DIGEST_LENGTH+1); */
+  /* memset(aux_sc, 0, SHA_DIGEST_LENGTH+1); */
   /* if(EVP_DigestFinal_ex(mdctx, aux_sc, NULL) != 1) { */
   /*   LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_sign", __LINE__, EDQUOT, */
   /*   		"EVP_DigestFinal_ex", LOGERROR); */
   /*     GOTOENDRC(IERROR, kty04_sign); */
   /* } */
 
-  aux_sc = (byte_t*) hash_message_hw((byte_t*) to_be_hashed, msg_len * 8);  // bits
+  aux_sc = (byte_t*) hash_message_hw((byte_t*) to_be_hashed, msg_len);
   // debug messages
   /* if (aux_sc==NULL) printf("It is NULL\n"); */
   /* printf("Hash of sign: %s\n",aux_sc); */
@@ -691,7 +695,7 @@ int kty04_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   /* printf("Length of message in sign: %d\n",msg_len); */
 
   /* Now, we have to get c = h(message,B[1],...,B[z],A[1]...,A[m]) as an mpz */
-  if(!(c = bigz_import(aux_sc,SHA256_DIGEST_LENGTH))) GOTOENDRC(IERROR, kty04_sign);
+  if(!(c = bigz_import(aux_sc, SHA_DIGEST_LENGTH))) GOTOENDRC(IERROR, kty04_sign);
   if(bigz_set(kty04_sig->c, c) == IERROR) GOTOENDRC(IERROR, kty04_sign);
 
   /* For the calculations of the sw's we are only interested in the k LSbits of c. */
