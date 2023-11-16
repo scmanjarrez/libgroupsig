@@ -10,7 +10,7 @@
 const char* correct_value(int val) {
   if (val == 1)
     return "✔";
-  return "𐄂";
+  return "✗";
 }
 
 void check_randomness() {
