@@ -1,11 +1,5 @@
 include_directories ("${PROJECT_SOURCE_DIR}/src/include"
                      "${PROJECT_SOURCE_DIR}/src/global")
-
-if (HW3)
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DHW3")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHW3")
-endif ()
-
 if (HW)
   add_library (kty04 STATIC grp_key.c grp_key.h mgr_key.c mgr_key.h mem_key.c
     mem_key.h signature.c signature.h sphere.c sphere.h setup.c

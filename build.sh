@@ -3,7 +3,9 @@
 usage() {
     echo "Usage: $0 [--keep-mcl][--hw]"
     echo "  --keep-mcl: do not rebuild mcl"
-    echo "  --hw/hw3: compile using hw functions (sha2 or sha3)"
+    echo "  --blake: compile using BLAKE hash function (SW). Default SHA2"
+    echo "  --sha3: compile using SHA3 hash function (SW)"
+    echo "  --hw/hw3: compile using HW SHA2/SHA3 hash functions"
 }
 
 keep_mcl() {
@@ -17,6 +19,18 @@ rebuild() {
 }
 
 build() {
+    local blake
+    if [ -z $BLAKE ]; then
+        blake=""
+    else
+        blake="-DBLAKE=1"
+    fi
+    local sha3
+    if [ -z $SHA3 ]; then
+        sha3=""
+    else
+        sha3="-DSHA3=1"
+    fi
     local hw
     if [ -z $HW ]; then
         hw=
@@ -35,7 +49,7 @@ build() {
     else
         comp=
     fi
-    cd build && cmake $comp -DCMAKE_BUILD_TYPE=DEBUG -DALL=1 $hw $hw3 .. \
+    cd build && cmake $comp -DCMAKE_BUILD_TYPE=DEBUG -DALL=1 $blake $sha3 $hw $hw3 .. \
         && make VERBOSE=1
 }
 
@@ -46,6 +60,12 @@ fi
 
 if [ "$1" == "--keep-mcl" ] || [ "$2" == "--keep-mcl" ]; then
     KEEPMCL=1
+fi
+if [ "$1" == "--blake" ] || [ "$2" == "--blake" ]; then
+    BLAKE=1
+fi
+if [ "$1" == "--sha3" ] || [ "$2" == "--sha3" ]; then
+    SHA3=1
 fi
 if [ "$1" == "--hw" ] || [ "$2" == "--hw" ]; then
     HW=1

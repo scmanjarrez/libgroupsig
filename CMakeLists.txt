@@ -22,6 +22,22 @@ else ()
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
   set (CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 endif ()
+
+if (BLAKE)
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DBLAKE")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBLAKE")
+endif ()
+
+if (SHA3)
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSHA3")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSHA3")
+endif ()
+
+if (HW3)
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DHW3")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHW3")
+endif ()
+
 add_link_options("LINKER:--allow-multiple-definition")
 
 # Add the binary tree to the search path for include files
