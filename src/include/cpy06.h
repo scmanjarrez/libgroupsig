@@ -49,35 +49,29 @@ extern "C" {
  */
 #define GROUPSIG_CPY06_NAME "CPY06"
 
-/**
- * @def CPY06_D_MAX
- * @brief Maximum discriminant for pairing generation.
- */
-#define CPY06_D_MAX 1000000000
-
 /* @todo Why are CPY06_SUPPORTED_KEY_FORMATS in the main header file
    but CPY06_SUPPORTED_SIG_FORMATS in the signature.h file!? 
    (key applies to all key types!)
 */
 
-/** 
- * @def CPY06_SUPPORTED_KEY_FORMATS_N
- * @brief Number of supported key formats supported by CPY06.
- */
-#define CPY06_SUPPORTED_KEY_FORMATS_N 6
+/* /\**  */
+/*  * @def CPY06_SUPPORTED_KEY_FORMATS_N */
+/*  * @brief Number of supported key formats supported by CPY06. */
+/*  *\/ */
+/* #define CPY06_SUPPORTED_KEY_FORMATS_N 6 */
 
-/**
- * @var CPY06_SUPPORTED_KEY_FORMATS
- * @brief Codes of the key formats supported by CPY06.
- */
-static const int CPY06_SUPPORTED_KEY_FORMATS[CPY06_SUPPORTED_KEY_FORMATS_N] = { 
-  GROUPSIG_KEY_FORMAT_FILE_NULL,
-  GROUPSIG_KEY_FORMAT_FILE_NULL_B64,
-  GROUPSIG_KEY_FORMAT_BYTEARRAY,
-  GROUPSIG_KEY_FORMAT_STRING_NULL_B64,
-  GROUPSIG_KEY_FORMAT_MESSAGE_NULL,
-  GROUPSIG_KEY_FORMAT_MESSAGE_NULL_B64,
-};
+/* /\** */
+/*  * @var CPY06_SUPPORTED_KEY_FORMATS */
+/*  * @brief Codes of the key formats supported by CPY06. */
+/*  *\/ */
+/* static const int CPY06_SUPPORTED_KEY_FORMATS[CPY06_SUPPORTED_KEY_FORMATS_N] = {  */
+/*   GROUPSIG_KEY_FORMAT_FILE_NULL, */
+/*   GROUPSIG_KEY_FORMAT_FILE_NULL_B64, */
+/*   GROUPSIG_KEY_FORMAT_BYTEARRAY, */
+/*   GROUPSIG_KEY_FORMAT_STRING_NULL_B64, */
+/*   GROUPSIG_KEY_FORMAT_MESSAGE_NULL, */
+/*   GROUPSIG_KEY_FORMAT_MESSAGE_NULL_B64, */
+/* }; */
 
 /**
  * @var cpy06_description
@@ -86,7 +80,28 @@ static const int CPY06_SUPPORTED_KEY_FORMATS[CPY06_SUPPORTED_KEY_FORMATS_N] = {
 static const groupsig_description_t cpy06_description = {
   GROUPSIG_CPY06_CODE, /**< CPY06's scheme code. */
   GROUPSIG_CPY06_NAME /**< CPY06's scheme name. */
+  1, /**< CPY06 has a GML. */
+  1, /**< CPY06 does have CRL. */
+  1, /**< CPY06 uses PBC. */
+  0, /**< CPY06 does not have verifiable openings. */
+  1, /**< CPY06's issuer key is the first manager key. TODO? */
+  1 /**< CPY06's inspector (opener) key is the first manager key. TODO? */
 };
+
+/* Metadata for the join protocol */
+
+/* 0 means the first message is sent by the manager, 1 means the first message
+   is sent by the member */
+#define CPY06_JOIN_START 1
+
+/* Number of exchanged messages */
+#define CPY06_JOIN_SEQ 2
+
+/**
+ * @def CPY06_D_MAX
+ * @brief Maximum discriminant for pairing generation.
+ */
+#define CPY06_D_MAX 1000000000
 
 /**
  * @struct cpy06_genparam_t
@@ -119,67 +134,85 @@ typedef struct {
 
 #define CPY06_DEFAULT_BITLIMIT 160
 
-#define CPY06_CONFIG_SET_DEFAULTS(cfg)		\
-  ((cpy06_config_t *) cfg)->bitlimit = CPY06_DEFAULT_BITLIMIT;
+/* #define CPY06_CONFIG_SET_DEFAULTS(cfg)		\ */
+/*   ((cpy06_config_t *) cfg)->bitlimit = CPY06_DEFAULT_BITLIMIT; */
+
+/* /\** */
+/*  * @struct cpy06_sysenv_t */
+/*  * @brief Global information specific to the CPY06 scheme, useful for saving */
+/*  *  communications and/or computation costs. */
+/*  *\/ */
+/* typedef struct { */
+/*   pbc_param_t param; /\**< The pairing parameters. *\/ */
+/*   pairing_t pairing; /\**< The pairing. *\/ */
+/* } cpy06_sysenv_t; */
+
+/* /\**  */
+/*  * @fn groupsig_config_t* cpy06_config_init(void) */
+/*  * @brief Allocates memory for a CPY06 config structure. */
+/*  *  */
+/*  * @return A pointer to the allocated structure or NULL if error. */
+/*  *\/ */
+/* groupsig_config_t* cpy06_config_init(void); */
+
+/* /\**  */
+/*  * @fn int cpy06_config_free(groupsig_config_t *cfg) */
+/*  * @brief Frees the memory of a CPY06 config structure. */
+/*  *  */
+/*  * @param cfg The structure to free. */
+/*  * */
+/*  * @return A pointer to the allocated structure or NULL if error. */
+/*  *\/ */
+/* int cpy06_config_free(groupsig_config_t *cfg); */
+
+
+/* /\**  */
+/*  * @fn int cpy06_sysenv_update(void *data) */
+/*  * @brief Sets the CPY06 internal environment data, i.e., the PBC params and pairings. */
+/*  * */
+/*  * @param data A cpy06_sysenv_t structure containing the PBC params and pairings. */
+/*  *  */
+/*  * @return IOK or IERROR. */
+/*  *\/ */
+/* int cpy06_sysenv_update(void *data); */
+
+/* /\**  */
+/*  * @fn void* cpy06_sysenv_get(void) */
+/*  * @brief Returns the CPY06 specific environment data. */
+/*  *  */
+/*  * @return A pointer to the CPY06 specific environment data or NULL if error. */
+/*  *\/ */
+/* void* cpy06_sysenv_get(void); */
+
+/* /\**  */
+/*  * @fn int cpy06_sysenv_free(void) */
+/*  * @brief Frees the CPY06 internal environment. */
+/*  *  */
+/*  * @return IOK or IERROR. */
+/*  *\/ */
+/* int cpy06_sysenv_free(void); */
 
 /**
- * @struct cpy06_sysenv_t
- * @brief Global information specific to the CPY06 scheme, useful for saving
- *  communications and/or computation costs.
- */
-typedef struct {
-  pbc_param_t param; /**< The pairing parameters. */
-  pairing_t pairing; /**< The pairing. */
-} cpy06_sysenv_t;
-
-/** 
- * @fn groupsig_config_t* cpy06_config_init(void)
- * @brief Allocates memory for a CPY06 config structure.
- * 
- * @return A pointer to the allocated structure or NULL if error.
- */
-groupsig_config_t* cpy06_config_init(void);
-
-/** 
- * @fn int cpy06_config_free(groupsig_config_t *cfg)
- * @brief Frees the memory of a CPY06 config structure.
- * 
- * @param cfg The structure to free.
+ * @fn int cpy06_init()
+ * @brief Initializes the internal variables needed by CPY06.
  *
- * @return A pointer to the allocated structure or NULL if error.
- */
-int cpy06_config_free(groupsig_config_t *cfg);
-
-
-/** 
- * @fn int cpy06_sysenv_update(void *data)
- * @brief Sets the CPY06 internal environment data, i.e., the PBC params and pairings.
- *
- * @param data A cpy06_sysenv_t structure containing the PBC params and pairings.
- * 
  * @return IOK or IERROR.
  */
-int cpy06_sysenv_update(void *data);
 
-/** 
- * @fn void* cpy06_sysenv_get(void)
- * @brief Returns the CPY06 specific environment data.
- * 
- * @return A pointer to the CPY06 specific environment data or NULL if error.
- */
-void* cpy06_sysenv_get(void);
+int cpy06_init();
 
-/** 
- * @fn int cpy06_sysenv_free(void)
- * @brief Frees the CPY06 internal environment.
- * 
+/**
+ * @fn int cpy06_clear()
+ * @brief Frees the memory initialized by cpy06_init.
+ *
  * @return IOK or IERROR.
  */
-int cpy06_sysenv_free(void);
+
+int cpy06_clear();
 
 /** 
  * @fn int cpy06_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, 
- *                     gml_t *gml, groupsig_config_t *config)
+ *                     gml_t *gml)
  * @brief The setup function for the CPY06 scheme.
  *
  * @param[in,out] grpkey An initialized group key, will be updated with the newly
@@ -187,11 +220,10 @@ int cpy06_sysenv_free(void);
  * @param[in,out] mgrkey An initialized manager key, will be updated with the
  *   newly created group's manager key.
  * @param[in,out] gml An initialized GML, will be set to an empty GML.
- * @param[in] config A CPY06 configuration structure.
  * 
  * @return IOK or IERROR.
  */
-int cpy06_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml, groupsig_config_t *config);
+int cpy06_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml);
 
 /**
  * @fn int cpy06_get_joinseq(uint8_t *seq)
@@ -442,31 +474,35 @@ int cpy06_prove_equality_verify(uint8_t *ok, groupsig_proof_t *proof, groupsig_k
  * @brief The set of functions to manage CPY06 groups.
  */
 static const groupsig_t cpy06_groupsig_bundle = {
-  &cpy06_description, /**< Contains the CPY06 scheme description. */
-  &cpy06_config_init, /**< Initializes a CPY06 config structure. */
-  &cpy06_config_free, /**< Frees a CPY06 config structure. */
-  &cpy06_sysenv_update, /**< Sets the PBC params and pairing. */
-  &cpy06_sysenv_get, /**< Returns the CPY06 specific environment data. */
-  &cpy06_sysenv_free, /**<  Frees the PBC params and pairing. */
-  &cpy06_setup, /**< Sets up CPY06 groups. */
-  &cpy06_get_joinseq, /**< Returns the number of messages in the join 
-			    protocol. */
-  &cpy06_get_joinstart, /**< Returns who begins the join protocol. */
-  &cpy06_join_mem, /**< Executes member-side joins. */
-  &cpy06_join_mgr, /**< Executes maanger-side joins. */
-  &cpy06_sign, /**< Issues CPY06 signatures. */
-  &cpy06_verify, /**< Verifies CPY06 signatures. */
-  &cpy06_open, /**< Opens CPY06 signatures. */
-  NULL, /**< CPY06 does not create proofs of opening. */
-  &cpy06_reveal, /**< Reveals the tracing trapdoor from CPY06 signatures. */
-  &cpy06_trace, /**< Traces the issuer of a signature. */ 
-  &cpy06_claim, /**< Claims, in ZK, "ownership" of a signature. */
-  &cpy06_claim_verify, /**< Verifies claims. */
-  &cpy06_prove_equality, /**< Issues "same issuer" ZK proofs for several signatures. */
-  &cpy06_prove_equality_verify, /**< Verifies "same issuer" ZK proofs. */
-  NULL, /**< CPY06 does not provide blinding. */
-  NULL, /**< CPY06 does not provide conversion. */
-  NULL, /**< CPY06 does not provide unblinding. */
+ desc: &cpy06_description, /**< Contains the CPY06 scheme description. */
+ init: &cpy06_init, /**< Initializes a CPY06 config structure. */
+ clear: &cpy06_clear, /**< Frees a CPY06 config structure. */
+ setup: &cpy06_setup, /**< Sets up CPY06 groups. */
+ get_joinseq: &cpy06_get_joinseq, /**< Returns the number of messages in the join 
+				     protocol. */
+ get_joinstart: &cpy06_get_joinstart, /**< Returns who begins the join protocol. */
+ join_mem: &cpy06_join_mem, /**< Executes member-side joins. */
+ join_mgr: &cpy06_join_mgr, /**< Executes maanger-side joins. */
+ sign: &cpy06_sign, /**< Issues CPY06 signatures. */
+ verify: &cpy06_verify, /**< Verifies CPY06 signatures. */
+ open: &cpy06_open, /**< Opens CPY06 signatures. */
+ open_verify: NULL, /**< CPY06 does not create proofs of opening. */
+ reveal: &cpy06_reveal, /**< Reveals the tracing trapdoor from CPY06 signatures. */
+ trace: &cpy06_trace, /**< Traces the issuer of a signature. */ 
+ claim: &cpy06_claim, /**< Claims, in ZK, "ownership" of a signature. */
+ claim_verify: &cpy06_claim_verify, /**< Verifies claims. */
+ prove_equality: &cpy06_prove_equality, /**< Issues "same issuer" ZK proofs for 
+					   several signatures. */
+ prove_equality_verify: &cpy06_prove_equality_verify, /**< Verifies "same
+							 issuer" ZK proofs. */
+ blind: NULL, /**< CPY06 does not provide blinding. */
+ convert: NULL, /**< CPY06 does not provide conversion. */
+ unblind: NULL, /**< CPY06 does not provide unblinding. */
+ identify: NULL,
+ link: NULL,
+ verify_link: NULL,
+ seqlink: NULL,
+ verify_seqlink: NULL
 };
 
 #ifdef __cplusplus
