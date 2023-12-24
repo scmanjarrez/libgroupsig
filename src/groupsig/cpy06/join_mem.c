@@ -24,8 +24,8 @@
 #include "cpy06.h"
 #include "groupsig/cpy06/grp_key.h"
 #include "groupsig/cpy06/mem_key.h"
-#include "bigz.h"
 #include "sys/mem.h"
+#include "shim/pbc_ext.h"
 
 /** 
  * @fn int cpy06_join_mem(groupsig_key_t **memkey, groupsig_key_t *grpkey)
@@ -50,6 +50,7 @@ int cpy06_join_mem(void **mout, groupsig_key_t *memkey,
   cpy06_sysenv_t *cpy06_sysenv;
   cpy06_mem_key_t *cpy06_memkey;
   cpy06_grp_key_t *cpy06_grpkey;
+  int rc;
 
   if(!mout || !memkey || memkey->scheme != GROUPSIG_CPY06_CODE ||
      !grpkey || grpkey->scheme != GROUPSIG_CPY06_CODE) {
@@ -57,28 +58,46 @@ int cpy06_join_mem(void **mout, groupsig_key_t *memkey,
     return IERROR;
   }
 
-  cpy06_sysenv = (cpy06_sysenv_t*) sysenv->data;
   cpy06_memkey = (cpy06_mem_key_t *) memkey->key;
   cpy06_grpkey = (cpy06_grp_key_t *) grpkey->key;
-  cpy06_sysenv = sysenv->data;
+  rc = IOK;
 
   /** @todo A provably secure two party computation for adaptive chosing of 
       random powers should be executed here (see KTY04). */  
   /* x \in_R Z^*_p */
-  element_init_Zr(cpy06_memkey->x, cpy06_sysenv->pairing);
-  element_random(cpy06_memkey->x);
+  if (!(cpy06_memkey->x = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_join_mem);
+  if (pbcext_element_Fr_random(cpy06_memkey->x) == IERROR)
+    GOTOENDRC(IERROR, cpy06_join_mem);
 
   /* By convention here, we will set t and A to 0 to mark that they have not
      been set... (@todo is this a mathematical stupidity?) 
      NOTE: this is needed by some external applications (e.g. caduceus)
   */
   
-  element_init_Zr(cpy06_memkey->t, cpy06_sysenv->pairing);
-  element_set0(cpy06_memkey->t);
-  element_init_G1(cpy06_memkey->A, cpy06_sysenv->pairing);
-  element_set0(cpy06_memkey->A);
+  if (!(cpy06_memkey->t = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_join_mem);
+  /* pbcext_element_set0(cpy06_memkey->t); */
+  if (!(cpy06_memkey->A = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_join_mem);
+  /* pbcext_element_set0(cpy06_memkey->A); */
+
+
+ cpy06_join_mem_end:
   
-  return IOK;
+  if (rc == IERROR) {
+    if (cpy06_memkey->x) {
+      pbcext_element_Fr_free(cpy06_memkey->x); cpy06_memkey->x = NULL;
+    }
+    if (cpy06_memkey->t) {
+      pbcext_element_Fr_free(cpy06_memkey->x); cpy06_memkey->t = NULL;      
+    }
+    if (cpy06_memkey->A) {
+      pbcext_element_G1_free(cpy06_memkey->A); cpy06_memkey->A = NULL;      
+    }    
+  }
+  
+  return rc;
 
 }
 

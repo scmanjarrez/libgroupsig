@@ -175,7 +175,7 @@ int ps16_join_mem(message_t **mout, groupsig_key_t *memkey,
   if (n) { pbcext_element_G1_free(n); n = NULL; }
   if (tau) { pbcext_element_G1_free(tau); tau = NULL; }
   if (ttau) { pbcext_element_G2_free(ttau); ttau = NULL; }
-  if (bn) {	mem_free(bn); bn = NULL; }      
+  if (bn) { mem_free(bn); bn = NULL; }      
   if (btau) { mem_free(btau); btau = NULL; }
   if (bttau) { mem_free(bttau); bttau = NULL; }
   if (bpi) { mem_free(bpi); bpi = NULL; }

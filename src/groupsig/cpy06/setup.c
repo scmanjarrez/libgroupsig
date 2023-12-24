@@ -189,7 +189,7 @@ int cpy06_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
   /* Clear data */
   pbcext_element_Fr_free(inv); inv = NULL;
   
-  return IOK;
+  return rc;
 
 }
 
