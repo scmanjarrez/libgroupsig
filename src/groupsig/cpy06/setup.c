@@ -66,7 +66,7 @@ int cpy06_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
 
   cpy06_grp_key_t *gkey;
   cpy06_mgr_key_t *mkey;
-  element_t inv;
+  pbcext_element_Fr_t *inv;
   unsigned int d;
   int rc;
 
@@ -81,6 +81,7 @@ int cpy06_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
   gkey = grpkey->key;
   mkey = mgrkey->key;
   rc = IOK;
+  inv = NULL;
 
   /* Create group manager private key */
 

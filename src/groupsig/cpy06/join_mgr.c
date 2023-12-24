@@ -57,8 +57,8 @@ int cpy06_join_mgr(void **mout, gml_t *gml,
   cpy06_grp_key_t *cpy06_grpkey;
   cpy06_gml_entry_t *cpy06_entry;
   cpy06_trapdoor_t *cpy06_trap;
-  cpy06_sysenv_t *cpy06_sysenv;
-  element_t gammat,c;
+  pbcext_element_Fr_t *gammat;
+  int rc;
 
   if(!mout || !gml || gml->scheme != GROUPSIG_CPY06_CODE ||
      !mgrkey || mgrkey->scheme != GROUPSIG_CPY06_CODE ||
@@ -70,54 +70,92 @@ int cpy06_join_mgr(void **mout, gml_t *gml,
   cpy06_memkey = (cpy06_mem_key_t *) memkey->key;
   cpy06_mgrkey = (cpy06_mgr_key_t *) mgrkey->key;
   cpy06_grpkey = (cpy06_grp_key_t *) grpkey->key;
-  cpy06_sysenv = sysenv->data;
+  rc = IOK;
+  gammat = NULL;
+  cpy06_entry = NULL;
+  cpy06_trap = NULL;
 
   /* /\* x \in_R Z^*_p (@todo Should be non-adaptively chosen by member) *\/ */
   /* element_init_Zr(cpy06_memkey->x, cpy06_grpkey->pairing); */
   /* element_random(cpy06_memkey->x); */
 
   /* t \in_R Z^*_p */
-  element_init_Zr(cpy06_memkey->t, cpy06_sysenv->pairing);
-  element_random(cpy06_memkey->t);
+  if (!(cpy06_memkey->t = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_join_mgr);
+  if (pbcext_element_Fr_random(cpy06_memkey->t) == IERROR)
+    GOTOENDRC(IERROR, cpy06_join_mgr);
 
   /* A = (q*g_1^x)^(1/t+\gamma) */
-  element_init_Zr(gammat, cpy06_sysenv->pairing);
-  element_add(gammat, cpy06_mgrkey->gamma, cpy06_memkey->t);
-  element_invert(gammat, gammat);
-  element_init_G1(cpy06_memkey->A, cpy06_sysenv->pairing);
-  element_pow_zn(cpy06_memkey->A, cpy06_grpkey->g1, cpy06_memkey->x);
-  element_mul(cpy06_memkey->A, cpy06_memkey->A, cpy06_grpkey->q);
-  element_pow_zn(cpy06_memkey->A,cpy06_memkey->A, gammat);
-  element_clear(gammat);
+  if (!(gamat = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_join_mgr);
+  if (pbcext_element_Fr_add(gammat,
+			    cpy06_mgrkey->gamma,
+			    cpy06_memkey->t) == IERROR)
+    GOTOENDRC(IERROR, cpy06_join_mgr);
+  if (pbcext_element_Fr_inv(gammat, gammat) == IERROR)
+    GOTOENDRC(IERROR, cpy06_join_mgr);
+  if (!(cpy06_memkey->A = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_join_mgr);
+  if (pbcext_element_G1_mul(cpy06_memkey->A,
+			    cpy06_grpkey->g1,
+			    cpy06_memkey->x) == IERROR)
+    GOTOENDRC(IERROR, cpy06_join_mgr);
+  if (pbcext_element__G1_add(cpy06_memkey->A,
+			     cpy06_memkey->A,
+			     cpy06_grpkey->q) == IERROR)
+    GOTOENDRC(IERROR, cpy06_join_mgr);
+  if (pbcext_element_G1_mul(cpy06_memkey->A,
+			    cpy06_memkey->A,
+			    gammat) == IERROR)
+    GOTOENDRC(IERROR, cpy06_join_mgr);
 
   /* Update the gml, if any */
   if(gml) {
 
     /* Initialize the GML entry */
     if(!(cpy06_entry = cpy06_gml_entry_init()))
-      return IERROR;
+      GOTOENDRC(IERROR, cpy06_join_mgr);
 
     cpy06_trap = (cpy06_trapdoor_t *) cpy06_entry->trapdoor->trap;
 
     /* Open trapdoor */
-    element_init_same_as(cpy06_trap->open, cpy06_memkey->A);
-    element_set(cpy06_trap->open, cpy06_memkey->A);
+    if (!(cpy06_trap->open = pbcext_element_G1_init()))
+      GOTOENDRC(IERROR, cpy06_join_mgr);
+    if (pbcext_element_G1_set(cpy06_trap->open, cpy06_memkey->A))
+      GOTOENDRC(IERROR, cpy06_join_mgr);
 
     /* Trace trapdoor */
-    element_init_G1(cpy06_trap->trace, cpy06_sysenv->pairing);
-    element_pow_zn(cpy06_trap->trace, cpy06_grpkey->g1, cpy06_memkey->x);
+    if (!(cpy06_trap->trace = pbcext_element_G1_init()))
+      GOTOENDRC(IERROR, cpy06_join_mgr);
+    if (pbcext_element_G1_mul(cpy06_trap->trace,
+			      cpy06_grpkey->g1,
+			      cpy06_memkey->x))
+      GOTOENDRC(IERROR, cpy06_join_mgr);
 
     /* Currently, CPY06 identities are just uint64_t's */
     *(cpy06_identity_t *) cpy06_entry->id->id = gml->n;
     
-    if(gml_insert(gml, cpy06_entry) == IERROR) {
-      cpy06_gml_entry_free(cpy06_entry); cpy06_entry = NULL;
-      return IERROR;
-    }
+    if(gml_insert(gml, cpy06_entry) == IERROR)
+      GOTOENDRC(IERROR, cpy06_join_mgr);
     
   }
 
-  return IOK;
+ cpy06_join_mgr_end:
+
+  if (rc == IERROR) {
+    if (cpy06_entry) {
+      cpy06_gml_entry_free(cpy06_entry); cpy06_entry = NULL;
+    }
+    if (cpy06_memkey->t) {
+      pbcext_element_Fr_free(cpy06_memkey_t); cpy06_memkey->t = NULL;
+    }
+    if (cpy06_memkey->A) {
+      pbcext_element_G1_free(cpy06_memkey->A); cpy06_memkey->A = NULL;
+    }
+  }
+
+  if (gammat) { pbcext_element_G1_clear(gammat); gammat = NULL; }
+  
+  return rc;
 
 }
 
