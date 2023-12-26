@@ -40,10 +40,13 @@ int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
      that are not specified in the paper but helpful or required for its 
      implementation will be named aux_<name>. */
 
-  element_t B1, B2, B3, B4, B5, B6;
-  element_t r1, r2, aux_r1r2, r3, aux_r3x, d1, d2;
-  element_t br1, br2, bd1, bd2, bt, bx;
-  element_t aux_xbd1, aux_ybd2, aux_e;
+  pbcext_element_G1_t *B1, *B2, *B3, *B4;
+  pbcext_element_GT_t *B5, *B6;
+  pbc_element_Fr_t *r1, *r2, *r3, *d1, *d2;
+  pbcext_element_Fr_t *aux_r1r2, *aux_r3x;
+  pbcext_element_Fr_t *br1, *br2, *bd1, *bd2, *bt, *bx;
+  pbcext_element_G1_t *aux_xbd1, *aux_ybd2;
+  element_t aux_e;
   element_t aux_bd1bd2, aux_br1br2, aux_bx, aux_cmul;
   hash_t *aux_c;
   byte_t *aux_bytes;
@@ -68,93 +71,122 @@ int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   cpy06_sysenv = sysenv->data;
 
   /* r1,r2,r3 \in_R Z_p */
-  element_init_Zr(r1, cpy06_sysenv->pairing);
-  element_random(r1);
-  element_init_Zr(r2, cpy06_sysenv->pairing);
-  element_random(r2);
-  element_init_Zr(r3, cpy06_sysenv->pairing);
-  element_random(r3);
+  if (!(r1 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_Fr_random(r1) == IERROR) GOTOENDRC(IERROR, cpy06_sign);
+  if (!(r2 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_Fr_random(r2) == IERROR) GOTOENDRC(IERROR, cpy06_sign);
+  if (!(r3 = pbcext_element_Fr_init()) == IERROR) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_fr_random(r3) == IERROR) GOTOENDRC(IERROR, cpy06_sign);
 
   /* d1 = t*r1 */
-  element_init_Zr(d1, cpy06_sysenv->pairing);
-  element_mul(d1, cpy06_memkey->t, r1);
+  if (!(d1 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_Fr_mul(d1, cpy06_memkey->t, r1) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
 
   /* d2 = t*r2 */
-  element_init_Zr(d2, cpy06_sysenv->pairing);
-  element_mul(d2, cpy06_memkey->t, r2);
+  if (!(d2 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_Fr_mul(d2, cpy06_memkey->t, r2) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
 
   /* T1 = X^r1 */
-  element_init_G1(cpy06_sig->T1, cpy06_sysenv->pairing);
-  element_pow_zn(cpy06_sig->T1, cpy06_grpkey->x, r1);
+  if (!(cpy06_sig->T1 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_G1_mul(cpy06_sig->T1, cpy06_grpkey->x, r1) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
 
   /* T2 = Y^r2 */
-  element_init_G1(cpy06_sig->T2, cpy06_sysenv->pairing);
-  element_pow_zn(cpy06_sig->T2, cpy06_grpkey->y, r2);
+  if (!(cpy06_sig->T2 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_G1_mul(cpy06_sig->T2, cpy06_grpkey->y, r2) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
 
   /* T3 = A*Z^(r1+r2) */
-  element_init_Zr(aux_r1r2, cpy06_sysenv->pairing);
-  element_add(aux_r1r2, r1, r2);
-  element_init_G1(cpy06_sig->T3, cpy06_sysenv->pairing);
-  element_pow_zn(cpy06_sig->T3, cpy06_grpkey->z, aux_r1r2);
-  element_mul(cpy06_sig->T3, cpy06_sig->T3, cpy06_memkey->A);
+  if (!(aux_r1r2 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_Fr_add(aux_r1r2, r1, r2) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
+  if (!(cpy06_sig->T3 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_G1_mul(cpy06_sig->T3, cpy06_grpkey->z, aux_r1r2) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_G1_add(cpy06_sig->T3,
+			    cpy06_sig->T3,
+			    cpy06_memkey->A) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
 
   /* T4 = W^r3 */
-  element_init_G2(cpy06_sig->T4, cpy06_sysenv->pairing);
-  element_pow_zn(cpy06_sig->T4, cpy06_grpkey->w, r3);
+  if (!(cpy06_sig->T4 = pbcext_element_G2_init()))
+    GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_G2_mul(cpy06_sig->T4, cpy06_grpkey->w, r3) == IERROR)
+    GOTOENDR(IERROR, cpy06_sign);
 
   /* T5 = e(g1, T4)^x = e(g1, W)^(r3*x) */
-  element_init_Zr(aux_r3x, cpy06_sysenv->pairing);
-  element_mul(aux_r3x, r3, cpy06_memkey->x);
-  element_init_GT(cpy06_sig->T5, cpy06_sysenv->pairing);
-  element_pow_zn(cpy06_sig->T5, cpy06_grpkey->T5, aux_r3x);
+  if (!(aux_r3x = element_init_Zr())) GOTOENDRC(IERROR, cpy06_sign);
+  if (element_mul(aux_r3x, r3, cpy06_memkey->x) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
+  if (!(cpy06_sig->T5 = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_GT_pow(cpy06_sig->T5, cpy06_grpkey->T5, aux_r3x) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
 
   /* br1, br2,bd1,bd2,bt,bx \in_R Z_p */
-  element_init_Zr(br1, cpy06_sysenv->pairing);
-  element_random(br1);
-  element_init_Zr(br2, cpy06_sysenv->pairing);
-  element_random(br2);
-  element_init_Zr(bd1, cpy06_sysenv->pairing);
-  element_random(bd1);
-  element_init_Zr(bd2, cpy06_sysenv->pairing);
-  element_random(bd2);
-  element_init_Zr(bt, cpy06_sysenv->pairing);
-  element_random(bt);
-  element_init_Zr(bx, cpy06_sysenv->pairing);
-  element_random(bt);
+  if (!(br1 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_Fr_random(br1) == IERROR) GOTOENDRC(IERROR, cpy06_sign);
+  if (!(br2 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_Fr_random(br2) == IERROR) GOTOENDRC(IERROR, cpy06_sign);
+  if (!(bd1 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_Gr_random(bd1)) GOTOENDRC(IERROR, cpy06_sign);
+  if (!(bd2 = pbcext_element_init_Zr())) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_Fr_random(bd2) == IERROR) GOTOENDRC(IERROR, cpy06_sign);
+  if (!(bt = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_Fr_random(bt) == IERROR) GOTOENDRC(IERROR, cpy06_sign);
+  if (!(bx = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_random(bx) == IERROR) GOTOENDRC(IERROR, cpy06_sign);
 
   /* B1 = X^br1 */
-  element_init_G1(B1, cpy06_sysenv->pairing);
-  element_pow_zn(B1, cpy06_grpkey->x, br1);
+  if (!(B1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, cpy60_sign);
+  if (pbcext_element_G1_mul(B1, cpy06_grpkey->x, br1) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
 
   /* B2 = Y^br2 */
-  element_init_G1(B2, cpy06_sysenv->pairing);
-  element_pow_zn(B2, cpy06_grpkey->y, br2);
+  if (!(B2 = pbcext_element_G1_init())) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_G1_mul(B2, cpy06_grpkey->y, br2) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
   
   /* B3 = T1^bt/X^bd1 */
-  element_init_G1(B3, cpy06_sysenv->pairing);
-  element_pow_zn(B3, cpy06_sig->T1, bt);
-  element_init_G1(aux_xbd1, cpy06_sysenv->pairing);
-  element_pow_zn(aux_xbd1, cpy06_grpkey->x, bd1);
-  element_div(B3, B3, aux_xbd1);
+  if (!(B3 = pbcext_element_G1_init())) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_G1_mul(B3, cpy06_sig->T1, bt) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
+  if (!(aux_xbd1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_G1_mul(aux_xbd1, cpy06_grpkey->x, bd1) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_G1_sub(B3, B3, aux_xbd1) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
 
   /* B4 = T2^bt/Y^bd2 */
-  element_init_G1(B4, cpy06_sysenv->pairing);
-  element_pow_zn(B4, cpy06_sig->T2, bt);
-  element_init_G1(aux_ybd2, cpy06_sysenv->pairing);
-  element_pow_zn(aux_ybd2, cpy06_grpkey->y, bd2);
-  element_div(B4, B4, aux_ybd2);
+  if (!(B4 = pbcext_element_G1_init())) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_G1_mul(B4, cpy06_sig->T2, bt) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
+  if (!(aux_ybd2 = pbcext_element_G1_init())) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_G1_mul(aux_ybd2, cpy06_grpkey->y, bd2) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_G1_sub(B4, B4, aux_ybd2) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
 
   /* B5 = e(g1,T4)^bx */
-  element_init_GT(B5, cpy06_sysenv->pairing);
-  element_pairing(B5, cpy06_grpkey->g1, cpy06_sig->T4);
-  element_pow_zn(B5, B5, bx);
+  if (!(B5 = pbcext_element_GT_init())) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_pairing(B5, cpy06_grpkey->g1, cpy06_sig->T4) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_GT_pow(B5, B5, bx) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
 
   /* B6 = e(T3,g2)^bt * e(z,g2)^(-bd1-bd2) * e(z,r)^(-br1-br2) * e(g1,g2)^(-bx) */
   
   /* [temp] B6 = e(T3,g2)^bt */
-  element_init_GT(B6, cpy06_sysenv->pairing);
-  element_pairing(B6, cpy06_sig->T3, cpy06_grpkey->g2);
-  element_pow_zn(B6, B6, bt);
+  if (!(B6 = pbcext_element_GT_init())) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_pairing(B6, cpy06_sig->T3, cpy06_grpkey->g2) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_GT_pow(B6, B6, bt) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
 
   /* aux_e: the rest (with the help of the optimizations is easier...) */
   

@@ -28,7 +28,7 @@
 #include "groupsig/cpy06/gml.h"
 #include "groupsig/cpy06/identity.h"
 #include "groupsig/cpy06/trapdoor.h"
-#include "wrappers/pbc_ext.h"
+#include "shim/pbc_ext.h"
 #include "sys/mem.h"
 
 int cpy06_get_joinseq(uint8_t *seq) {

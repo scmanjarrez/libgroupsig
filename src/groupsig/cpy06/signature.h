@@ -53,18 +53,18 @@ typedef struct {
   uint8_t scheme; /**< Metainformation: the gs scheme this key belongs to. */
   /* pbc_param_t param; /\**< PBC parameters. *\/ */
   /* pairing_t pairing; /\**< PBC pairing data. *\/ */
-  element_t T1;
-  element_t T2;
-  element_t T3;
-  element_t T4;
-  element_t T5;
-  element_t c;
-  element_t sr1;
-  element_t sr2;
-  element_t sd1;
-  element_t sd2;
-  element_t sx;
-  element_t st;
+  pbcext_element_G1_t *T1;
+  pbcext_element_G1_t *T2;
+  pbcext_element_G1_t *T3;
+  pbcext_element_G2_t *T4;
+  pbcext_element_t *T5;
+  pbcext_element_t *c;
+  pbcext_element_t *sr1;
+  pbcext_element_t *sr2;
+  pbcext_element_t *sd1;
+  pbcext_element_t *sd2;
+  pbcext_element_t *sx;
+  pbcext_element_t *st;
 } cpy06_signature_t;
 
 /** 

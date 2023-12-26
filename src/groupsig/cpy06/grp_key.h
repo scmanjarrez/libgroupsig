@@ -35,19 +35,19 @@
  */
 typedef struct {
   element_t g1; /**< Tr(g2) */
-  element_t g2; /**< Random generator of G2 */
-  element_t q; /**< Q \in_R G1 */
-  element_t r; /**< R = g2^\gamma */
-  element_t w; /**< W \in_R G2 \setminus 1 */
-  element_t x; /**< X = Z^(\xi_1^-1) */
-  element_t y; /**< Y = Z^(\xi_2^-1) */
-  element_t z; /**< Z \in_R G1 \setminus 1 */
+  pbcext_element_G2_t *g2; /**< Random generator of G2 */
+  pbcext_element_G1_t *q; /**< Q \in_R G1 */
+  pbcext_element_G2_t *r; /**< R = g2^\gamma */
+  pbcext_element_G2_t *w; /**< W \in_R G2 \setminus 1 */
+  pbcext_element_G1_t *x; /**< X = Z^(\xi_1^-1) */
+  pbcext_element_G1_t *y; /**< Y = Z^(\xi_2^-1) */
+  pbcext_element_G1_t *z; /**< Z \in_R G1 \setminus 1 */
   /* Optimizations */
-  element_t T5; /**< T5 = e(g1, W). Used in sign. */
-  element_t e2; /**< e2 = e(z,g2). Used in sign. */
-  element_t e3; /**< e3 = e(z,r). Used in sign. */
-  element_t e4; /**< e4 = e(g1,g2). Used in sign. */
-  element_t e5; /**< e5 = e(q,g2). Used in verify. */
+  pbcext_element_GT_t *T5; /**< T5 = e(g1, W). Used in sign. */
+  pbcext_element_GT_t *e2; /**< e2 = e(z,g2). Used in sign. */
+  pbcext_element_GT_t *e3; /**< e3 = e(z,r). Used in sign. */
+  pbcext_element_GT_t *e4; /**< e4 = e(g1,g2). Used in sign. */
+  pbcext_element_GT_t *e5; /**< e5 = e(q,g2). Used in verify. */
 } cpy06_grp_key_t;
 
 /**

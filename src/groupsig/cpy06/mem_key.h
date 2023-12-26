@@ -44,9 +44,9 @@
  * @brief CPY06 member keys.
  */
 typedef struct {
-  element_t x; /**< x \in_R Z^*_p (non-adaptively chosen by member) */
-  element_t t; /**< t \in_R Z^*_p (chosen by manager) */
-  element_t A; /**< A = (q*g_1^x)^(1/t+\gamma) */
+  pbcext_element_Fr_t *x; /**< x \in_R Z^*_p (non-adaptively chosen by member) */
+  pbcext_element_Fr_t *t; /**< t \in_R Z^*_p (chosen by manager) */
+  pbcext_element_G1_t *A; /**< A = (q*g_1^x)^(1/t+\gamma) */
 } cpy06_mem_key_t;
 
 /** 

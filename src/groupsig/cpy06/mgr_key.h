@@ -48,9 +48,9 @@
  * However, we combine both roles into the group manager, for simplicity.
  */
 typedef struct {
-  element_t xi1; /**< Exponent for tracing signatures. \xi_1 \in_R Z^*_p */
-  element_t xi2; /**< Exponent for tracing signatures. \xi_2 \in_R Z^*_p */
-  element_t gamma; /**< Exponent for generating member keys. \gamma \in_R Z^*_p */
+  pbcext_element_Fr_t *xi1; /**< Exponent for tracing signatures. \xi_1 \in_R Z^*_p */
+  pbcext_element_Fr_t *xi2; /**< Exponent for tracing signatures. \xi_2 \in_R Z^*_p */
+  pbcext_element_Fr_t *gamma; /**< Exponent for generating member keys. \gamma \in_R Z^*_p */
 } cpy06_mgr_key_t;
 
 /** 
