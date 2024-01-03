@@ -57,14 +57,14 @@ typedef struct {
   pbcext_element_G1_t *T2;
   pbcext_element_G1_t *T3;
   pbcext_element_G2_t *T4;
-  pbcext_element_t *T5;
-  pbcext_element_t *c;
-  pbcext_element_t *sr1;
-  pbcext_element_t *sr2;
-  pbcext_element_t *sd1;
-  pbcext_element_t *sd2;
-  pbcext_element_t *sx;
-  pbcext_element_t *st;
+  pbcext_element_GT_t *T5;
+  pbcext_element_Fr_t *c;
+  pbcext_element_Fr_t *sr1;
+  pbcext_element_Fr_t *sr2;
+  pbcext_element_Fr_t *sd1;
+  pbcext_element_Fr_t *sd2;
+  pbcext_element_Fr_t *sx;
+  pbcext_element_Fr_t *st;
 } cpy06_signature_t;
 
 /** 
