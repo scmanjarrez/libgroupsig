@@ -320,8 +320,8 @@ char* ps16_mgr_key_to_string(groupsig_key_t *key) {
 
  mgr_key_to_string_error:
 
-  if(x){free(x), x = NULL;}
-  if(y){free(y), y = NULL;}
+  if(x){mem_free(x), x = NULL;}
+  if(y){mem_free(y), y = NULL;}
 
   return mgr_key;
 }

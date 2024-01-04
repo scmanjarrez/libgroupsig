@@ -21,11 +21,10 @@
 #define _CPY06_MGR_KEY_H
 
 #include <stdint.h>
-#include <pbc/pbc.h>
 #include "types.h"
-#include "sysenv.h"
 #include "cpy06.h"
 #include "include/mgr_key.h"
+#include "shim/pbc_ext.h"
 
 /**
  * @def CPY06_MGR_KEY_BEGIN_MSG
@@ -84,30 +83,29 @@ int cpy06_mgr_key_free(groupsig_key_t *key);
 int cpy06_mgr_key_copy(groupsig_key_t *dst, groupsig_key_t *src);
 
 /** 
- * @fn int cpy06_mgr_key_get_size_in_format(groupsig_key_t *key, groupsig_key_format_t format)
+ * @fn int cpy06_mgr_key_get_size_in_format(groupsig_key_t *key)
  * @brief Returns the size that the given key would require in order to be
- *  represented using the specified format.
+ *  stored in an array of bytes.
  *
  * @param[in] key The key.
- * @param[in] format The format. The list of supported key formats in the CPY06
- *  scheme are defined in @ref cpy06.h.
  *
  * @return The required number of bytes, or -1 if error.
  */
-int cpy06_mgr_key_get_size_in_format(groupsig_key_t *key, groupsig_key_format_t format);
+int cpy06_mgr_key_get_size(groupsig_key_t *key);
 
 /**
- * @fn int cpy06_mgr_key_export(groupsig_key_t *key, groupsig_key_format_t format, 
- *                              void *dst)
- * @brief Exports the given manager key to the specified destination, using the
- *  specified format.
+ * @fn int cpy06_mgr_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key)
+ * @brief Writes a bytearray representation of the given key, with format:
  *
- * @param[in] key The key to export.
- * @param[in] format The format to use. The supported formats for CPY06 keys are
- *  specified in @ref cpy06.h.
- * @param[in] dst The destination information.
- * 
- * @return IOK or IERROR.
+ *  | CPY06_CODE | KEYTYPE | size_params | params | size_xi1 | xi1 | size_xi2 |
+ *  | xi2 | size_gamma | gamma |
+ *
+ * @param[in,out] bytes A pointer to the array that will contain the exported
+ *  manager key. If <i>*bytes</i> is NULL, memory will be internally allocated.
+ * @param[in,out] size Will be set to the number of bytes written in <i>*bytes</i>.
+ * @param[in] key The manager key to export.
+ *
+ * @return IOK or IERROR
  */
 int cpy06_mgr_key_export(groupsig_key_t *key, groupsig_key_format_t format, void *dst);
 
@@ -140,14 +138,14 @@ char* cpy06_mgr_key_to_string(groupsig_key_t *key);
  * @brief Set of functions for CPY06 manager keys management.
  */
 static const mgr_key_handle_t cpy06_mgr_key_handle = {
-  GROUPSIG_CPY06_CODE, /**< The scheme code. */
-  &cpy06_mgr_key_init, /**< Initializes manager keys. */
-  &cpy06_mgr_key_free, /**< Frees manager keys. */
-  &cpy06_mgr_key_copy, /**< Copies manager keys. */
-  &cpy06_mgr_key_export, /**< Exports manager keys. */
-  &cpy06_mgr_key_import, /**< Imports manager keys. */
-  &cpy06_mgr_key_to_string, /**< Converts manager keys to printable strings. */
-  &cpy06_mgr_key_get_size_in_format,
+  .code = GROUPSIG_CPY06_CODE, /**< The scheme code. */
+  .init = &cpy06_mgr_key_init, /**< Initializes manager keys. */
+  .free = &cpy06_mgr_key_free, /**< Frees manager keys. */
+  .copy = &cpy06_mgr_key_copy, /**< Copies manager keys. */
+  .gexport = &cpy06_mgr_key_export, /**< Exports manager keys. */
+  .gimport = &cpy06_mgr_key_import, /**< Imports manager keys. */
+  .to_string = &cpy06_mgr_key_to_string, /**< Converts manager keys to printable strings. */
+  .get_size = &cpy06_mgr_key_get_size,
 };
 
 #endif
