@@ -29,54 +29,11 @@
 #include "sysenv.h"
 #include "sys/mem.h"
 #include "misc/misc.h"
-#include "exim.h"
-#include "wrappers/base64.h"
-#include "wrappers/pbc_ext.h"
+#include "shim/base64.h"
+#include "shim/pbc_ext.h"
 
 #include "cpy06.h"
 #include "groupsig/cpy06/grp_key.h"
-
-/* This breaks encapsulation, but is needed to get the number of bits of
-   the elements in the group. */
-/* From $PBC/ecc/d_param.c */
-struct d_param_s {
-  mpz_t q;       // curve defined over F_q
-  mpz_t n;       // has order n (= q - t + 1) in F_q
-  mpz_t h;       // h * r = n, r is prime
-  mpz_t r;
-  mpz_t a, b;    // curve equation is y^2 = x^3 + ax + b
-  int k;         // embedding degree
-  mpz_t nk;      // order of curve over F_q^k
-  mpz_t hk;      // hk * r^2 = nk
-  mpz_t *coeff;  // coefficients of polynomial used to extend F_q by k/2
-  mpz_t nqr;     // a quadratic nonresidue in F_q^d that lies in F_q
-};
-
-typedef struct d_param_s *d_param_ptr;
-
-/* static (private) functions */
-
-/** 
- * @fn static int _is_supported_format(groupsig_key_format_t format)
- * @brief Returns 1 if the specified format is supported by this scheme. 0 if not.
- *
- * @param[in] format The format to be "tested"
- * 
- * @return 1 if the specified format is supported, 0 if not.
- */
-static int _is_supported_format(groupsig_key_format_t format) {
-
-  int i;
-
-  for(i=0; i<CPY06_SUPPORTED_KEY_FORMATS_N; i++) {
-    if(CPY06_SUPPORTED_KEY_FORMATS[i] == format) {
-      return 1;
-    }
-  }
-
-  return 0;
-
-}
 
 
 /**
@@ -397,6 +354,7 @@ static exim_handle_t _exim_h = {
 groupsig_key_t* cpy06_grp_key_init() {
 
   groupsig_key_t *key;
+  cpy06_grp_key_t *cpy06_key;
 
   if(!(key = (groupsig_key_t *) mem_malloc(sizeof(groupsig_key_t)))) {
     return NULL;
@@ -408,6 +366,18 @@ groupsig_key_t* cpy06_grp_key_init() {
   }
 
   key->scheme = GROUPSIG_CPY06_CODE;
+  cpy06_key = key->key;
+  cpy06_key->q = NULL;
+  cpy06_key->r = NULL;
+  cpy06_key->w = NULL;
+  cpy06_key->x = NULL;
+  cpy06_key->y = NULL;
+  cpy06_key->z = NULL;
+  cpy06_key->T5 = NULL;
+  cpy06_key->e2 = NULL;
+  cpy06_key->e3  = NULL;
+  cpy06_key->e4 = NULL;
+  cpy06_key->e5 = NULL;
   
   return key;
   
@@ -429,21 +399,40 @@ int cpy06_grp_key_free(groupsig_key_t *key) {
   }
 
   if(key->key) {
-
     cpy06_key = key->key;
-    element_clear(cpy06_key->g1);
-    element_clear(cpy06_key->g2);
-    element_clear(cpy06_key->q);
-    element_clear(cpy06_key->r);
-    element_clear(cpy06_key->w);
-    element_clear(cpy06_key->x);
-    element_clear(cpy06_key->y);
-    element_clear(cpy06_key->z);
-    element_clear(cpy06_key->T5);
-    element_clear(cpy06_key->e2);
-    element_clear(cpy06_key->e3);
-    element_clear(cpy06_key->e4);
-    element_clear(cpy06_key->e5);
+    if (cpy06_key->q) {
+      pbcext_element_G1_free(cpy06_key->q); cpy06_key->q = NULL;
+    }
+    if (cpy06_key->r) {
+      pbcext_element_G2_free(cpy06_key->r); cpy06_key->r = NULL;
+    }
+    if (cpy06_key->w) {
+      pbcext_element_G2_free(cpy06_key->w); cpy06_key->w = NULL;
+    }
+    if (cpy06_key->x) {
+      pbcext_element_G1_free(cpy06_key->x); cpy06_key->x = NULL;
+    }
+    if (cpy06_key->y) {
+      pbcext_element_G1_free(cpy06_key->y); cpy06_key->y = NULL;
+    }
+    if (cpy06_key->z) {    
+      pbcext_element_G1_free(cpy06_key->z); cpy06_key->z = NULL;
+    }
+    if (cpy06_key->T5) {
+      pbcext_element_GT_free(cpy06_key->T5); cpy06_key->T5 = NULL;
+    }
+    if (cpy06_key->e2) {
+      pbcext_element_GT_free(cpy06_key->e2); cpy06_key->e2 = NULL;
+    }
+    if (cpy06_key->e3) {
+      pbcext_element_GT_free(cpy06_key->e3); cpy06_key->e3 = NULL;
+    }
+    if (cpy06_key->e4) {
+      cpy06_element_GT_free(cpy06_key->e4); cpy06_key->e4 = NULL;
+    }
+    if (cpy06_key->e5) {
+      cpy06_element_GT_free(cpy06_key->e5); cpy06_key->e5 = NULL;
+    }
     mem_free(key->key);
     key->key = NULL;
   }
@@ -457,6 +446,7 @@ int cpy06_grp_key_free(groupsig_key_t *key) {
 int cpy06_grp_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
 
   cpy06_grp_key_t *cpy06_dst, *cpy06_src;
+  int rc;
 
   if(!dst || dst->scheme != GROUPSIG_CPY06_CODE ||
      !src || src->scheme != GROUPSIG_CPY06_CODE) {
@@ -466,171 +456,502 @@ int cpy06_grp_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
 
   cpy06_dst = dst->key;
   cpy06_src = src->key;
+  rc = IOK;
 
   /* Copy the elements */
-  element_init_same_as(cpy06_dst->g1, cpy06_src->g1);
-  element_set(cpy06_dst->g1, cpy06_src->g1);
-  element_init_same_as(cpy06_dst->g2, cpy06_src->g2);
-  element_set(cpy06_dst->g2, cpy06_src->g2);
-  element_init_same_as(cpy06_dst->q, cpy06_src->q);
-  element_set(cpy06_dst->q, cpy06_src->q);  
-  element_init_same_as(cpy06_dst->r, cpy06_src->r);
-  element_set(cpy06_dst->r, cpy06_src->r);
-  element_init_same_as(cpy06_dst->w, cpy06_src->w);
-  element_set(cpy06_dst->w, cpy06_src->w);
-  element_init_same_as(cpy06_dst->x, cpy06_src->x);
-  element_set(cpy06_dst->x, cpy06_src->x);    
-  element_init_same_as(cpy06_dst->y, cpy06_src->y);
-  element_set(cpy06_dst->y, cpy06_src->y);  
-  element_init_same_as(cpy06_dst->z, cpy06_src->z);
-  element_set(cpy06_dst->z, cpy06_src->z);
-  element_init_same_as(cpy06_dst->T5, cpy06_src->T5);
-  element_set(cpy06_dst->T5, cpy06_src->T5);
-  element_init_same_as(cpy06_dst->e2, cpy06_src->e2);
-  element_set(cpy06_dst->e2, cpy06_src->e2);
-  element_init_same_as(cpy06_dst->e3, cpy06_src->e3);
-  element_set(cpy06_dst->e3, cpy06_src->e3);
-  element_init_same_as(cpy06_dst->e4, cpy06_src->e4);
-  element_set(cpy06_dst->e4, cpy06_src->e4);
-  element_init_same_as(cpy06_dst->e5, cpy06_src->e5);
-  element_set(cpy06_dst->e5, cpy06_src->e5);
+  if (!(cpy06_dst->q = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);
+  if (pbcext_element_G1_set(cpy06_dst->q, cpy06_src->q) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);
+  if (!(cpy06_dst->r = pbcext_element_G2_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);
+  if (pbcext_element_G2_set(cpy06_dst->r, cpy06_src->r) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);  
+  if (!(cpy06_dst->w = pbcext_element_G2_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);
+  if (pbcext_element_G2_set(cpy06_dst->w, cpy06_src->w) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);
+  if (!(cpy06_dst->x = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);
+  if (pbcext_element_set(cpy06_dst->x, cpy06_src->x) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);  
+  if (!(cpy06_dst->y = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);  
+  if (pbcext_element_G1_set(cpy06_dst->y, cpy06_src->y) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);  
+  if (!(cpy06_dst->z = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);  
+  if (pbcext_element_G1_set(cpy06_dst->z, cpy06_src->z) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);
+  if (!(cpy06_dst->T5 = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);  
+  if (pbcext_element_GT_set(cpy06_dst->T5, cpy06_src->T5) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);  
+  if (!(cpy06_dst->e2 = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);  
+  if (pbcext_element_GT_set(cpy06_dst->e2, cpy06_src->e2) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);  
+  if (!(cpy06_dst->e3 = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);  
+  if (pbcext_element_GT_set(cpy06_dst->e3, cpy06_src->e3) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);  
+  if (!(cpy06_dst->e4 = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);  
+  if (pbcext_element_GT_set(cpy06_dst->e4, cpy06_src->e4) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);  
+  if (!(cpy06_dst->e5 = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);  
+  if (pbcext_element_GT_set(cpy06_dst->e5, cpy06_src->e5) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_copy);
 
-  return IOK;
+ cpy06_grp_key_copy_end:
 
-}
-
-int cpy06_grp_key_get_size_in_format(groupsig_key_t *key, groupsig_key_format_t format) {
-  if(!key || key->scheme != GROUPSIG_CPY06_CODE ||
-     !_is_supported_format(format)) {
-    LOG_EINVAL(&logger, __FILE__, "cpy06_grp_key_get_size_in_format", __LINE__, LOGERROR);
-    return -1;
+  if (rc == IERROR) {
+    if (cpy06_dst->q) {
+      pbcext_element_G1_free(cpy06_dst->q); cpy06_dst->q = NULL;
+    }
+    if (cpy06_dst->r) {
+      pbcext_element_G2_free(cpy06_dst->r); cpy06_dst->r = NULL;
+    }
+    if (cpy06_dst->w) {
+      pbcext_element_G2_free(cpy06_dst->w); cpy06_dst->w = NULL;
+    }
+    if (cpy06_dst->x) {
+      pbcext_element_G1_free(cpy06_dst->x); cpy06_dst->x = NULL;
+    }
+    if (cpy06_dst->y) {
+      pbcext_element_G1_free(cpy06_dst->y); cpy06_dst->y = NULL;
+    }
+    if (cpy06_dst->z) {
+      pbcext_element_G1_free(cpy06_dst->z); cpy06_dst->z = NULL;
+    }
+    if (cpy06_dst->T5) {
+      pbcext_element_GT_free(cpy06_dst->T5); cpy06_dst->T5 = NULL;
+    }
+    if (cpy06_dst->e2) {
+      pbcext_element_GT_free(cpy06_dst->e2); cpy06_dst->e2 = NULL;
+    }
+    if (cpy06_dst->e3) {
+      pbcext_element_GT_free(cpy06_dst->e3); cpy06_dst->e3 = NULL;
+    }
+    if (cpy06_dst->e4) {
+      pbcext_element_GT_free(cpy06_dst->e4); cpy06_dst->e4 = NULL;
+    }
+    if (cpy06_dst->e5) {
+      pbcext_element_GT_free(cpy06_dst->e5); cpy06_dst->e5 = NULL;
+    }    
   }
-  exim_t wrap = {key->key, &_exim_h };
-  return exim_get_size_in_format(&wrap, format);
+  
+  return rc;
 
 }
 
-int cpy06_grp_key_export(groupsig_key_t *key, groupsig_key_format_t format, void *dst) {
+int cpy06_grp_key_get_size(groupsig_key_t *key) {
 
-  exim_t wrap;
+  cpy06_grp_key_t *cpy06_key;
+  uint64_t size64, sq, sr, sw, sx, sy, sz, sT5, se2, se3, se4, se5;
   
   if(!key || key->scheme != GROUPSIG_CPY06_CODE) {
+    LOG_EINVAL(&logger, __FILE__, "cpy06_grp_key_get_size", __LINE__, LOGERROR);
+    return -1;
+  }
+
+  cpy06_key = key->key;
+
+  sq = sr = sw = sx = sy = sz = sT5 = se2 = se3 = se4 = se5 = 0;
+
+  if(pbcext_element_G1_byte_size(&sq) == IERROR) return -1;
+  if(pbcext_element_G2_byte_size(&sr) == IERROR) return -1;
+  if(pbcext_element_G2_byte_size(&sw) == IERROR) return -1;
+  if(pbcext_element_G1_byte_size(&sx) == IERROR) return -1;
+  if(pbcext_element_G1_byte_size(&sy) == IERROR) return -1;  
+  if(pbcext_element_G1_byte_size(&sz) == IERROR) return -1;
+  if(pbcext_element_GT_byte_size(&sT5) == IERROR) return -1;
+  if(pbcext_element_GT_byte_size(&se2) == IERROR) return -1;
+  if(pbcext_element_GT_byte_size(&se3) == IERROR) return -1;
+  if(pbcext_element_GT_byte_size(&se4) == IERROR) return -1;
+  if(pbcext_element_GT_byte_size(&se5) == IERROR) return -1;  
+
+  size64 = sizeof(uint8_t)*2 + sizeof(int)*11 + sq + sr + sw + sx + sy + sz +
+    sT5 + se2 + se3 + se4 + se5;
+  if (size64 > INT_MAX) return -1;
+
+  return (int) size64;
+
+}
+
+int cpy06_grp_key_export(byte_t **bytes,
+			 uint32_t *size,
+			 groupsig_key_t *key) {
+
+  cpy06_grp_key_t *cpy06_key;
+  byte_t *_bytes, *__bytes;
+  uint64_t len;
+  int _size, ctr, rc;
+  
+  if(!bytes ||
+     !size ||
+     !key || key->scheme != GROUPSIG_CPY06_CODE) {
     LOG_EINVAL(&logger, __FILE__, "cpy06_grp_key_export", __LINE__, LOGERROR);
     return IERROR;
   }
 
-  /* See if the current scheme supports the given format */
-  if(!_is_supported_format(format)) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "cpy06_grp_key_export", __LINE__,
-  		   "The specified format is not supported.", LOGERROR);
+  rc = IOK;
+  ctr = 0;
+  cpy06_key = key->key;
+
+  /* Get the number of bytes to represent the key */
+  if ((_size = cpy06_grp_key_get_size(key)) == -1) {
     return IERROR;
   }
 
-  /* Apply the specified conversion */
-  wrap.eximable = key->key;
-  wrap.funcs = &_exim_h;
-  return exim_export(&wrap, format, dst);
+  if(!(_bytes = mem_malloc(sizeof(byte_t)*_size))) {
+    return IERROR;
+  }
+
+  /* Dump GROUPSIG_CPY06_CODE */
+  _bytes[ctr++] = GROUPSIG_CPY06_CODE;
+
+  /* Dump key type */
+  _bytes[ctr++] = GROUPSIG_KEY_GRPKEY;
+
+  /* Dump q */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_G1_bytes(&__bytes, &len, cpy06_key->q) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_export);
+  ctr += len;
+
+  /* Dump r */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_G2_bytes(&__bytes, &len, cpy06_key->r) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_export);
+  ctr += len;
+
+  /* Dump w */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_G2_bytes(&__bytes, &len, cpy06_key->w) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_export);
+  ctr += len;
+
+  /* Dump x */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_G1_bytes(&__bytes, &len, cpy06_key->x) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_export);
+  ctr += len;
+
+  /* Dump y */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_G1_bytes(&__bytes, &len, cpy06_key->y) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_export);
+  ctr += len;
+
+  /* Dump z */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_G1_bytes(&__bytes, &len, cpy06_key->z) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_export);
+  ctr += len;
+
+  /* Dump T5 */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_GT_bytes(&__bytes, &len, cpy06_key->T5) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_export);
+  ctr += len;
+
+  /* Dump e2 */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_GT_bytes(&__bytes, &len, cpy06_key->e2) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_export);
+  ctr += len;
+
+  /* Dump e3 */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_GT_bytes(&__bytes, &len, cpy06_key->e3) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_export);
+  ctr += len;
+
+  /* Dump e4 */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_GT_bytes(&__bytes, &len, cpy06_key->e4) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_export);
+  ctr += len;
+
+  /* Dump e5 */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_GT_bytes(&__bytes, &len, cpy06_key->e5) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_export);
+  ctr += len;  
+
+  /* Prepare the return */
+  if(!*bytes) {
+    *bytes = _bytes;
+  } else {
+    memcpy(*bytes, _bytes, ctr);
+    mem_free(_bytes); _bytes = NULL;
+  }
+  
+  /* Sanity check */
+  if (ctr != _size) {
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "cpy06_grp_key_export", __LINE__,
+                      EDQUOT, "Unexpected size.", LOGERROR);
+    GOTOENDRC(IERROR, cpy06_grp_key_export);
+  }
+
+  *size = ctr;
+
+ cpy06_grp_key_export_end:
+
+  if (rc == IERROR) {
+    if(_bytes) { mem_free(_bytes); _bytes = NULL; }
+  }
+
+  return rc;  
   
 }
 
-groupsig_key_t* cpy06_grp_key_import(groupsig_key_format_t format, void *source) {
+groupsig_key_t* cpy06_grp_key_import(byte_t *source, uint32_t size) {
 
-  if(!source) {
+  groupsig_key_t *key;
+  cpy06_grp_key_t *cpy06_key;
+  uint64_t len;
+  byte_t scheme, type;
+  int rc, ctr;
+
+  if(!source || !size) {
     LOG_EINVAL(&logger, __FILE__, "cpy06_grp_key_import", __LINE__, LOGERROR);
     return NULL;
   }
 
-  /* See if the current scheme supports the given format */
-  if(!_is_supported_format(format)) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "cpy06_grp_key_import", __LINE__,
-  		   "The specified format is not supported.", LOGERROR);
+  rc = IOK;
+  ctr = 0;
+
+  if(!(key = cpy06_grp_key_init())) {
     return NULL;
   }
 
-  /* Apply the specified conversion */
-  exim_t wrap = {NULL, &_exim_h };
-  if(exim_import(format, source, &wrap) == IOK){
-    return wrap.eximable;
+  cpy06_key = key->key;
+
+  /* First byte: scheme */
+  scheme = source[ctr++];
+  if(scheme != key->scheme) {
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "cpy06_grp_key_import", __LINE__,
+                      EDQUOT, "Unexpected key scheme.", LOGERROR);
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
   }
 
-  return NULL;
+  /* Next  byte: key type */
+  type = source[ctr++];
+  if(type != GROUPSIG_KEY_GRPKEY) {
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "cpy06_grp_key_import", __LINE__,
+                      EDQUOT, "Unexpected key scheme.", LOGERROR);
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  }
+
+  /* Get q */
+  if(!(cpy06_key->q = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  if(pbcext_get_element_G1_bytes(cpy06_key->q, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  ctr += len;
+
+  /* Get r */
+  if(!(cpy06_key->r = pbcext_element_G2_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  if(pbcext_get_element_G2_bytes(cpy06_key->r, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  ctr += len;
+
+  /* Get w */
+  if(!(cpy06_key->w = pbcext_element_G2_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  if(pbcext_get_element_G2_bytes(cpy06_key->w, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  ctr += len;
+
+  /* Get x */
+  if(!(cpy06_key->x = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  if(pbcext_get_element_G1_bytes(cpy06_key->x, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  ctr += len;
+
+  /* Get y */
+  if(!(cpy06_key->y = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  if(pbcext_get_element_G1_bytes(cpy06_key->y, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  ctr += len;
+
+  /* Get z */
+  if(!(cpy06_key->z = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  if(pbcext_get_element_G1_bytes(cpy06_key->z, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  ctr += len;
+
+  /* Get T5 */
+  if(!(cpy06_key->T5 = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  if(pbcext_get_element_GT_bytes(cpy06_key->T5, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  ctr += len;
+
+  /* Get e2 */
+  if(!(cpy06_key->e2 = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  if(pbcext_get_element_GT_bytes(cpy06_key->e2, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  ctr += len;
+
+  /* Get e3 */
+  if(!(cpy06_key->e3 = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  if(pbcext_get_element_GT_bytes(cpy06_key->e3, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  ctr += len;
+
+  /* Get e4 */
+  if(!(cpy06_key->e4 = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  if(pbcext_get_element_GT_bytes(cpy06_key->e4, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  ctr += len;
+
+  /* Get e5 */
+  if(!(cpy06_key->e5 = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  if(pbcext_get_element_GT_bytes(cpy06_key->e5, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_import);
+  ctr += len;  
+
+ cpy06_grp_key_import_end:
+  
+  if(rc == IERROR && key) { cpy06_grp_key_free(key); key = NULL; }
+  if(rc == IOK) return key;
+
+  return NULL;  
 
 }
 
 char* cpy06_grp_key_to_string(groupsig_key_t *key) { 
 
-  struct stat buf;
-  uint64_t len;
-  size_t b;
-  cpy06_grp_key_t *cpy06_key;
-  cpy06_sysenv_t *cpy06_sysenv;
-  FILE *fd;
-  char *skey, *tmpnm, *pbc_str;
+  char *q, *r, *w, *x, *y, *z, *T5, *e2, *e3, *e4, *e5, *skey;
+  uint64_t q_len, r_len, w_len, x_len, y_len, z_len;
+  uint64_t T5_len, e2_len, e3_len, e4_len, e5_len;
+  uint32_t skey_len;
+  int rc;
 
-  if(!key) {
-    LOG_EINVAL(&logger, __FILE__, "cpy06_grp_key_to_string", __LINE__, LOGERROR);
-    return NULL;
-  }
-
-  cpy06_key = (cpy06_grp_key_t *) key->key;
-  cpy06_sysenv = sysenv->data;
-
-  /* Get the size of the key (determined by the q value of the PBC struct) */
-  b = mpz_sizeinbase(((d_param_ptr) cpy06_sysenv->param->data)->q, 2);
-
-  /* PBC only supports direct dumping of the PBC parameters to a file... 
-     We'll dump them to a file and then read the file to a string...
-     @todo Probably reading the fields directly would be better, although
-     it would break encapsulation... */
-  // @todo tmpnam is deprecated!!! use mkstemp instead
-  if(!(tmpnm = tmpnam(NULL))) {
-    LOG_ERRORCODE(&logger, __FILE__, "cpy06_grp_key_to_string", __LINE__, 
-		  errno, LOGERROR);
-    return NULL;
-  }
+  g = r = w = x = y = z = T5 = e2 = e3 = e4 = e5 = NULL;
+  skey = NULL;
+  rc = IOK;
   
-  if(!(fd = fopen(tmpnm, "w"))) {
-    LOG_ERRORCODE(&logger, __FILE__, "cpy06_grp_key_to_string", __LINE__, 
-		  errno, LOGERROR);
-    return NULL;
-  }
+  if(pbcext_element_G1_to_string(&q,
+                                 &q_len,
+                                 10,
+                                 gkey->q) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_to_string);
 
-  /* Dump the pbc params to fd */
-  pbc_param_out_str(fd, cpy06_sysenv->param);
-  fclose(fd); fd = NULL;
+  if(pbcext_element_G2_to_string(&r,
+                                 &r_len,
+                                 10,
+                                 gkey->r) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_to_string);
 
-  if(stat(tmpnm, &buf) == -1) {
-    LOG_ERRORCODE(&logger, __FILE__, "cpy06_grp_key_to_string", __LINE__, 
-		  errno, LOGERROR);
-    return NULL;    
-  }
+  if(pbcext_element_G2_to_string(&w,
+                                 &w_len,
+                                 10,
+                                 gkey->w) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_to_string);  
+  
+  if(pbcext_element_G1_to_string(&x,
+                                 &q_len,
+                                 10,
+                                 gkey->x) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_to_string);
 
-  len = buf.st_size+10+strlen("Group key:  bits\n");
+  if(pbcext_element_G1_to_string(&y,
+                                 &y_len,
+                                 10,
+                                 gkey->y) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_to_string);
 
-  /* Read the file to a string */
-  if(!(skey = (char *) 
-       mem_malloc(sizeof(char)*(len+1)))) {
-    LOG_ERRORCODE(&logger, __FILE__, "cpy06_grp_key_to_string", __LINE__, 
-		  errno, LOGERROR);
-    return NULL;        
-  }
+  if(pbcext_element_G1_to_string(&z,
+                                 &z_len,
+                                 10,
+                                 gkey->z) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_to_string);
 
-  sprintf(skey, "Group key: %ld bits\n", b);
+  if(pbcext_element_GT_to_string(&T5,
+                                 &T5_len,
+                                 10,
+                                 gkey->T5) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_to_string);
 
-  pbc_str = NULL;
-  if(misc_read_file_to_string(tmpnm, (char **) &pbc_str, &len) == IERROR) {
-    LOG_ERRORCODE(&logger, __FILE__, "cpy06_grp_key_to_string", __LINE__, 
-		  errno, LOGERROR);
-    return NULL;        
-  }
+  if(pbcext_element_GT_to_string(&e2,
+                                 &e2_len,
+                                 10,
+                                 gkey->e2) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_to_string);
 
-  sprintf(&skey[strlen(skey)], "%s", pbc_str);
-  mem_free(pbc_str); pbc_str = NULL;
+  if(pbcext_element_GT_to_string(&e3,
+                                 &e3_len,
+                                 10,
+                                 gkey->e3) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_to_string);
 
-  unlink(tmpnm);
+  if(pbcext_element_GT_to_string(&e4,
+                                 &e4_len,
+                                 10,
+                                 gkey->e4) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_to_string);
+
+  if(pbcext_element_GT_to_string(&e5,
+                                 &e5_len,
+                                 10,
+                                 gkey->e5) == IERROR)
+    GOTOENDRC(IERROR, cpy06_grp_key_to_string);
+
+  if (!q || !r || !w || !x || !y || !z || !T5 || !e2 || !e3 || !e4 || !e5)
+    GOTOENDRC(IERROR, cpy06_grp_key_to_string);
+
+  skey_len = strlen(q) + strlen(r) + strlen(w) + strlen(x) + strlen(y) +
+    strlen(z) + strlen(T5) + strlen(e2) + strlen(e3) + strlen(e4) + strlen(e5) +
+    strlen("q: \nr: \nw: \nx: \ny: \nz: \nT5: e2: \ne3: \ne4: \ne5") + 1;
+  
+  if (!(skey = (char *) malloc(sizeof(char)*skey_len)))
+    GOTOENDRC(IERROR, cpy06_grp_key_to_string);
+
+  memset(skey, 0, sizeof(char)*skey_len);
+
+  sprintf(skey,
+          "q: %s\n"
+          "r: %s\n"
+          "w: %s\n"
+          "x: %s\n"
+	  "y: %s\n"
+	  "z: %s\n"
+	  "T5: %s\n"
+	  "e2: %s\n"
+	  "e3: %s\n"
+	  "e4: %s\n"
+	  "e5: %s\n",
+          q, r, w, x, y, z, T5, e2, e3, e4, e5);
+
+ cpy06_grp_key_to_string_end:
+
+  if (q) { mem_free(q); q = NULL; }
+  if (r) { mem_free(r); r = NULL; }
+  if (w) { mem_free(w); w = NULL; }
+  if (x) { mem_free(x); x = NULL; }
+  if (y) { mem_free(y); y = NULL; }
+  if (z) { mem_free(z); z = NULL; }
+  if (T5) { mem_free(T5); T5 = NULL; }
+  if (e2) { mem_free(e2); e2 = NULL; }
+  if (e3) { mem_free(e3); e3 = NULL; }
+  if (e4) { mem_free(e4); e4 = NULL; }
+  if (e5) { mem_free(e5); e5 = NULL; }  
 
   return skey;
-
+  
 }
 
 /* grp_key.c ends here */

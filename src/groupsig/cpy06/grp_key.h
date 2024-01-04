@@ -21,11 +21,11 @@
 #define _CPY06_GRP_KEY_H
 
 #include <stdint.h>
-#include <pbc/pbc.h>
 #include "types.h"
 #include "sysenv.h"
 #include "cpy06.h"
 #include "include/grp_key.h"
+#include "shim/pbc_ext.h"
 
 /**
  * @struct cpy06_grp_key_t
@@ -34,10 +34,8 @@
  * CPY06 group keys. 
  */
 typedef struct {
-  element_t g1; /**< Tr(g2) */
-  pbcext_element_G2_t *g2; /**< Random generator of G2 */
   pbcext_element_G1_t *q; /**< Q \in_R G1 */
-  pbcext_element_G2_t *r; /**< R = g2^\gamma */
+  pbcext_element_G2_t *r; /**< R = g2^\gamma; where g2 is G2's generator*/
   pbcext_element_G2_t *w; /**< W \in_R G2 \setminus 1 */
   pbcext_element_G1_t *x; /**< X = Z^(\xi_1^-1) */
   pbcext_element_G1_t *y; /**< Y = Z^(\xi_2^-1) */
@@ -95,46 +93,43 @@ int cpy06_grp_key_free(groupsig_key_t *key);
 int cpy06_grp_key_copy(groupsig_key_t *dst, groupsig_key_t *src);
 
 /**
- * @fn int cpy06_grp_key_get_size_in_format(groupsig_key_t *key, groupsig_key_format_t format)
- * @brief Returns the size that the given key would require in order to be
- *  represented using the specified format.
+ * @fn int cpy06_grp_key_get_size_in_format(groupsig_key_t *key)
+ * @brief Returns the number of bytes required to export the key.
  *
  * @param[in] key The key.
- * @param[in] format The format. The list of supported key formats in the CPY06
- *  scheme are defined in @ref cpy06.h.
  *
  * @return The required number of bytes, or -1 if error.
  */
-int cpy06_grp_key_get_size_in_format(groupsig_key_t *key, groupsig_key_format_t format);
+int cpy06_grp_key_get_size(groupsig_key_t *key);
 
 /** 
- * @fn int cpy06_grp_key_export(groupsig_key_t *key, groupsig_key_format_t format, void *dst)
- * @brief Exports the given group key.
+ * @fn int cpy06_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key)
+ * @brief Writes a bytearray representation of the given key, with format:
  *
- * Exports the given CPY06 group key, to the specified destination, using the given format.
+ *  | CPY06_CODE | KEYTYPE | size_params | params | size_g1 | g1 | size_g2 | g2 |
+ *    size_q | q | size_r | r | size_w | w | size_x | x | size_y | y | size_z | z |
  *
+ * @param[in,out] bytes A pointer to the array that will contain the exported
+ *  group key. If <i>*bytes</i> is NULL, memory will be internally allocated.
+ * @param[in,out] size Will be set to the number of bytes written in <i>*bytes</i>.
  * @param[in] key The group key to export.
- * @param[in] format The format to use for exporting the key. The available key 
- *  formats in CPY06 are defined in @ref cpy06.h.
- * @param[in] dst The destination's description.
- * 
- * @return IOK or IERROR.
+ *
+ * @return IOK or IERROR
  */
-int cpy06_grp_key_export(groupsig_key_t *key, groupsig_key_format_t format, void *dst);
+int cpy06_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key);
 
 /** 
- * @fn groupsig_key_t* cpy06_grp_key_import(groupsig_key_format_t format, void *source)
+ * @fn groupsig_key_t* cpy06_grp_key_import(byte_t *source, uint32_t size)
  * @brief Imports a group key.
  *
- * Imports a CPY06 group key from the specified source, of the specified format.
+ * Imports a PS16 group key from the specified array of bytes.
  * 
- * @param[in] format The source format. The available key formats in CPY06 are
- *  defined in @ref cpy06.h.
- * @param[in] source The source's description.
+ * @param[in] source The array of bytes containing the key to import.
+ * @param[in] source The number of bytes in the passed array.
  * 
  * @return A pointer to the imported key, or NULL if error.
  */
-groupsig_key_t* cpy06_grp_key_import(groupsig_key_format_t format, void *source);
+groupsig_key_t* cpy06_grp_key_import(byte_t *source, uint32_t size);
 
 /** 
  * @fn char* cpy06_grp_key_to_string(groupsig_key_t *key)
@@ -153,14 +148,14 @@ char* cpy06_grp_key_to_string(groupsig_key_t *key);
  * @brief The set of functions to manage CPY06 group keys.
  */
 static const grp_key_handle_t cpy06_grp_key_handle = {
-  GROUPSIG_CPY06_CODE, /**< Scheme. */
-  &cpy06_grp_key_init, /**< Initialize group keys. */
-  &cpy06_grp_key_free, /**< Free group keys. */
-  &cpy06_grp_key_copy, /**< Copy group keys. */
-  &cpy06_grp_key_export, /**< Export group keys. */
-  &cpy06_grp_key_import, /**< Import group keys. */
-  &cpy06_grp_key_to_string, /**< Convert to printable strings. */
-  &cpy06_grp_key_get_size_in_format,
+  .code = GROUPSIG_CPY06_CODE, /**< Scheme. */
+  .init = &cpy06_grp_key_init, /**< Initialize group keys. */
+  .free = &cpy06_grp_key_free, /**< Free group keys. */
+  .copy = &cpy06_grp_key_copy, /**< Copy group keys. */
+  .gexport = &cpy06_grp_key_export, /**< Export group keys. */
+  .gimport = &cpy06_grp_key_import, /**< Import group keys. */
+  .to_string = &cpy06_grp_key_to_string, /**< Convert to printable strings. */
+  .get_size = &cpy06_grp_key_get_size,
 };
 
 #endif

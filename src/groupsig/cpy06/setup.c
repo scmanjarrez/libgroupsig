@@ -29,26 +29,9 @@
 #include "sys/mem.h"
 #include "shim/pbc_ext.h"
 
-/** 
- * @fn static int _setup_parameters_check(unsigned int bitlimit)
- * @brief Checks the input parameters of the setup function.
- *
- * @param[in] bitlimit The produced groups will be of order at most 2^bitlimit-1.
- * 
- * @return IOK if the parameters are valid, IERROR otherwise
- */
-static int _setup_parameters_check(unsigned int bitlimit) {
-
-  if(!bitlimit) {
-    LOG_EINVAL(&logger, __FILE__, "_setup_parameters_check", __LINE__, LOGERROR);
-    return IERROR;
-  }
-
-  return IOK;
-
-}
-
 int cpy06_init() {
+
+  fprintf("XXXXX REMEMBER TO USE _element_free INSTEAD of _element_clear\n");
 
   if(pbcext_init(BLS12_381) == IERROR) {
     return IERROR;
@@ -67,6 +50,7 @@ int cpy06_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
   cpy06_grp_key_t *gkey;
   cpy06_mgr_key_t *mkey;
   pbcext_element_Fr_t *inv;
+  pbcext_element_G2_t *g2;
   unsigned int d;
   int rc;
 
@@ -108,8 +92,11 @@ int cpy06_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
     GOTOENDRC(IERROR, cpy06_setup);
 
   /* R = g2^\gamma */
+  if (!(g2 = pbcext_element_G2_init())) GOTOENDRC(IERROR, cpy06_setup);
+  if (pbcext_element_G2_from_string(&g2, BLS12_381_Q, 10) == IERROR)
+    GOTOENDRC(IERROR, cpy06_setup);
   if (!(gkey->r = pbcext_element_G2_init())) GOTOENDRC(IERROR, cpy06_setup);
-  if (pbcext_element_G2_mul(gkey->r, gkey->g2, mkey->gamma) == IERROR)
+  if (pbcext_element_G2_mul(gkey->r, g2, mkey->gamma) == IERROR)
     GOTOENDRC(IERROR, cpy06_setup);
   
   /* W \in_R G2 \setminus 1 */
@@ -150,7 +137,7 @@ int cpy06_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
   /* e2 = e(z,g2) */
   if (!(gkey->e2 = pbcext_element_GT_init()))
     GOTOENDRC(IERROR, cpy06_setup);
-  if (pbcext_pairing(gkey->e2, gkey->z, gkey->g2) == IERROR)
+  if (pbcext_pairing(gkey->e2, gkey->z, g2) == IERROR)
     GOTOENDRC(IERROR, cpy06_setup);    
 
   /* e3 = e(z,r) */
@@ -189,6 +176,7 @@ int cpy06_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
 
   /* Clear data */
   pbcext_element_Fr_free(inv); inv = NULL;
+  pbcext_element_Fr_free(g2); g2 = NULL;
   
   return rc;
 
