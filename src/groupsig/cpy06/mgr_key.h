@@ -107,11 +107,10 @@ int cpy06_mgr_key_get_size(groupsig_key_t *key);
  *
  * @return IOK or IERROR
  */
-int cpy06_mgr_key_export(groupsig_key_t *key, groupsig_key_format_t format, void *dst);
+int cpy06_mgr_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key);
 
 /** 
- * @fn groupsig_key_t* cpy06_mgr_key_import(groupsig_key_format_t format, 
- *                                          void *source)
+ * @fn groupsig_key_t* cpy06_mgr_key_import(byte_t *source, uint32_t size)
  * @brief Imports a CPY06 manager key from the specified source, of the specified
  *  format.
 
@@ -121,7 +120,7 @@ int cpy06_mgr_key_export(groupsig_key_t *key, groupsig_key_format_t format, void
  * 
  * @return A pointer to the imported manager key, or NULL if error.
  */
-groupsig_key_t* cpy06_mgr_key_import(groupsig_key_format_t format, void *source);
+groupsig_key_t* cpy06_mgr_key_import(byte_t *source, uint32_t size);
 
 /** 
  * @fn char* cpy06_mgr_key_to_string(mgr_key_t *key)
