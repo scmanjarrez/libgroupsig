@@ -25,316 +25,315 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <math.h>
-#include <openssl/sha.h>
+//#include <openssl/sha.h>
 
 #include "types.h"
 #include "sysenv.h"
 #include "sys/mem.h"
-#include "wrappers/base64.h"
-#include "wrappers/pbc_ext.h"
+#include "shim/base64.h"
+#include "shim/pbc_ext.h"
 #include "misc/misc.h"
-#include "exim.h"
 #include "cpy06.h"
 #include "groupsig/cpy06/signature.h"
 
-/* Private functions */
-/** 
- * @fn static int _is_supported_format(groupsig_signature_format_t format)
- * @brief Returns 1 if the specified format is supported by this scheme. 0 if not.
- *
- * @param[in] format The format to be "tested"
- * 
- * @return 1 if the specified format is supported, 0 if not.
- */
-static int _is_supported_format(groupsig_signature_format_t format) {
+/* /\* Private functions *\/ */
+/* /\**  */
+/*  * @fn static int _is_supported_format(groupsig_signature_format_t format) */
+/*  * @brief Returns 1 if the specified format is supported by this scheme. 0 if not. */
+/*  * */
+/*  * @param[in] format The format to be "tested" */
+/*  *  */
+/*  * @return 1 if the specified format is supported, 0 if not. */
+/*  *\/ */
+/* static int _is_supported_format(groupsig_signature_format_t format) { */
 
-  int i;
+/*   int i; */
 
-  for(i=0; i<CPY06_SUPPORTED_SIG_FORMATS_N; i++) {
-    if(CPY06_SUPPORTED_SIG_FORMATS[i] == format) {
-      return 1;
-    }
-  }
+/*   for(i=0; i<CPY06_SUPPORTED_SIG_FORMATS_N; i++) { */
+/*     if(CPY06_SUPPORTED_SIG_FORMATS[i] == format) { */
+/*       return 1; */
+/*     } */
+/*   } */
 
-  return 0;
+/*   return 0; */
 
-}
+/* } */
 
-/**
- * @fn static int _get_size_bytearray_null(exim_t *obj)
- * @brief Returns the size in bytes of the exim wrapped object. The size will be
- * equal to the size of bytearray output by _export_fd() or created by
- * _import_fd().
- *
- * @param[in] obj The object to be sized.
- *
- * @return The size in bytes of the object contained in obj.
- */
-static int _get_size_bytearray_null(exim_t* obj) {
+/* /\** */
+/*  * @fn static int _get_size_bytearray_null(exim_t *obj) */
+/*  * @brief Returns the size in bytes of the exim wrapped object. The size will be */
+/*  * equal to the size of bytearray output by _export_fd() or created by */
+/*  * _import_fd(). */
+/*  * */
+/*  * @param[in] obj The object to be sized. */
+/*  * */
+/*  * @return The size in bytes of the object contained in obj. */
+/*  *\/ */
+/* static int _get_size_bytearray_null(exim_t* obj) { */
 
-  int size;
+/*   int size; */
 
-  if(!obj || !obj->eximable) {
-    LOG_EINVAL(&logger, __FILE__, "_get_size_bytearray_null", __LINE__,
-	       LOGERROR);
-    return -1;
-  }
-  cpy06_signature_t *sig = obj->eximable;
+/*   if(!obj || !obj->eximable) { */
+/*     LOG_EINVAL(&logger, __FILE__, "_get_size_bytearray_null", __LINE__, */
+/* 	       LOGERROR); */
+/*     return -1; */
+/*   } */
+/*   cpy06_signature_t *sig = obj->eximable; */
 
-  size = element_length_in_bytes(sig->T1)+element_length_in_bytes(sig->T2)+
-    element_length_in_bytes(sig->T3)+element_length_in_bytes(sig->T4)+
-    element_length_in_bytes(sig->T5)+element_length_in_bytes(sig->c)+
-    element_length_in_bytes(sig->sr1)+element_length_in_bytes(sig->sr2)+
-    element_length_in_bytes(sig->sd1)+element_length_in_bytes(sig->sd2)+
-    element_length_in_bytes(sig->sx)+element_length_in_bytes(sig->st)+sizeof(int)*12+1;
+/*   size = element_length_in_bytes(sig->T1)+element_length_in_bytes(sig->T2)+ */
+/*     element_length_in_bytes(sig->T3)+element_length_in_bytes(sig->T4)+ */
+/*     element_length_in_bytes(sig->T5)+element_length_in_bytes(sig->c)+ */
+/*     element_length_in_bytes(sig->sr1)+element_length_in_bytes(sig->sr2)+ */
+/*     element_length_in_bytes(sig->sd1)+element_length_in_bytes(sig->sd2)+ */
+/*     element_length_in_bytes(sig->sx)+element_length_in_bytes(sig->st)+sizeof(int)*12+1; */
 
-  return size;  
+/*   return size;   */
 
-}
+/* } */
 
-/**
- * @fn static int _export_fd(exim_t* obj, FILE *fd)
- * @brief Exports a CPY06 proof to a bytearray,
- *
- * The format of the produced bytearray will be will be:
- *
- *    | CPY06_CODE | sizeof(c) | c | sizeof(s) | s|
- *
- * Where the first field is a byte and the sizeof fields are ints indicating
- * the number of bytes of the following field.
- *
- * @param[in] obj The exim wrapped signature to export.
- * @param[in] fd The destination file descriptor. Must be big enough to store the result.
- *
- * @return IOK or IERROR:
- */
-static int _export_fd(exim_t* obj, FILE *fd) {
-  uint8_t code;
+/* /\** */
+/*  * @fn static int _export_fd(exim_t* obj, FILE *fd) */
+/*  * @brief Exports a CPY06 proof to a bytearray, */
+/*  * */
+/*  * The format of the produced bytearray will be will be: */
+/*  * */
+/*  *    | CPY06_CODE | sizeof(c) | c | sizeof(s) | s| */
+/*  * */
+/*  * Where the first field is a byte and the sizeof fields are ints indicating */
+/*  * the number of bytes of the following field. */
+/*  * */
+/*  * @param[in] obj The exim wrapped signature to export. */
+/*  * @param[in] fd The destination file descriptor. Must be big enough to store the result. */
+/*  * */
+/*  * @return IOK or IERROR: */
+/*  *\/ */
+/* static int _export_fd(exim_t* obj, FILE *fd) { */
+/*   uint8_t code; */
 
-  if(!obj || !obj->eximable || !fd) {
-    LOG_EINVAL(&logger, __FILE__, "_export_fd", __LINE__, LOGERROR);
-    return IERROR;
-  }
-  cpy06_signature_t *sig = (cpy06_signature_t*)obj->eximable;
+/*   if(!obj || !obj->eximable || !fd) { */
+/*     LOG_EINVAL(&logger, __FILE__, "_export_fd", __LINE__, LOGERROR); */
+/*     return IERROR; */
+/*   } */
+/*   cpy06_signature_t *sig = (cpy06_signature_t*)obj->eximable; */
 
-  /* Dump GROUPSIG_CPY06_CODE */
-  code = GROUPSIG_CPY06_CODE;
-  if(fwrite(&code, sizeof(byte_t), 1, fd) != 1) {
-      return IERROR;
-  }
+/*   /\* Dump GROUPSIG_CPY06_CODE *\/ */
+/*   code = GROUPSIG_CPY06_CODE; */
+/*   if(fwrite(&code, sizeof(byte_t), 1, fd) != 1) { */
+/*       return IERROR; */
+/*   } */
 
-  /* Dump T1 */
-  if(pbcext_dump_element_fd(sig->T1, fd) == IERROR) {
-    return IERROR;
-  }
+/*   /\* Dump T1 *\/ */
+/*   if(pbcext_dump_element_fd(sig->T1, fd) == IERROR) { */
+/*     return IERROR; */
+/*   } */
 
-  /* Dump T2 */
-  if(pbcext_dump_element_fd(sig->T2, fd) == IERROR) {
-    return IERROR;
-  }
+/*   /\* Dump T2 *\/ */
+/*   if(pbcext_dump_element_fd(sig->T2, fd) == IERROR) { */
+/*     return IERROR; */
+/*   } */
 
-  /* Dump T3 */
-  if(pbcext_dump_element_fd(sig->T3, fd) == IERROR) {
-    return IERROR;
-  }
+/*   /\* Dump T3 *\/ */
+/*   if(pbcext_dump_element_fd(sig->T3, fd) == IERROR) { */
+/*     return IERROR; */
+/*   } */
 
-  /* Dump T4 */
-  if(pbcext_dump_element_fd(sig->T4, fd) == IERROR) {
-    return IERROR;
-  }
+/*   /\* Dump T4 *\/ */
+/*   if(pbcext_dump_element_fd(sig->T4, fd) == IERROR) { */
+/*     return IERROR; */
+/*   } */
 
-  /* Dump T5 */
-  if(pbcext_dump_element_fd(sig->T5, fd) == IERROR) {
-    return IERROR;
-  }
+/*   /\* Dump T5 *\/ */
+/*   if(pbcext_dump_element_fd(sig->T5, fd) == IERROR) { */
+/*     return IERROR; */
+/*   } */
 
-  /* Dump c */
-  if(pbcext_dump_element_fd(sig->c, fd) == IERROR) {
-    return IERROR;
-  }
+/*   /\* Dump c *\/ */
+/*   if(pbcext_dump_element_fd(sig->c, fd) == IERROR) { */
+/*     return IERROR; */
+/*   } */
 
-  /* Dump sr1 */
-  if(pbcext_dump_element_fd(sig->sr1, fd) == IERROR) {
-    return IERROR;
-  }
+/*   /\* Dump sr1 *\/ */
+/*   if(pbcext_dump_element_fd(sig->sr1, fd) == IERROR) { */
+/*     return IERROR; */
+/*   } */
 
-  /* Dump sr2 */
-  if(pbcext_dump_element_fd(sig->sr2, fd) == IERROR) {
-    return IERROR;
-  }
+/*   /\* Dump sr2 *\/ */
+/*   if(pbcext_dump_element_fd(sig->sr2, fd) == IERROR) { */
+/*     return IERROR; */
+/*   } */
 
-  /* Dump sd1 */
-  if(pbcext_dump_element_fd(sig->sd1, fd) == IERROR) {
-    return IERROR;
-  }
+/*   /\* Dump sd1 *\/ */
+/*   if(pbcext_dump_element_fd(sig->sd1, fd) == IERROR) { */
+/*     return IERROR; */
+/*   } */
 
-  /* Dump sd2 */
-  if(pbcext_dump_element_fd(sig->sd2, fd) == IERROR) {
-    return IERROR;
-  }
+/*   /\* Dump sd2 *\/ */
+/*   if(pbcext_dump_element_fd(sig->sd2, fd) == IERROR) { */
+/*     return IERROR; */
+/*   } */
 
-  /* Dump sx */
-  if(pbcext_dump_element_fd(sig->sx, fd) == IERROR) {
-    return IERROR;
-  }
+/*   /\* Dump sx *\/ */
+/*   if(pbcext_dump_element_fd(sig->sx, fd) == IERROR) { */
+/*     return IERROR; */
+/*   } */
 
-  /* Dump st */
-  if(pbcext_dump_element_fd(sig->st, fd) == IERROR) {
-    return IERROR;
-  }
+/*   /\* Dump st *\/ */
+/*   if(pbcext_dump_element_fd(sig->st, fd) == IERROR) { */
+/*     return IERROR; */
+/*   } */
 
-  return IOK;
-}
+/*   return IOK; */
+/* } */
 
-/**
- * @fn static char* _signature_to_string_b64(cpy06_signature_t *sig)
- * @brief Creates a representation of the given signature as a base64 string
- *
- * @param[in] sig The signature to convert.
- *
- * @return A pointer to the produced base64 string or NULL in case of error.
- */
-static char* _signature_to_string_b64(cpy06_signature_t *sig) {
-//  char *b64;
-//  byte_t *bytes;
-//  uint64_t /* offset, written,  */size;
-//  b64 = NULL;
+/* /\** */
+/*  * @fn static char* _signature_to_string_b64(cpy06_signature_t *sig) */
+/*  * @brief Creates a representation of the given signature as a base64 string */
+/*  * */
+/*  * @param[in] sig The signature to convert. */
+/*  * */
+/*  * @return A pointer to the produced base64 string or NULL in case of error. */
+/*  *\/ */
+/* static char* _signature_to_string_b64(cpy06_signature_t *sig) { */
+/* //  char *b64; */
+/* //  byte_t *bytes; */
+/* //  uint64_t /\* offset, written,  *\/size; */
+/* //  b64 = NULL; */
 
-  return NULL;
-}
+/*   return NULL; */
+/* } */
 
-/**
- * @fn static int _import_fd(FILE *fd, exim_t* obj)
- * @brief Import a representation of the given key from a file descriptor.
- * Expects the same format as the output from _export_fd().
- *
- * @return IOK or IERROR
- */
-static int _import_fd(FILE *fd, exim_t* obj) {
-  groupsig_signature_t *sig;
-  cpy06_signature_t *cpy06_sig;
-  struct pairing_s *pairing;
-  uint8_t scheme;
+/* /\** */
+/*  * @fn static int _import_fd(FILE *fd, exim_t* obj) */
+/*  * @brief Import a representation of the given key from a file descriptor. */
+/*  * Expects the same format as the output from _export_fd(). */
+/*  * */
+/*  * @return IOK or IERROR */
+/*  *\/ */
+/* static int _import_fd(FILE *fd, exim_t* obj) { */
+/*   groupsig_signature_t *sig; */
+/*   cpy06_signature_t *cpy06_sig; */
+/*   struct pairing_s *pairing; */
+/*   uint8_t scheme; */
 
-  if(!fd || !obj) {
-    LOG_EINVAL(&logger, __FILE__, "_import_fd", __LINE__,
-           LOGERROR);
-    return IERROR;
-  }
+/*   if(!fd || !obj) { */
+/*     LOG_EINVAL(&logger, __FILE__, "_import_fd", __LINE__, */
+/*            LOGERROR); */
+/*     return IERROR; */
+/*   } */
 
-  if(!(sig = cpy06_signature_init())) {
-    return IERROR;
-  }
-  cpy06_sig = sig->sig;
-  pairing = ((cpy06_sysenv_t *) sysenv->data)->pairing;
+/*   if(!(sig = cpy06_signature_init())) { */
+/*     return IERROR; */
+/*   } */
+/*   cpy06_sig = sig->sig; */
+/*   pairing = ((cpy06_sysenv_t *) sysenv->data)->pairing; */
 
 
-  /* First byte: scheme */
-  if(fread(&scheme, sizeof(byte_t), 1, fd) != 1) {
-    LOG_ERRORCODE(&logger, __FILE__, "_import_fd", __LINE__,
-          errno, LOGERROR);
-    cpy06_signature_free(sig); sig = NULL;
-    return IERROR;
-  }
+/*   /\* First byte: scheme *\/ */
+/*   if(fread(&scheme, sizeof(byte_t), 1, fd) != 1) { */
+/*     LOG_ERRORCODE(&logger, __FILE__, "_import_fd", __LINE__, */
+/*           errno, LOGERROR); */
+/*     cpy06_signature_free(sig); sig = NULL; */
+/*     return IERROR; */
+/*   } */
 
-  /* Get T1 */
-  element_init_G1(cpy06_sig->T1, pairing);
-  if(pbcext_get_element_fd(cpy06_sig->T1, fd) == IERROR) {
-    cpy06_signature_free(sig); sig = NULL;
-    return IERROR;
-  }
+/*   /\* Get T1 *\/ */
+/*   element_init_G1(cpy06_sig->T1, pairing); */
+/*   if(pbcext_get_element_fd(cpy06_sig->T1, fd) == IERROR) { */
+/*     cpy06_signature_free(sig); sig = NULL; */
+/*     return IERROR; */
+/*   } */
 
-  /* Get T2 */
-  element_init_G1(cpy06_sig->T2, pairing);
-  if(pbcext_get_element_fd(cpy06_sig->T2, fd) == IERROR) {
-    cpy06_signature_free(sig); sig = NULL;
-    return IERROR;
-  }
+/*   /\* Get T2 *\/ */
+/*   element_init_G1(cpy06_sig->T2, pairing); */
+/*   if(pbcext_get_element_fd(cpy06_sig->T2, fd) == IERROR) { */
+/*     cpy06_signature_free(sig); sig = NULL; */
+/*     return IERROR; */
+/*   } */
 
-  /* Get T3 */
-  element_init_G1(cpy06_sig->T3, pairing);
-  if(pbcext_get_element_fd(cpy06_sig->T3, fd) == IERROR) {
-    cpy06_signature_free(sig); sig = NULL;
-    return IERROR;
-  }
+/*   /\* Get T3 *\/ */
+/*   element_init_G1(cpy06_sig->T3, pairing); */
+/*   if(pbcext_get_element_fd(cpy06_sig->T3, fd) == IERROR) { */
+/*     cpy06_signature_free(sig); sig = NULL; */
+/*     return IERROR; */
+/*   } */
 
-  /* Get T4 */
-  element_init_G2(cpy06_sig->T4, pairing);
-  if(pbcext_get_element_fd(cpy06_sig->T4, fd) == IERROR) {
-    cpy06_signature_free(sig); sig = NULL;
-    return IERROR;
-  }
+/*   /\* Get T4 *\/ */
+/*   element_init_G2(cpy06_sig->T4, pairing); */
+/*   if(pbcext_get_element_fd(cpy06_sig->T4, fd) == IERROR) { */
+/*     cpy06_signature_free(sig); sig = NULL; */
+/*     return IERROR; */
+/*   } */
 
-  /* Get T5 */
-  element_init_GT(cpy06_sig->T5, pairing);
-  if(pbcext_get_element_fd(cpy06_sig->T5, fd) == IERROR) {
-    cpy06_signature_free(sig); sig = NULL;
-    return IERROR;
-  }
+/*   /\* Get T5 *\/ */
+/*   element_init_GT(cpy06_sig->T5, pairing); */
+/*   if(pbcext_get_element_fd(cpy06_sig->T5, fd) == IERROR) { */
+/*     cpy06_signature_free(sig); sig = NULL; */
+/*     return IERROR; */
+/*   } */
 
-  /* Get c */
-  element_init_Zr(cpy06_sig->c, pairing);
-  if(pbcext_get_element_fd(cpy06_sig->c, fd) == IERROR) {
-    cpy06_signature_free(sig); sig = NULL;
-    return IERROR;
-  }
+/*   /\* Get c *\/ */
+/*   element_init_Zr(cpy06_sig->c, pairing); */
+/*   if(pbcext_get_element_fd(cpy06_sig->c, fd) == IERROR) { */
+/*     cpy06_signature_free(sig); sig = NULL; */
+/*     return IERROR; */
+/*   } */
   
-  /* Get sr1 */
-  element_init_Zr(cpy06_sig->sr1, pairing);
-  if(pbcext_get_element_fd(cpy06_sig->sr1, fd) == IERROR) {
-    cpy06_signature_free(sig); sig = NULL;
-    return IERROR;
-  }
+/*   /\* Get sr1 *\/ */
+/*   element_init_Zr(cpy06_sig->sr1, pairing); */
+/*   if(pbcext_get_element_fd(cpy06_sig->sr1, fd) == IERROR) { */
+/*     cpy06_signature_free(sig); sig = NULL; */
+/*     return IERROR; */
+/*   } */
 
-  /* Get sr2 */
-  element_init_Zr(cpy06_sig->sr2, pairing);
-  if(pbcext_get_element_fd(cpy06_sig->sr2, fd) == IERROR) {
-    cpy06_signature_free(sig); sig = NULL;
-    return IERROR;
-  }
+/*   /\* Get sr2 *\/ */
+/*   element_init_Zr(cpy06_sig->sr2, pairing); */
+/*   if(pbcext_get_element_fd(cpy06_sig->sr2, fd) == IERROR) { */
+/*     cpy06_signature_free(sig); sig = NULL; */
+/*     return IERROR; */
+/*   } */
 
-  /* Get sd1 */
-  element_init_Zr(cpy06_sig->sd1, pairing);
-  if(pbcext_get_element_fd(cpy06_sig->sd1, fd) == IERROR) {
-    cpy06_signature_free(sig); sig = NULL;
-    return IERROR;
-  }
+/*   /\* Get sd1 *\/ */
+/*   element_init_Zr(cpy06_sig->sd1, pairing); */
+/*   if(pbcext_get_element_fd(cpy06_sig->sd1, fd) == IERROR) { */
+/*     cpy06_signature_free(sig); sig = NULL; */
+/*     return IERROR; */
+/*   } */
 
-  /* Get sd2 */
-  element_init_Zr(cpy06_sig->sd2, pairing);
-  if(pbcext_get_element_fd(cpy06_sig->sd2, fd) == IERROR) {
-    cpy06_signature_free(sig); sig = NULL;
-    return IERROR;
-  }
+/*   /\* Get sd2 *\/ */
+/*   element_init_Zr(cpy06_sig->sd2, pairing); */
+/*   if(pbcext_get_element_fd(cpy06_sig->sd2, fd) == IERROR) { */
+/*     cpy06_signature_free(sig); sig = NULL; */
+/*     return IERROR; */
+/*   } */
 
-  /* Get sx */
-  element_init_Zr(cpy06_sig->sx, pairing);
-  if(pbcext_get_element_fd(cpy06_sig->sx, fd) == IERROR) {
-    cpy06_signature_free(sig); sig = NULL;
-    return IERROR;
-  }
+/*   /\* Get sx *\/ */
+/*   element_init_Zr(cpy06_sig->sx, pairing); */
+/*   if(pbcext_get_element_fd(cpy06_sig->sx, fd) == IERROR) { */
+/*     cpy06_signature_free(sig); sig = NULL; */
+/*     return IERROR; */
+/*   } */
 
-  /* Get st */
-  element_init_Zr(cpy06_sig->st, pairing);
-  if(pbcext_get_element_fd(cpy06_sig->st, fd) == IERROR) {
-    cpy06_signature_free(sig); sig = NULL;
-    return IERROR;
-  }
+/*   /\* Get st *\/ */
+/*   element_init_Zr(cpy06_sig->st, pairing); */
+/*   if(pbcext_get_element_fd(cpy06_sig->st, fd) == IERROR) { */
+/*     cpy06_signature_free(sig); sig = NULL; */
+/*     return IERROR; */
+/*   } */
 
-  obj->eximable = sig;
-  return IOK;
+/*   obj->eximable = sig; */
+/*   return IOK; */
 
-}
+/* } */
 
-/* Export/import handle definition */
+/* /\* Export/import handle definition *\/ */
 
-static exim_handle_t _exim_h = {
-  &_get_size_bytearray_null,
-  &_export_fd,
-  &_import_fd,
-};
+/* static exim_handle_t _exim_h = { */
+/*   &_get_size_bytearray_null, */
+/*   &_export_fd, */
+/*   &_import_fd, */
+/* }; */
 
-/* Public functions */
+/* /\* Public functions *\/ */
 groupsig_signature_t* cpy06_signature_init() {
 
   groupsig_signature_t *sig;
@@ -356,10 +355,19 @@ groupsig_signature_t* cpy06_signature_init() {
 
   sig->scheme = GROUPSIG_CPY06_CODE;
   sig->sig = cpy06_sig;
-
-  /* Since we use the PBC library, to initialize the signature fields, we need
-     the pairing. Hence, they will be initialized during the sign procedure. */
-
+  cpy06_sig->T1 = NULL;
+  cpy06_sig->T2 = NULL;
+  cpy06_sig->T3 = NULL;
+  cpy06_sig->T4 = NULL;
+  cpy06_sig->T5 = NULL;
+  cpy06_sig->c = NULL;
+  cpy06_sig->sr1 = NULL;
+  cpy06_sig->sr2 = NULL;
+  cpy06_sig->sd1 = NULL;
+  cpy06_sig->sd2 = NULL;
+  cpy06_sig->sx = NULL;
+  cpy06_sig->st = NULL;
+  
   return sig;
 
 }
@@ -376,18 +384,42 @@ int cpy06_signature_free(groupsig_signature_t *sig) {
 
   if(sig->sig) {
     cpy06_sig = sig->sig;
-    element_clear(cpy06_sig->T1);
-    element_clear(cpy06_sig->T2);
-    element_clear(cpy06_sig->T3);
-    element_clear(cpy06_sig->T4);
-    element_clear(cpy06_sig->T5);
-    element_clear(cpy06_sig->c);
-    element_clear(cpy06_sig->sr1);
-    element_clear(cpy06_sig->sr2);
-    element_clear(cpy06_sig->sd1);
-    element_clear(cpy06_sig->sd2);
-    element_clear(cpy06_sig->sx);
-    element_clear(cpy06_sig->st);
+    if (cpy06_sig->T1) {
+      pbcext_element_G1_free(cpy06_sig->T1); cpy06_sig->T1 = NULL;
+    }
+    if (cpy06_sig->T2) {
+      pbcext_element_G1_free(cpy06_sig->T2); cpy06_sig->T2 = NULL;
+    }
+    if (cpy06_sig->T3) {
+      pbcext_element_G1_free(cpy06_sig->T3); cpy06_sig->T3 = NULL;
+    }
+    if (cpy06_sig->T4) {
+      pbcext_element_G2_free(cpy06_sig->T4); cpy06_sig->T4 = NULL;
+    }
+    if (cpy06_sig->T5) {
+      pbcext_element_GT_free(cpy06_sig->T5); cpy06_sig->T5 = NULL;
+    }
+    if (cpy06_sig->c) {
+      pbcext_element_Fr_free(cpy06_sig->c); cpy06_sig->c = NULL;
+    }
+    if (cpy06_sig->sr1) {
+      pbcext_element_Fr_free(cpy06_sig->sr1); cpy06_sig->sr1 = NULL;
+    }
+    if (cpy06_sig->sr2) {
+      pbcext_element_Fr_free(cpy06_sig->sr2); cpy06_sig->sr2 = NULL;
+    }
+    if (cpy06_sig->sd1) {
+      pbcext_element_Fr_free(cpy06_sig->sd1); cpy06_sig->sd1 = NULL;
+    }
+    if (cpy06_sig->sd2) {
+      pbcext_element_Fr_free(cpy06_sig->sd2); cpy06_sig->sd2 = NULL;
+    }
+    if (cpy06_sig->sx) {
+      pbcext_element_Fr_free(cpy06_sig->sx); cpy06_sig->sx = NULL;
+    }
+    if (cpy06_sig->st) {
+      pbcext_element_Fr_free(cpy06_sig->st); cpy06_sig->st = NULL;
+    }
     mem_free(cpy06_sig); 
     cpy06_sig = NULL;
   }
@@ -401,6 +433,7 @@ int cpy06_signature_free(groupsig_signature_t *sig) {
 int cpy06_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src) {
 
   cpy06_signature_t *cpy06_dst, *cpy06_src;
+  int rc;
 
   if(!dst || dst->scheme != GROUPSIG_CPY06_CODE ||
      !src || src->scheme != GROUPSIG_CPY06_CODE) {
@@ -410,112 +443,497 @@ int cpy06_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src) {
 
   cpy06_dst = dst->sig;
   cpy06_src = src->sig;
+  rc = IOK;
 
   /* Copy the elements */
-  element_init_same_as(cpy06_dst->T1, cpy06_src->T1);
-  element_set(cpy06_dst->T1, cpy06_src->T1);
-  element_init_same_as(cpy06_dst->T2, cpy06_src->T2);
-  element_set(cpy06_dst->T2, cpy06_src->T2);
-  element_init_same_as(cpy06_dst->T3, cpy06_src->T3);
-  element_set(cpy06_dst->T3, cpy06_src->T3);
-  element_init_same_as(cpy06_dst->T4, cpy06_src->T4);
-  element_set(cpy06_dst->T4, cpy06_src->T4);
-  element_init_same_as(cpy06_dst->T5, cpy06_src->T5);
-  element_set(cpy06_dst->T5, cpy06_src->T5);
-  element_init_same_as(cpy06_dst->c, cpy06_src->c);
-  element_set(cpy06_dst->c, cpy06_src->c);  
-  element_init_same_as(cpy06_dst->sr1, cpy06_src->sr1);
-  element_set(cpy06_dst->sr1, cpy06_src->sr1);
-  element_init_same_as(cpy06_dst->sr2, cpy06_src->sr2);
-  element_set(cpy06_dst->sr2, cpy06_src->sr2);
-  element_init_same_as(cpy06_dst->sd1, cpy06_src->sd1);
-  element_set(cpy06_dst->sd1, cpy06_src->sd1);
-  element_init_same_as(cpy06_dst->sd2, cpy06_src->sd2);
-  element_set(cpy06_dst->sd2, cpy06_src->sd2);
-  element_init_same_as(cpy06_dst->sx, cpy06_src->sx);
-  element_set(cpy06_dst->sx, cpy06_src->sx);
-  element_init_same_as(cpy06_dst->st, cpy06_src->st);
-  element_set(cpy06_dst->st, cpy06_src->st);
+  if (!(cpy06_dst->T1 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_signature_copy);
+  if (pbcext_element_G1_set(cpy06_dst->T1, cpy06_src->T1) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_copy);
+  if (!(cpy06_dst->T2 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_signature_copy);
+  if (pbcext_element_G1_set(cpy06_dst->T2, cpy06_src->T2) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_copy);  
+  if (!(cpy06_dst->T3 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_signature_copy);
+  if (pbcext_element_G1_set(cpy06_dst->T3, cpy06_src->T3) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_copy);
+  if (!(cpy06_dst->T4 = pbcext_element_G2_init()))
+    GOTOENDRC(IERROR, cpy06_signature_copy);
+  if (pbcext_element_G2_set(cpy06_dst->T4, cpy06_src->T4) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_copy);
+  if (!cpy06_dst->T5 = pbcext_element_GT_init())
+    GOTOENDRC(IERROR, cpy06_signature_copy);
+  if (pbcext_element_GT_set(cpy06_dst->T5, cpy06_src->T5) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_copy);
+  if (!(cpy06_dst->c = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_signature_copy);
+  if (pbcext_element_Fr_set(cpy06_dst->c, cpy06_src->c) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_copy);
+  if (!(cpy06_dst->sr1 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_signature_copy);    
+  if (pbcext_element_Fr_set(cpy06_dst->sr1, cpy06_src->sr1) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_copy);
+  if (!(cpy06_dst->sr2 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_signature_copy);
+  if (pbcext_element_Fr_set(cpy06_dst->sr2, cpy06_src->sr2) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_copy);
+  if (!(cpy06_dst->sd1 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_signature_copy);
+  if (pbcext_element_Fr_set(cpy06_dst->sd1, cpy06_src->sd1) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_copy);
+  if (!(cpy06_dst->sd2 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_signature_copy);  
+  if (pbcext_element_Fr_set(cpy06_dst->sd2, cpy06_src->sd2) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_copy);
+  if (!(cpy06_dst->sx = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_signature_copy);
+  if (pbcext_element_Fr_set(cpy06_dst->sx, cpy06_src->sx) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_copy);
+  if (!(cpy06_dst->st = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_signature_copy);
+  if (pbcext_element_Fr_set(cpy06_dst->st, cpy06_src->st) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_copy);
 
-  return IOK;
+ cpy06_signature_copy_end:
+
+  if (rc == IERROR) {
+    if (cpy06_dst->T1) {
+      pbcext_element_G1_free(cpy06_dst->T1); cpy06_dst->T1 = NULL;
+    }
+    if (cpy06_dst->T2) {
+      pbcext_element_G1_free(cpy06_dst->T2); cpy06_dst->T2 = NULL;
+    }
+    if (cpy06_dst->T3) {
+      pbcext_element_G1_free(cpy06_dst->T3); cpy06_dst->T3 = NULL;
+    }
+    if (cpy06_dst->T4) {
+      pbcext_element_G2_free(cpy06_dst->T4); cpy06_dst->T4 = NULL;
+    }
+    if (cpy06_dst->T5) {
+      pbcext_element_GT_free(cpy06_dst->T5); cpy06_dst->T5 = NULL;
+    }
+    if (cpy06_dst->c) {
+      pbcext_element_Fr_free(cpy06_dst->c); cpy06_dst->c = NULL;
+    }
+    if (cpy06_dst->sr1) {
+      pbcext_element_Fr_free(cpy06_dst->sr1); cpy06_dst->sr1 = NULL;
+    }
+    if (cpy06_dst->sr2) {
+      pbcext_element_Fr_free(cpy06_dst->sr2); cpy06_dst->sr2 = NULL;
+    }
+    if (cpy06_dst->sd1) {
+      pbcext_element_Fr_free(cpy06_dst->sd1); cpy06_dst->sd1 = NULL;
+    }
+    if (cpy06_dst->sd2) {
+      pbcext_element_Fr_free(cpy06_dst->sd2); cpy06_dst->sd2 = NULL;
+    }
+    if (cpy06_dst->sx) {
+      pbcext_element_Fr_free(cpy06_dst->sx); cpy06_dst->sx = NULL;
+    }
+    if (cpy06_dst->st) {
+      pbcext_element_Fr_free(cpy06_dst->st); cpy06_dst->st = NULL;
+    }    
+  }
+  
+  return rc;
 
 }
 
 char* cpy06_signature_to_string(groupsig_signature_t *sig) {
 
-  char* b64;
-  b64 = NULL;
-  cpy06_signature_t* cpy06_sig;
+  cpy06_signature_t *cpy06_sig;
+  char *T1, *T2, *T3, *T4, *T5, *c, *sr1, *sr2, *sd1, *sd2, *sx, *st, *ssig;
+  uint64_t T1_len, T2_len, T3_len, T4_len, T5_len, c_len, sr1_len, sr2_len;
+  uint64_t sd1_len, sd2_len, sx_len, st_len;
+  uint32_t ssig_len;
+  int rc;
+
   if(!sig || sig->scheme != GROUPSIG_CPY06_CODE) {
-    LOG_EINVAL(&logger, __FILE__, "signature_to_string", __LINE__, LOGERROR);
+    LOG_EINVAL(&logger, __FILE__, "cpy06_signatgure_to_string",
+	       __LINE__, LOGERROR);
     return NULL;
   }
+
+  cpy06_sig = sig->sig;
+  T1 = T2 = T3 = T4 = T5 = c = sr1 = sr2 = sd1 = sd2 = sx = st = NULL;
+  ssig = NULL;
+  rc = IOK;
+
+  if (pbcext_element_G1_to_string(&T1, &T1_len, 10, cpy06_sig->T1) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_to_string);
+
+  if (pbcext_element_G1_to_string(&T2, &T2_len, 10, cpy06_sig->T2) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_to_string);
+
+  if (pbcext_element_G1_to_string(&T3, &T3_len, 10, cpy06_sig->T3) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_to_string);
+
+  if (pbcext_element_G2_to_string(&T4, &T4_len, 10, cpy06_sig->T4) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_to_string);
+
+  if (pbcext_element_GT_to_string(&T5, &T5_len, 10, cpy06_sig->T5) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_to_string);
+
+  if (pbcext_element_Fr_to_string(&c, &c_len, 10, cpy06_sig->c) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_to_string);
+
+  if (pbcext_element_Fr_to_string(&sr1, &sr1_len, 10, cpy06_sig->sr1) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_to_string);
+
+  if (pbcext_element_Fr_to_string(&sr2, &sr2_len, 10, cpy06_sig->sr2) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_to_string);
+
+  if (pbcext_element_Fr_to_string(&sd1, &sd1_len, 10, cpy06_sig->sd1) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_to_string);
+
+  if (pbcext_element_Fr_to_string(&sd2, &sd2_len, 10, cpy06_sig->sd2) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_to_string);
+
+  if (pbcext_element_Fr_to_string(&sx, &sx_len, 10, cpy06_sig->sx) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_to_string);
+
+  if (pbcext_element_G1_to_string(&st, &st_len, 10, cpy06_sig->st) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_to_string);
+
+  if (!T1 || !T2 || !T3 || !T4 || !T5 || !c || !sr1 || !sr2 ||
+      !sd1 || !sd2 || !sx || !st)
+    GOTOENDRC(IERROR, cpy06_signature_to_string);
+
+  skey_len = strlen(T1) + strlen(T2) + strlen(T3) + strlen(T4) + strlen(T5) +
+    strlen(c) + strlen(sr1) + strlen(sr2) + strlen(sd1) + strlen(sd2) +
+    strlen(sx) + strlen(st) +
+    strlen("T1: \nT2: \nT3: \nT4: \nT5: \nc: \nsr1: \nsr2: \n") +
+    strlen("sd1: \nsd2: \nsx: \nst: \n") + 1;
   
-  cpy06_sig = (cpy06_signature_t*) sig->sig;
-  b64 = _signature_to_string_b64(cpy06_sig);
+  if (!(ssig = (char *) malloc(sizeof(char)*ssig_len)))
+    GOTOENDRC(IERROR, cpy06_signature_to_string);
 
-  return b64;
+  memset(ssig, 0, sizeof(char)*ssig_len);
 
+  sprintf(ssig,
+          "T1: %s\n"
+          "T2: %s\n"
+          "T3: %s\n"
+          "T4: %s\n"
+	  "T5: %s\n"
+	  "c: %s\n"
+	  "sr1: %s\n"
+	  "sr2: %s\n"
+	  "sd1: %s\n"
+	  "sd2: %s\n"
+	  "sx: %s\n"
+	  "st: %s\n",	  
+          T1, T2, T3, T4, T5, c, sr1, sr2, sd1, sd2, sx, st);
+  
+ cpy06_signature_to_string_end:
+
+  if (rc == IERROR && ssig) { mem_free(ssig); ssig = NULL; }
+
+  if (T1) { mem_free(T1); T1 = NULL; }
+  if (T2) { mem_free(T2); T2 = NULL; }
+  if (T3) { mem_free(T3); T3 = NULL; }
+  if (T4) { mem_free(T4); T4 = NULL; }
+  if (T5) { mem_free(T5); T5 = NULL; }
+  if (c) { mem_free(c); c = NULL; }
+  if (sr1) { mem_free(sr1); sr1 = NULL; }
+  if (sr2) { mem_free(sr2); sr2 = NULL; }
+  if (sd1) { mem_free(sd1); sd1 = NULL; }
+  if (sd2) { mem_free(sd2); sd2 = NULL; }
+  if (sx) { mem_free(sx); sx = NULL; }
+  if (st) { mem_free(st); st = NULL; }
+
+  return ssig;
+  
 }
 
-int cpy06_signature_get_size_in_format(groupsig_signature_t *sig, groupsig_signature_format_t format) {
+int cpy06_signature_get_size(groupsig_signature_t *sig) {
 
+  cpy06_signature_t *cpy06_sig;
+  uint64_t size64, sT1, sT2, sT3, sT4, sT5, sc;
+  uint64_t ssr1, ssr2, ssd1, ssd2, ssx, sst;
+  
   if(!sig || sig->scheme != GROUPSIG_CPY06_CODE) {
-    LOG_EINVAL(&logger, __FILE__, "cpy06_signature_get_size_in_format", __LINE__, LOGERROR);
+    LOG_EINVAL(&logger, __FILE__, "cpy06_signature_get_size", __LINE__, LOGERROR);
     return -1;
   }
 
-  /* See if the current scheme supports the given format */
-  if(!_is_supported_format(format)) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "cpy06_signature_get_size_in_format", __LINE__,
-  		   "The specified format is not supported.", LOGERROR);
-    return -1;
-  }
+  cpy06_sig = sig->sig;
 
-  exim_t wrap = {sig->sig, &_exim_h };
-  return exim_get_size_in_format(&wrap, format);
+  sT1 = sT2 = sT3 = sT4 = sT5 = sc = ssr1 = ssr2 = ssd1 = ssd2 = ssx = sst = 0;
 
+  if (pbcext_element_G1_byte_size(&sT1) == IERROR) return -1;
+  if (pbcext_element_G1_byte_size(&sT2) == IERROR) return -1;
+  if (pbcext_element_G1_byte_size(&sT3) == IERROR) return -1;
+  if (pbcext_element_G2_byte_size(&sT4) == IERROR) return -1;
+  if (pbcext_element_GT_byte_size(&sT5) == IERROR) return -1;
+  if (pbcext_element_Fr_byte_size(&sc) == IERROR) return -1;
+  if (pbcext_element_Fr_byte_size(&ssr1) == IERROR) return -1;
+  if (pbcext_element_Fr_byte_size(&ssr2) == IERROR) return -1;
+  if (pbcext_element_Fr_byte_size(&ssd1) == IERROR) return -1;
+  if (pbcext_element_Fr_byte_size(&ssd2) == IERROR) return -1;
+  if (pbcext_element_Fr_byte_size(&sx) == IERROR) return -1;
+  if (pbcext_element_Fr_byte_size(&st) == IERROR) return -1;
+
+  size64 = sizeof(uint8_t) + sizeof(int)*12 + sT1 + sT2 + sT3 + sT4 + sT5 +
+    sc + ssr1 + ssr2 + ssd1 + ssd2 + ssx + sst;
+  if (size64 > INT_MAX) return -1;
+
+  return (int) size64;
+  
 }
 
-int cpy06_signature_export(groupsig_signature_t *sig, groupsig_signature_format_t format, void *dst) { 
+int cpy06_signature_export(byte_t **bytes,
+			   uint32_t *size,
+			   groupsig_key_t *key) { 
 
-  if(!sig || sig->scheme != GROUPSIG_CPY06_CODE) {
+  cpy06_signature_t *cpy06_sig;
+  byte_t *_bytes, *__bytes;
+  uint64_t len;
+  int _size, ctr, rc;
+  
+  if(!bytes ||
+     !size ||
+     !sig || sig->scheme != GROUPSIG_CPY06_CODE) {
     LOG_EINVAL(&logger, __FILE__, "cpy06_signature_export", __LINE__, LOGERROR);
     return IERROR;
   }
 
-  /* See if the current scheme supports the given format */
-  if(!_is_supported_format(format)) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "cpy06_signature_export", __LINE__,
-  		   "The specified format is not supported.", LOGERROR);
+  rc = IOK;
+  ctr = 0;
+  cpy06_sig = sig->sig;
+
+  /* Get the number of bytes to represent the signature */
+  if ((_size = cpy06_signature_get_size(key)) == -1) {
     return IERROR;
   }
 
-  exim_t wrap = {sig->sig, &_exim_h };
-  return exim_export(&wrap, format, dst);
+  if(!(_bytes = mem_malloc(sizeof(byte_t)*_size))) {
+    return IERROR;
+  }
+
+  /* Dump GROUPSIG_CPY06_CODE */
+  _bytes[ctr++] = GROUPSIG_CPY06_CODE;
+
+  /* Dump T1 */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_G1_bytes(&__bytes, &len, cpy06_sig->T1) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_export);
+  ctr += len;
+
+  /* Dump T2 */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_G1_bytes(&__bytes, &len, cpy06_sig->T2) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_export);
+  ctr += len;
+
+  /* Dump T3 */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_G1_bytes(&__bytes, &len, cpy06_sig->T3) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_export);
+  ctr += len;
+
+  /* Dump T4 */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_G2_bytes(&__bytes, &len, cpy06_sig->T4) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_export);
+  ctr += len;
+
+  /* Dump T5 */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_GT_bytes(&__bytes, &len, cpy06_sig->T5) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_export);
+  ctr += len;
+
+  /* Dump c */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, cpy06_sig->c) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_export);
+  ctr += len;
+
+  /* Dump sr1 */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, cpy06_sig->sr1) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_export);
+  ctr += len;
+
+  /* Dump sr2 */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, cpy06_sig->sr2) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_export);
+  ctr += len;
+
+  /* Dump sd1 */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, cpy06_sig->sd1) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_export);
+  ctr += len;
+
+  /* Dump sd2 */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, cpy06_sig->sd2) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_export);
+  ctr += len;
+
+  /* Dump sx */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, cpy06_sig->sx) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_export);
+  ctr += len;
+
+  /* Dump st */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, cpy06_sig->st) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_export);
+  ctr += len;
+
+  /* Prepare the return */
+  if(!*bytes) {
+    *bytes = _bytes;
+  } else {
+    memcpy(*bytes, _bytes, ctr);
+    mem_free(_bytes); _bytes = NULL;
+  }
+  
+  /* Sanity check */
+  if (ctr != _size) {
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "cpy06_signature_export", __LINE__,
+                      EDQUOT, "Unexpected size.", LOGERROR);
+    GOTOENDRC(IERROR, cpy06_signature_export);
+  }
+
+  *size = ctr;
+
+ cpy06_grp_key_export_end:
+
+  if (rc == IERROR) {
+    if(_bytes) { mem_free(_bytes); _bytes = NULL; }
+  }
+
+  return rc;  
 
 }
 
-groupsig_signature_t* cpy06_signature_import(groupsig_signature_format_t format, void *source) {
+groupsig_signature_t* cpy06_signature_import(byte_t *source, uint32_t size) {
 
-  if(!source) {
-    LOG_EINVAL(&logger, __FILE__, "signature_import", __LINE__, LOGERROR);
+  groupsig_signature_t *sig;
+  cpy06_signature_t *cpy06_sig;
+  uint64_t len;
+  byte_t scheme, type;
+  int rc, ctr;
+
+  if(!source || !size) {
+    LOG_EINVAL(&logger, __FILE__, "cpy06_signature_import", __LINE__, LOGERROR);
     return NULL;
   }
 
-  /* See if the current scheme supports the given format */
-  if(!_is_supported_format(format)) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "signature_import", __LINE__,
-  		   "The specified format is not supported.", LOGERROR);
+  rc = IOK;
+  ctr = 0;
+
+  if(!(key = cpy06_signature_init())) {
     return NULL;
   }
 
-  exim_t wrap = {NULL, &_exim_h };
-  if(exim_import(format, source, &wrap) != IOK){
-    return NULL;
+  cpy06_sig = sig->sig;
+
+  /* First byte: scheme */
+  scheme = source[ctr++];
+  if(scheme != sig->scheme) {
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "cpy06_grp_key_import", __LINE__,
+                      EDQUOT, "Unexpected key scheme.", LOGERROR);
+    GOTOENDRC(IERROR, cpy06_signature_import);
   }
 
-  return wrap.eximable;
+  /* Get T1 */
+  if(!(cpy06_sig->T1 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  if(pbcext_get_element_G1_bytes(cpy06_sig->T1, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  ctr += len;
+
+  /* Get T2 */
+  if(!(cpy06_sig->T2 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  if(pbcext_get_element_G1_bytes(cpy06_sig->T2, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  ctr += len;
+
+  /* Get T3 */
+  if(!(cpy06_sig->T3 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  if(pbcext_get_element_G1_bytes(cpy06_sig->T3, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  ctr += len;
+
+  /* Get T4 */
+  if(!(cpy06_sig->T4 = pbcext_element_G2_init()))
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  if(pbcext_get_element_G2_bytes(cpy06_sig->T4, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  ctr += len;
+
+  /* Get T5 */
+  if(!(cpy06_sig->T5 = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  if(pbcext_get_element_GT_bytes(cpy06_sig->T5, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  ctr += len;
+
+  /* Get c */
+  if(!(cpy06_sig->c = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  if(pbcext_get_element_Fr_bytes(cpy06_sig->c, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  ctr += len;
+
+  /* Get sr1 */
+  if(!(cpy06_sig->sr1 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  if(pbcext_get_element_Fr_bytes(cpy06_sig->sr1, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  ctr += len;
+
+  /* Get sr2 */
+  if(!(cpy06_sig->sr2 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  if(pbcext_get_element_Fr_bytes(cpy06_sig->sr2, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  ctr += len;
+
+  /* Get sd1 */
+  if(!(cpy06_sig->sd1 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  if(pbcext_get_element_Fr_bytes(cpy06_sig->sd1, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  ctr += len;
+
+  /* Get sd2 */
+  if(!(cpy06_sig->sd2 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  if(pbcext_get_element_Fr_bytes(cpy06_sig->sd2, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  ctr += len;
+
+  /* Get sx */
+  if(!(cpy06_sig->sx = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  if(pbcext_get_element_Fr_bytes(cpy06_sig->sx, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  ctr += len;
+
+  /* Get st */
+  if(!(cpy06_sig->st = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  if(pbcext_get_element_Fr_bytes(cpy06_sig->st, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_signature_import);
+  ctr += len;
+
+ cpy06_grp_key_import_end:
+  
+  if(rc == IERROR && sig) { cpy06_signature_free(sig); sig = NULL; }
+  if(rc == IOK) return sig;
+
+  return NULL;  
 
 }
 

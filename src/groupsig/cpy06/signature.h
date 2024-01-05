@@ -21,29 +21,10 @@
 #define _CPY06_SIGNATURE_H
 
 #include <stdint.h>
-#include <pbc/pbc.h>
 #include "include/signature.h"
-#include "bigz.h"
+//#include "bigz.h"
 #include "cpy06.h"
-
-/**
- * @def CPY06_SUPPORTED_SIG_FORMATS_N
- * @brief Number of supported signature formats in CPY06.
- */
-#define CPY06_SUPPORTED_SIG_FORMATS_N 6
-
-/**
- * @var CPY06_SUPPORTED_SIG_FORMATS
- * @brief List of supported signature formats in CPY06.
- */
-static const int CPY06_SUPPORTED_SIG_FORMATS[CPY06_SUPPORTED_SIG_FORMATS_N] = { 
-  GROUPSIG_SIGNATURE_FORMAT_FILE_NULL,
-  GROUPSIG_SIGNATURE_FORMAT_FILE_NULL_B64,
-  GROUPSIG_SIGNATURE_FORMAT_BYTEARRAY,
-  GROUPSIG_SIGNATURE_FORMAT_STRING_NULL_B64,
-  GROUPSIG_SIGNATURE_FORMAT_MESSAGE_NULL,
-  GROUPSIG_SIGNATURE_FORMAT_MESSAGE_NULL_B64,
-};
+#include "shim/pbc_ext.h"
 
 /**
  * @struct cpy06_signature_t
@@ -51,8 +32,6 @@ static const int CPY06_SUPPORTED_SIG_FORMATS[CPY06_SUPPORTED_SIG_FORMATS_N] = {
  */
 typedef struct {
   uint8_t scheme; /**< Metainformation: the gs scheme this key belongs to. */
-  /* pbc_param_t param; /\**< PBC parameters. *\/ */
-  /* pairing_t pairing; /\**< PBC pairing data. *\/ */
   pbcext_element_G1_t *T1;
   pbcext_element_G1_t *T2;
   pbcext_element_G1_t *T3;
@@ -108,64 +87,66 @@ int cpy06_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src);
 char* cpy06_signature_to_string(groupsig_signature_t *sig);
 
 /** 
- * @fn int cpy06_signature_get_size_in_format(groupsig_signature_t *sig, 
- *   groupsig_signature_format_t format)
- * Returns the size of the signature in the specified format. Useful when you have
- * to export the signature and pre-allocate the destination.
+ * @fn int cpy06_signature_get_size(groupsig_signature_t *sig)
+ * Returns the number of bytes needed to store the signature in an array
+ * of bytes.
  *
  * @param[in] sig The signature.
- * @param[in] format The format.
  * 
- * @return -1 if error, the size that this signature would have in case of
- *  being exported to the specified format.
+ * @return -1 if error. Else, the number of bytes to represent the signature.
  */
-int cpy06_signature_get_size_in_format(groupsig_signature_t *sig, 
-				       groupsig_signature_format_t format);
+int cpy06_signature_get_size(groupsig_signature_t *sig);
 
 /** 
- * @fn int cpy06_signature_export(groupsig_signature *signature,
- *                                groupsig_signature_format_t format,
- *                                void *dst)
- * @brief Exports the specified signature to the given destination using
- *  the specified format..
+ * @fn int cpy06_signature_export(byte_t **bytes,
+ *                                uint32_t *size,
+ *                                groupsig_signature *signature)
+ * @brief Writes a bytearray representation of the given signature, with format:
  *
- * @param[in] signature The signature to export.
- * @param[in] format The format to use.
- * @param[in,out] dst Details about the destination. Will depend on the
- *  specified parameter.
+ *    | CPY06_CODE | size_T1 | T1 | size_T2 | T2 | size_T3 | T3 | size_T4 | T4
+ *      size_T5 | T5 | size_c | c | size_sr1 | sr1 | size_sr2 | sr2 | 
+ *      size_sd1 | sd1 | size_sd2 | sd2 | size_sx | sx | size_st | st |
+ *
+ * @param[in,out] bytes A pointer to the array that will contain the exported
+ *  signature. If <i>*bytes</i> is NULL, memory will be internally allocated.
+ * @param[in,out] size Will be set to the number of bytes written in <i>*bytes</i>.
+ * @param[in] sig The signature to export.
  * 
  * @return IOK or IERROR
  */
-int cpy06_signature_export(groupsig_signature_t *signature, 
-			   groupsig_signature_format_t format, 
-			   void *dst);
+int cpy06_signature_export(byte_t **bytes,
+			   uint32_t *size,
+			   groupsig_signature_t *signature);
 
 /** 
- * @fn groupsig_signature_t* cpy06_signature_import(cpy06_groupsig_signature_format_t format, 
- *                                            void *source)
- * @brief Imports a signature according to the specified format.
+ * @fn groupsig_signature_t* cpy06_signature_import(byte_t *source, 
+ *                                                   uint32_t size)
+ * @brief Imports a signature.
  *
- * @param[in] format The format of the signature to import.
- * @param[in] source The signature to be imported.
+ * Imports a CPY06 signature from the specified array of bytes.
+ *
+ * @param[in] source The array of bytes containing the signature to import.
+ * @param[in] size The number of bytes in <i>source</i>.
  * 
  * @return A pointer to the imported signature.
  */
-groupsig_signature_t* cpy06_signature_import(groupsig_signature_format_t format, void *source);
+groupsig_signature_t* cpy06_signature_import(byte_t *source, uint32_t size);
 
 /**
  * @var cpy06_signature_handle
  * @brief Set of functions for managing CPY06 signatures.
  */
 static const groupsig_signature_handle_t cpy06_signature_handle = {
-  GROUPSIG_CPY06_CODE, /**< The scheme code. */
-  &cpy06_signature_init,  /**< Initializes signatures. */
-  &cpy06_signature_free, /**< Frees signatures. */
-  &cpy06_signature_copy, /**< Copies signatures. */
-  &cpy06_signature_get_size_in_format, /**< Gets the size in bytes of a signature
-					  in a specific format. */
-  &cpy06_signature_export, /**< Exports signatures. */
-  &cpy06_signature_import, /**< Imports signatures. */
-  &cpy06_signature_to_string, /**< Converts signatures to printable strings. */
+  .scheme = GROUPSIG_CPY06_CODE, /**< The scheme code. */
+  .init = &cpy06_signature_init,  /**< Initializes signatures. */
+  .free = &cpy06_signature_free, /**< Frees signatures. */
+  .copy = &cpy06_signature_copy, /**< Copies signatures. */
+  .get_size = &cpy06_signature_get_size, /**< Gets the size in bytes 
+					    of a signature. */
+  .gexport = &cpy06_signature_export, /**< Exports signatures. */
+  .gimport = &cpy06_signature_import, /**< Imports signatures. */
+  .to_string = &cpy06_signature_to_string, /**< Converts signatures to 
+					      printable strings. */
 };
 
 #endif
