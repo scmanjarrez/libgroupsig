@@ -106,8 +106,8 @@ int cpy06_grp_key_get_size(groupsig_key_t *key);
  * @fn int cpy06_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key)
  * @brief Writes a bytearray representation of the given key, with format:
  *
- *  | CPY06_CODE | KEYTYPE | size_params | params | size_g1 | g1 | size_g2 | g2 |
- *    size_q | q | size_r | r | size_w | w | size_x | x | size_y | y | size_z | z |
+ *  | CPY06_CODE | KEYTYPE | size_q | q | size_r | r | size_w | w | size_x | x |
+ *    size_y | y | size_z | z |
  *
  * @param[in,out] bytes A pointer to the array that will contain the exported
  *  group key. If <i>*bytes</i> is NULL, memory will be internally allocated.

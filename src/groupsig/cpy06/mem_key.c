@@ -29,251 +29,15 @@
 
 #include "cpy06.h"
 #include "groupsig/cpy06/mem_key.h"
-#include "wrappers/base64.h"
-#include "wrappers/pbc_ext.h"
+#include "shim/base64.h"
+#include "shim/pbc_ext.h"
 #include "misc/misc.h"
-#include "exim.h"
 #include "sys/mem.h"
-
-/* Private functions */
-
-/** 
- * @fn static int _is_supported_format(groupsig_key_format_t format)
- * @brief Returns 1 if the specified format is supported by this scheme. 0 if not.
- *
- * @param[in] format The format to be "tested"
- * 
- * @return 1 if the specified format is supported, 0 if not.
- */
-static int _is_supported_format(groupsig_key_format_t format) {
-
-  int i;
-
-  for(i=0; i<CPY06_SUPPORTED_KEY_FORMATS_N; i++) {
-    if(CPY06_SUPPORTED_KEY_FORMATS[i] == format) {
-      return 1;
-    }
-  }
-
-  return 0;
-
-}
-
-/**
- * @fn static int _get_size_bytearray_null(exim_t *obj)
- * @brief Returns the size in bytes of the exim wrapped object. The size will be
- * equal to the size of bytearray output by _export_fd() or created by
- * _import_fd().
- *
- * @param[in] obj The object to be sized.
- *
- * @return The size in bytes of the object contained in obj.
- */
-static int _get_size_bytearray_null(exim_t *obj){
-  int size;
-  byte_t *bytes_params;
-  uint64_t size_params;
-  cpy06_sysenv_t *cpy06_sysenv;
-  if(!obj || !obj->eximable){
-    return -1;
-  }
-  cpy06_mem_key_t *key = (cpy06_mem_key_t*)obj->eximable;
-  if(!key->x[0].data || !key->t[0].data || !key->A[0].data){
-      LOG_EINVAL(&logger, __FILE__, "_get_size_bytearray_null", __LINE__, LOGERROR);
-      return -1;
-  }
-
-  cpy06_sysenv = sysenv->data;
-
-  bytes_params = NULL;
-  if(pbcext_dump_param_bytes(&bytes_params, &size_params, cpy06_sysenv->param) == IERROR) {
-    return IERROR;
-  }
-
-  size = element_length_in_bytes(key->x)+element_length_in_bytes(key->t)+
-    element_length_in_bytes(key->A)+size_params+sizeof(int)*4+2;
-
-  return size;
-}
-
-/**
- * @fn static int _export_fd(exim_t* obj, FILE *fd)
- * @brief Writes a bytearray representation of the given exim object to a
- * file descriptor with format:
- *
- *  | CPY06_CODE | KEYTYPE | size_params | params | size_x | x | size_t | t | size_A | A |
- *
- * @param[in] key The key to export.
- * @param[in, out] fd An open filestream to write to.
- *
- * @return IOK or IERROR
- */
-static int _export_fd(exim_t* obj, FILE *fd) {
-  uint8_t code, type;
-  cpy06_sysenv_t *cpy06_sysenv;
-
-  if(!obj || !obj->eximable || !fd) {
-    LOG_EINVAL(&logger, __FILE__, "_export_fd", __LINE__, LOGERROR);
-    return IERROR;
-  }
-  cpy06_mem_key_t *key = (cpy06_mem_key_t*)obj->eximable;
-  if(!key->x[0].data || !key->t[0].data || !key->A[0].data){
-      LOG_EINVAL(&logger, __FILE__, "_export_fd", __LINE__, LOGERROR);
-      return IERROR;
-  }
-  cpy06_sysenv = sysenv->data;
-
-  /* Dump GROUPSIG_CPY06_CODE */
-  code = GROUPSIG_CPY06_CODE;
-  if(fwrite(&code, sizeof(byte_t), 1, fd) != 1) {
-      return IERROR;
-  }
-  /* Dump key type */
-  type = GROUPSIG_KEY_MEMKEY;
-  if(fwrite(&type, sizeof(byte_t), 1, fd) != 1) {
-    LOG_ERRORCODE(&logger, __FILE__, "_export_fd", __LINE__,
-          errno, LOGERROR);
-    return IERROR;
-  }
-
-  /* Dump params */
-  if(pbcext_dump_param_fd(cpy06_sysenv->param, fd) == IERROR) {
-    return IERROR;
-  }
-
-  /* Dump x */
-  if(pbcext_dump_element_fd(key->x, fd) == IERROR) {
-    return IERROR;
-  }
-
-  /* Dump t */
-  if(pbcext_dump_element_fd(key->t, fd) == IERROR) {
-    return IERROR;
-  }
-
-  /* Dump A */
-  if(pbcext_dump_element_fd(key->A, fd) == IERROR) {
-    return IERROR;
-  }
-
-  return IOK;
-}
-
-/**
- * @fn static int _import_fd(FILE *fd, exim_t* obj)
- * @brief Import a representation of the given key from a file descriptor.
- * Expects the same format as the output from _export_fd().
- *
- * @return IOK or IERROR
- */
-static int _import_fd(FILE *fd, exim_t* obj) {
-  groupsig_key_t *key;
-  cpy06_mem_key_t *cpy06_key;
-  cpy06_sysenv_t *cpy06_sysenv;
-  uint8_t type, scheme;
-
-  if(!fd || !obj) {
-    LOG_EINVAL(&logger, __FILE__, "_import_fd", __LINE__,
-           LOGERROR);
-    return IERROR;
-  }
-
-  if(!(key = cpy06_mem_key_init())) {
-    return IERROR;
-  }
-
-  cpy06_key = key->key;
-
-  /* First byte: scheme */
-  if(fread(&scheme, sizeof(byte_t), 1, fd) != 1) {
-    LOG_ERRORCODE(&logger, __FILE__, "_import_fd", __LINE__,
-          errno, LOGERROR);
-    cpy06_mem_key_free(key); key = NULL;
-    return IERROR;
-  }
-
-  /* Next byte: key type */
-  if(fread(&type, sizeof(byte_t), 1, fd) != 1) {
-    LOG_ERRORCODE(&logger, __FILE__, "_import_fd", __LINE__,
-          errno, LOGERROR);
-    cpy06_mem_key_free(key); key = NULL;
-    return IERROR;
-  }
-
-  /* Get the params if sysenv->data is uninitialized */
-  if(!sysenv->data) {
-
-    /* Copy the param and pairing to the CPY06 internal environment */
-    /* By setting the environment, we avoid having to keep a copy of params
-       and pairing in manager/member keys and signatures, crls, gmls... */
-    if(!(cpy06_sysenv = (cpy06_sysenv_t *) mem_malloc(sizeof(cpy06_sysenv_t)))) {
-      cpy06_mem_key_free(key); key = NULL;
-      return IERROR;
-    }
-
-    /* Get the params */
-    if(pbcext_get_param_fd(cpy06_sysenv->param, fd) == IERROR) {
-      cpy06_mem_key_free(key); key = NULL;
-      return IERROR;
-    }
-
-    pairing_init_pbc_param(cpy06_sysenv->pairing, cpy06_sysenv->param);
-
-    if(cpy06_sysenv_update(cpy06_sysenv) == IERROR) {
-      cpy06_mem_key_free(key); key = NULL;
-      pbc_param_clear(cpy06_sysenv->param);
-      mem_free(cpy06_sysenv); cpy06_sysenv = NULL;
-      return IERROR;
-    }
-
-  } else { /* Else, skip it */
-
-    if (pbcext_skip_param_fd(fd) == IERROR) {
-      cpy06_mem_key_free(key); key = NULL;
-    }
-    cpy06_sysenv = sysenv->data;
-
-  }
-
-  /* Get x */
-  element_init_Zr(cpy06_key->x, cpy06_sysenv->pairing);
-  if(pbcext_get_element_fd(cpy06_key->x, fd) == IERROR) {
-    cpy06_mem_key_free(key); key = NULL;
-    return IERROR;
-  }
-
-  /* Get t */
-  element_init_Zr(cpy06_key->t, cpy06_sysenv->pairing);
-  if(pbcext_get_element_fd(cpy06_key->t, fd) == IERROR) {
-    cpy06_mem_key_free(key); key = NULL;
-    return IERROR;
-  }
-
-  /* Get A */
-  element_init_G1(cpy06_key->A, cpy06_sysenv->pairing);
-  if(pbcext_get_element_fd(cpy06_key->A, fd) == IERROR) {
-    cpy06_mem_key_free(key); key = NULL;
-    return IERROR;
-  }
-
-  obj->eximable = (void*) key;
-  return IOK;
-
-}
-
-/* Export/import handle definition */
-
-static exim_handle_t _exim_h = {
-  &_get_size_bytearray_null,
-  &_export_fd,
-  &_import_fd,
-};
-
-/* Public functions */
 
 groupsig_key_t* cpy06_mem_key_init() {
   
   groupsig_key_t *key;
+  cpy06_mem_key_t *cpy06_key;
 
   if(!(key = (groupsig_key_t *) mem_malloc(sizeof(groupsig_key_t)))) {
     return NULL;
@@ -285,6 +49,10 @@ groupsig_key_t* cpy06_mem_key_init() {
   }
 
   key->scheme = GROUPSIG_CPY06_CODE;
+  cpy06_key = key->key;
+  cpy06_key->x = NULL;
+  cpy06_key->t = NULL;
+  cpy06_key->A = NULL;
 
   return key;
 
@@ -307,9 +75,15 @@ int cpy06_mem_key_free(groupsig_key_t *key) {
 
   if(key->key) {
     cpy06_key = key->key;
-    if(cpy06_key->x[0].data) element_clear(cpy06_key->x);
-    if(cpy06_key->t[0].data) element_clear(cpy06_key->t);
-    if(cpy06_key->A[0].data) element_clear(cpy06_key->A);
+    if (cpy06_key->x) {
+      pbcext_element_Fr_free(cpy06_key->x); cpy06_key->x = NULL;
+    }
+    if (cpy06_key->t) {
+      pbcext_element_Fr_free(cpy06_key->t); cpy06_key->t = NULL;
+    }
+    if (cpy06_key->A) {
+      pbcext_element_G1_free(cpy06_key->A); cpy06_key->A = NULL;
+    }
     mem_free(key->key);
     key->key = NULL;
   }
@@ -323,6 +97,7 @@ int cpy06_mem_key_free(groupsig_key_t *key) {
 int cpy06_mem_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
 
   cpy06_mem_key_t *cpy06_dst, *cpy06_src;
+  int rc;
 
   if(!dst || dst->scheme != GROUPSIG_CPY06_CODE ||
      !src || src->scheme != GROUPSIG_CPY06_CODE) {
@@ -332,104 +107,263 @@ int cpy06_mem_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
 
   cpy06_dst = dst->key;
   cpy06_src = src->key;
+  rc = IOK;
 
   /* Copy the elements */
-  element_init_same_as(cpy06_dst->x, cpy06_src->x);
-  element_set(cpy06_dst->x, cpy06_src->x);
-  element_init_same_as(cpy06_dst->t, cpy06_src->t);
-  element_set(cpy06_dst->t, cpy06_src->t);
-  element_init_same_as(cpy06_dst->A, cpy06_src->A);
-  element_set(cpy06_dst->A, cpy06_src->A);
+  if (!(cpy06_dst->x = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_mem_key_copy);
+  if (pbcext_element_Fr_set(cpy06_dst->x, cpy06_src->x) == IERROR)
+    GOTOENDRC(IERROR, cpy06_mem_key_copy);
+  if (!(cpy06_dst->t = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_mem_key_copy);
+  if (pbcext_element_Fr_set(cpy06_dst->t, cpy06_src->t) == IERROR)
+    GOTOENDRC(IERROR, cpy06_mem_key_copy);
+  if (!(cpy06_dst->A = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_mem_key_copy);
+  if (pbcext_element_G1_set(cpy06_dst->A, cpy06_src->A) == IERROR)
+    GOTOENDRC(IERROR, cpy06_mem_key_copy);
 
-  return IOK;
+ cpy06_mem_key_copy_end:
+
+  if (rc == IERROR) {
+    if (cpy06_dst->x) {
+      pbcext_element_Fr_free(cpy06_dst->x); cpy06_dst->x = NULL;
+    }
+    if (cpy06_dst->t) {
+      pbcext_element_Fr_free(cpy06_dst->t); cpy06_dst->t = NULL;
+    }
+    if (cpy06_dst->A) {
+      pbcext_element_G1_free(cpy06_dst->A); cpy06_dst->A = NULL;
+    }    
+  }
+
+  return rc;
 
 }
 
-int cpy06_mem_key_get_size_in_format(groupsig_key_t *key, groupsig_key_format_t format) {
+int cpy06_mem_key_get_size(groupsig_key_t *key) {
 
-  if(!key || key->scheme != GROUPSIG_CPY06_CODE ||
-     !_is_supported_format(format)) {
-    LOG_EINVAL(&logger, __FILE__, "cpy06_mem_key_get_size_in_format", __LINE__, LOGERROR);
+  cpy06_mem_key_t *cpy06_key;
+  uint64_t size64, sx, st, sA;
+
+  if(!key || key->scheme != GROUPSIG_CPY06_CODE) {
+    LOG_EINVAL(&logger, __FILE__, "cpy06_mem_key_get_size", __LINE__, LOGERROR);
     return -1;
   }
 
-  exim_t wrap = {key->key, &_exim_h };
-  return exim_get_size_in_format(&wrap, format);
+  cpy06_key = key->key;
+  sx = st = sA = 0;
+
+  if (pbcext_element_Fr_byte_size(&sx) == IERROR) return -1;
+  if (pbcext_element_Fr_byte_size(&st) == IERROR) return -1;
+  if (pbcext_element_G1_byte_size(&sA) == IERROR) return -1;
+
+  size64 = sizeof(uint8_t)*2 + sizeof(int)*3 + sx + st + sA;
+  if (size64 > INT_MAX) return -1;
+
+  return (int) size64;
 
 }
 
 char* cpy06_mem_key_to_string(groupsig_key_t *key) {
 
-  char *s;
-  int l, l_x, l_t, l_A, o;
+  cpy06_mem_key_t *cpy06_key;
+  char *x, *t, *A, *skey;
+  uint64_t x_len, t_len, A_len;
+  uint32_t skey_len;
+  int rc;
 
   if(!key || key->scheme != GROUPSIG_CPY06_CODE) {
-    LOG_EINVAL(&logger, __FILE__, "cpy06_mem_key_to_string", __LINE__, LOGERROR);
+    LOG_EINVAL(&logger, __FILE__, "cpy06_mem_key_to_string",
+	       __LINE__, LOGERROR);
     return NULL;
   }
 
-  l_x = element_length_in_bytes(((cpy06_mem_key_t *) key->key)->x);
-  l_t = element_length_in_bytes(((cpy06_mem_key_t *) key->key)->t);
-  l_A = element_length_in_bytes(((cpy06_mem_key_t *) key->key)->A);
-  l = (l_x + l_t + l_A) * 28; // @todo (28 = 3.5 * 8 ~ 3.33 * 8)
-  l += strlen("X: \nt: \nA:\n");
+  cpy06_key = key->key;
+  x = t = A = skey = NULL;
+  rc = IOK;
 
-  if(!(s = (char *) mem_malloc(sizeof(char)*(l+1)))) {
-    return NULL;
-  }
+  if (pbcext_element_Fr_to_string(&x, &x_len, 10, cpy06_key->x) == IERROR)
+    GOTOENDRC(IERROR, cpy06_mem_key_to_string);
 
-  sprintf(s, "X: "); o = strlen("X: ");
-  l_x = element_snprint(&s[o], l, ((cpy06_mem_key_t *) key->key)->x); o += l_x; 
-  sprintf(&s[o], "\nt: "); o += strlen("\nt: ");
-  l_t = element_snprint(&s[o], l, ((cpy06_mem_key_t *) key->key)->t); o += l_t;
-  sprintf(&s[o], "\nA: "); o += strlen("\nA: ");
-  l_A = element_snprint(&s[o], l, ((cpy06_mem_key_t *) key->key)->A); o += l_A;
-  sprintf(&s[o], "\n");
+  if (pbcext_element_Fr_to_string(&t, &t_len, 10, cpy06_key->t) == IERROR)
+    GOTOENDRC(IERROR, cpy06_mem_key_to_string);
 
+  if (pbcext_element_G1_to_string(&A, &A_len, 10, cpy06_key->A) == IERROR)
+    GOTOENDRC(IERROR, cpy06_mem_key_to_string);
+
+  if (!x || !t || !A) GOTOENDRC(IERROR, cpy06_mem_key_to_string);
+
+  skey_len = strlen(x) + strlen(t) + strlen(A) + strlen("x: \nt: \nA: \n")+1;
+
+  if (!(skey = (char *) mem_malloc(sizeof(char)*skey_len)))
+    GOTOENDRC(IERROR, cpy06_mem_key_to_string);
+
+  memset(skey, 0, sizeof(char)*skey_len);
+
+  sprintf(skey,
+	  "x: %s\n"
+	  "t: %s\n"
+	  "A: %s\n",
+	  x, t, A);
+
+ cpy06_mem_key_to_string_end:
+
+  if (x) { mem_free(x); x = NULL; }
+  if (t) { mem_free(t); t = NULL; }
+  if (A) { mem_free(A); A = NULL; }
+
+  if (rc == IERROR && skey) { mem_free(skey); skey = NULL; }
+  
   return s;
 
 }
 
-int cpy06_mem_key_export(groupsig_key_t *key, groupsig_key_format_t format, void *dst) {
+int cpy06_mem_key_export(byte_t **bytes,
+			 uint32_t *size,
+			 groupsig_key_t *key) {
 
-  if(!key || key->scheme != GROUPSIG_CPY06_CODE) {
+  cpy06_mem_key_t *cpy06_key;
+  byte_t *_bytes, *__bytes;
+  uint64_t len;
+  int _size, ctr, rc;
+
+  if(!bytes ||
+     !size ||
+     !key || key->scheme != GROUPSIG_CPY06_CODE) {
     LOG_EINVAL(&logger, __FILE__, "cpy06_mem_key_export", __LINE__, LOGERROR);
     return IERROR;
   }
 
-  /* See if the current scheme supports the given format */
-  if(!_is_supported_format(format)) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "cpy06_mem_key_export", __LINE__,
-		   "The specified format is not supported.", LOGERROR);
+  rc = IOK;
+  ctr = 0;
+  cpy06_key = key->key;
+
+  /* Get the number of bytes to represent the key */
+  if ((_size = cpy06_mem_key_get_size(key)) == -1) {
     return IERROR;
   }
 
-  /* Apply the specified conversion */
-  exim_t wrap = {key->key, &_exim_h };
-  return exim_export(&wrap, format, dst);
+  if(!(_bytes = mem_malloc(sizeof(byte_t)*_size))) {
+    return IERROR;
+  }
+
+  /* Dump GROUPSIG_CPY06_CODE */
+  _bytes[ctr++] = GROUPSIG_CPY06_CODE;
+
+  /* Dump key type */
+  _bytes[ctr++] = GROUPSIG_KEY_MEMKEY;
+
+  /* Dump x */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, cpy06_key->x) == IERROR)
+    GOTOENDRC(IERROR, cpy06_mem_key_export);
+  ctr += len;
+
+  /* Dump t */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, cpy06_key->t) == IERROR)
+    GOTOENDRC(IERROR, cpy06_mem_key_export);
+  ctr += len;
+
+  /* Dump A */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_G1_bytes(&__bytes, &len, cpy06_key->A) == IERROR)
+    GOTOENDRC(IERROR, cpy06_mem_key_export);
+  ctr += len;  
+
+  /* Prepare the return */
+  if(!*bytes) {
+    *bytes = _bytes;
+  } else {
+    memcpy(*bytes, _bytes, ctr);
+    mem_free(_bytes); _bytes = NULL;
+  }
+  
+  /* Sanity check */
+  if (ctr != _size) {
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "cpy06_mem_key_export", __LINE__,
+                      EDQUOT, "Unexpected size.", LOGERROR);
+    GOTOENDRC(IERROR, cpy06_mem_key_export);
+  }
+
+  *size = ctr;
+
+ cpy06_mem_key_export_end:
+
+  if (rc == IERROR) {
+    if(_bytes) { mem_free(_bytes); _bytes = NULL; }
+  }
+
+  return rc;  
   
 }
 
-groupsig_key_t* cpy06_mem_key_import(groupsig_key_format_t format, void *source) {
+groupsig_key_t* cpy06_mem_key_import(byte_t *source, uint32_t size) {
 
-  if(!source) {
+  groupsig_key_t *key;
+  cpy06_mem_key_t *cpy06_key;
+  uint64_t len;
+  byte_t scheme, type;
+  int rc, ctr;
+
+  if(!source || !size) {
     LOG_EINVAL(&logger, __FILE__, "cpy06_mem_key_import", __LINE__, LOGERROR);
     return NULL;
   }
 
-  /* See if the current scheme supports the given format */
-  if(!_is_supported_format(format)) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "cpy06_mem_key_import", __LINE__,
-  		   "The specified format is not supported.", LOGERROR);
+  rc = IOK;
+  ctr = 0;
+
+  if(!(key = cpy06_mem_key_init())) {
     return NULL;
   }
 
-  exim_t wrap = {NULL, &_exim_h };
-  if(exim_import(format, source, &wrap) != IOK){
-    return NULL;
+  cpy06_key = key->key;
+
+  /* First byte: scheme */
+  scheme = source[ctr++];
+  if(scheme != key->scheme) {
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "cpy06_mem_key_import", __LINE__,
+                      EDQUOT, "Unexpected key scheme.", LOGERROR);
+    GOTOENDRC(IERROR, cpy06_mem_key_import);
   }
 
-  return wrap.eximable;
+  /* Next byte: key type */
+  type = source[ctr++];
+  if(type != GROUPSIG_KEY_MEMKEY) {
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "cpy06_mem_key_import", __LINE__,
+                      EDQUOT, "Unexpected key scheme.", LOGERROR);
+    GOTOENDRC(IERROR, cpy06_mem_key_import);
+  }
+
+  /* Get x */
+  if(!(cpy06_key->x = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_mem_key_import);
+  if(pbcext_get_element_Fr_bytes(cpy06_key->x, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_mem_key_import);
+  ctr += len;
+
+  /* Get t */
+  if(!(cpy06_key->t = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_mem_key_import);
+  if(pbcext_get_element_Fr_bytes(cpy06_key->t, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_mem_key_import);
+  ctr += len;
+
+  /* Get A */
+  if(!(cpy06_key->A = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_mem_key_import);
+  if(pbcext_get_element_G1_bytes(cpy06_key->A, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_mem_key_import);
+  ctr += len; 
+
+ cpy06_mem_key_import_end:
+  
+  if(rc == IERROR && key) { cpy06_mem_key_free(key); key = NULL; }
+  if(rc == IOK) return key;
+
+  return NULL;
 
 }
 
