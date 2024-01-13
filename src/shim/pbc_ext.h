@@ -659,9 +659,32 @@ extern "C" {
 			    pbcext_element_Fr_t *s);
 
   /** 
+   * @fn int pbcext_element_G1_muln(pbcext_element_G1_t *dst,
+   *                                pbcext_element_G1_t *e,
+   *                                pbcext_element_Fr_t *s,
+   *                                uint32_t n)
+   * @brief Sets dst to s[0]*e[0]+...s[n-1]*e[n-1].
+   *
+   * If there's some optimized multiscalar multiplication option in the
+   * underlying engine, it will be used. Otherwise, old good n independent
+   * multiplications will be done, and finally added.
+   *
+   * @param[in,out] dst The element to be set.
+   * @param[in] e The array of G1 elements.
+   * @param[in] s The array of Fr elements.
+   * @param[in] n The number of elements in the previous arrays.
+   * 
+   * @return IOK or IERROR.
+   */  
+  int pbcext_element_G1_muln(pbcext_element_G1_t *dst,
+			     pbcext_element_G1_t **e,
+			     pbcext_element_Fr_t **s,
+			     uint32_t n);
+
+  /** 
    * @fn int pbcext_element_GT_pow(pbcext_element_GT_t *dst,
-   *                               pbcext_element_GT_t *e,
-   *                               pbcext_element_Fr_t *s)
+   *                               pbcext_element_GT_t **e,
+   *                               pbcext_element_Fr_t **s)
    * @brief Sets dst to e^s, where s is a scalar and e is a group element.
    *
    * @param[in,out] dst The element to be set.

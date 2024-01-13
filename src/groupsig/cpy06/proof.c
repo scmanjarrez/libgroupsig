@@ -28,199 +28,10 @@
 #include <openssl/sha.h>
 
 #include "types.h"
-#include "sysenv.h"
 #include "sys/mem.h"
-#include "wrappers/base64.h"
-#include "wrappers/pbc_ext.h"
-#include "misc/misc.h"
-#include "exim.h"
+#include "shim/pbc_ext.h"
 #include "cpy06.h"
 #include "groupsig/cpy06/proof.h"
-
-/* Private functions */
-/** 
- * @fn static int _is_supported_format(groupsig_proof_format_t format)
- * @brief Returns 1 if the specified format is supported by this scheme. 0 if not.
- *
- * @param[in] format The format to be "tested"
- * 
- * @return 1 if the specified format is supported, 0 if not.
- */
-static int _is_supported_format(groupsig_proof_format_t format) {
-
-  int i;
-
-  for(i=0; i<CPY06_SUPPORTED_PROOF_FORMATS_N; i++) {
-    if(CPY06_SUPPORTED_PROOF_FORMATS[i] == format) {
-      return 1;
-    }
-  }
-
-  return 0;
-
-}
-
-/**
- * @fn static int _get_size_bytearray_null(exim_t *obj)
- * @brief Returns the size in bytes of the exim wrapped object. The size will be
- * equal to the size of bytearray output by _export_fd() or created by
- * _import_fd().
- *
- * @param[in] obj The object to be sized.
- *
- * @return The size in bytes of the object contained in obj.
- */
-static int _get_size_bytearray_null(exim_t* obj) {
-
-  int size;
-
-  if(!obj || !obj->eximable) {
-    LOG_EINVAL(&logger, __FILE__, "_get_size_bytearray_null", __LINE__,
-           LOGERROR);
-    return -1;
-  }
-  cpy06_proof_t *proof = obj->eximable;
-
-  // size = sizeof(code) + 2*size(element size data) + elements
-  size = sizeof(byte_t) + 2*sizeof(int) +
-      element_length_in_bytes(proof->c) + element_length_in_bytes(proof->s);
-
-  return size;
-
-}
-
-/**
- * @fn static int _export_fd(exim_t* obj, FILE *fd)
- * @brief Exports a CPY06 proof to a bytearray,
- *
- * The format of the produced bytearray will be will be:
- *
- *    | CPY06_CODE | sizeof(c) | c | sizeof(s) | s|
- *
- * Where the first field is a byte and the sizeof fields are ints indicating
- * the number of bytes of the following field.
- *
- * @param[in] obj The exim wrapped proof to export.
- * @param[in] fd The destination file descriptor. Must be big enough to store the result.
- *
- * @return IOK or IERROR:
- */
-static int _export_fd(exim_t* obj, FILE *fd) {
-  byte_t *bytes;
-  uint64_t size, offset, written;
-  cpy06_proof_t *proof;
-
-  if(!obj || !obj->eximable || !fd) {
-    LOG_EINVAL(&logger, __FILE__, "_export_fd", __LINE__,
-           LOGERROR);
-    return IERROR;
-  }
-  proof = obj->eximable;
-  size = _get_size_bytearray_null(obj);//element_length_in_bytes(proof->c)+element_length_in_bytes(proof->s)+
-    //sizeof(uint64_t)*2+1;
-
-  if(!(bytes = (byte_t *) mem_malloc(sizeof(byte_t *)*size))) {
-    return IERROR;
-  }
-
-  /* Dump GROUPSIG_CPY06_CODE */
-  bytes[0] = GROUPSIG_CPY06_CODE;
-  offset = 1;
-
-  /* Dump T1 */
-  if(pbcext_dump_element_bytes(&bytes[offset], &written, proof->c) == IERROR) {
-    mem_free(bytes); bytes = NULL;
-    return IERROR;
-  }
-  offset += written;
-
-  /* Dump T2 */
-  if(pbcext_dump_element_bytes(&bytes[offset], &written, proof->s) == IERROR) {
-    mem_free(bytes); bytes = NULL;
-    return IERROR;
-  }
-  offset += written;
-
-  if(fwrite(bytes, offset, 1, fd) != 1){
-    return IERROR;
-  }
-
-  mem_free(bytes); bytes = NULL;
-
-  return IOK;
-
-}
-
-/**
- * @fn static int _import_fd(FILE *fd, exim_t* obj)
- * @brief Import a representation of the given key from a file descriptor.
- * Expects the same format as the output from _export_fd().
- *
- * @return IOK or IERROR
- */
-static int _import_fd(FILE *fd, exim_t* obj) {
-  groupsig_proof_t *proof;
-  cpy06_proof_t *cpy06_proof;
-  struct pairing_s *pairing;
-  uint64_t size, offset, rd;
-  int scheme;
-  byte_t* buffer;
-
-  if(!fd || !obj) {
-    LOG_EINVAL(&logger, __FILE__, "_import_fd", __LINE__,
-           LOGERROR);
-    return IERROR;
-  }
-
-  if(!(proof = cpy06_proof_init())) {
-    return IERROR;
-  }
-  size = misc_get_fd_size(fd);
-  if(!(buffer = (byte_t*)mem_malloc(size))){
-    return IERROR;
-  }
-  fread(buffer, size, 1, fd);
-  cpy06_proof = proof->proof;
-  pairing = ((cpy06_sysenv_t *) sysenv->data)->pairing;
-
-  /* First byte: scheme */
-  scheme = buffer[0];
-  offset = 1;
-
-  if(scheme != proof->scheme) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "_import_fd", __LINE__,
-              EDQUOT, "Unexpected proof scheme.", LOGERROR);
-    cpy06_proof_free(proof); proof = NULL;
-    return IERROR;
-  }
-
-  /* Get Zr */
-  element_init_Zr(cpy06_proof->c, pairing);
-  if(pbcext_get_element_bytes(cpy06_proof->c, &rd, &buffer[offset]) == IERROR) {
-    cpy06_proof_free(proof); proof = NULL;
-    return IERROR;
-  }
-  offset += rd;
-
-  /* Get s */
-  element_init_Zr(cpy06_proof->s, pairing);
-  if(pbcext_get_element_bytes(cpy06_proof->s, &rd, &buffer[offset]) == IERROR) {
-    cpy06_proof_free(proof); proof = NULL;
-    return IERROR;
-  }
-  offset += rd;
-
-  obj->eximable = proof;
-  return IOK;
-}
-
-/* Export/import handle definition */
-
-static exim_handle_t _exim_h = {
-  &_get_size_bytearray_null,
-  &_export_fd,
-  &_import_fd,
-};
 
 groupsig_proof_t* cpy06_proof_init() {
 
@@ -235,11 +46,16 @@ groupsig_proof_t* cpy06_proof_init() {
     mem_free(proof); proof = NULL;
     return NULL;
   }
+  
+  proof->c = NULL;
+  proof->s = NULL;
 
   return proof;
 }
 
 int cpy06_proof_free(groupsig_proof_t *proof) {
+
+  cpy06_proof_t *cpy06_proof;
 
   if(!proof) {
     LOG_EINVAL_MSG(&logger, __FILE__, "cpy06_proof_free", __LINE__,
@@ -248,8 +64,9 @@ int cpy06_proof_free(groupsig_proof_t *proof) {
   }
 
   if(proof->proof) {
-    element_clear(((cpy06_proof_t *) proof->proof)->c);
-    element_clear(((cpy06_proof_t *) proof->proof)->s);
+    cpy06_proof = proof->proof;
+    if (pbcext_element_Fr_free(cpy06_proof->c); cpy06_proof->c = NULL; }
+    if (pbcext_element_Fr_free(cpy06_proof->s); cpy06_proof->s = NULL; }
     mem_free(proof->proof); proof->proof = NULL;
   }
 
@@ -291,78 +108,189 @@ int cpy06_proof_free(groupsig_proof_t *proof) {
 
 char* cpy06_proof_to_string(groupsig_proof_t *proof) {
 
+  cpy06_proof_t *cpy06_proof;
+  char *sc, *ss, *sproof;
+  uint64_t sc_len, ss_len;
+  uint32_t sproof_len;
+  int rc;
+
   if(!proof || proof->scheme != GROUPSIG_CPY06_CODE) {
     LOG_EINVAL(&logger, __FILE__, "cpy06_proof_to_string", __LINE__, LOGERROR);
     return NULL;
   }
+
+  cpy06_proof = proof->proof;
+  sc = ss = sproof = NULL;
+  rc = IOK;
+
+  if (pbcext_element_Fr_to_string(sc, &sc_len, 10, cpy06_proof->c) == IERROR)
+    GOTOENDRC(IERROR, cpy06_proof_to_string);
+
+  if (pbcext_element_Fr_to_string(ss, &ss_len, 10, cpy06_proof->s) == IERROR)
+    GOTOENDRC(IERROR, cpy06_proof_to_string);
+
+  if (!sc || !ss) GOTOENDRC(IERROR, cpy06_proof_to_string);
+
+  sproof_len = strlen(sc) + strlen(ss) + strlen("c: \ns: \n")+1;
+
+  if (!(sproof = (char *) mem_malloc(sizeof(char)*sproof_len)))
+    GOTOENDRC(IERROR, cpy06_proof_to_string);
+
+  sprintf(sproof,"c: %s\ns: %s\n", sc, ss);
+
+ cpy06_proof_to_string_end:
+
+  if (rc == IERROR && sproof) { mem_free(sproof); sproof = NULL; }
+
+  if (sc) { mem_free(sc); sc = NULL; }
+  if (ss) { mem_free(ss); ss =NULL; }
   
-  return NULL;
+  return sproof;
 
 }
 
-int cpy06_proof_export(groupsig_proof_t *proof, groupsig_proof_format_t format, void *dst) { 
+int cpy06_proof_get_size_in_format(groupsig_proof_t *proof) {
 
   cpy06_proof_t *cpy06_proof;
+  uint64_t size64, sc, ss;
+
+  if(!proof || proof->scheme != GROUPSIG_CPY06_CODE) {
+    LOG_EINVAL(&logger, __FILE__, "cpy06_proof_get_size", __LINE__, LOGERROR);
+    return -1;
+  }
+
+  cpy06_proof = proof->proof;
+  sc = ss = size64 = 0;
+
+  if (pbcext_element_Fr_byte_size(&sc) == IERROR) return -1;
+  if (pbcext_element_Fr_byte_size(&ss) == IERROR) return -1;
+
+  size64 = sizeof(uint8_t)+sizeof(int)*2 + sc + ss;
+  if (size64 > INT_MAX) return -1;
+
+  return (int) size64;
+
+}
+
+int cpy06_proof_export(byte_t **bytes,
+		       uint32_t *size,
+		       groupsig_proof_t *proof) { 
+
+  cpy06_proof_t *cpy06_proof;
+  byte_t *_bytes, *__bytes;
+  uint64_t len;
+  int _size, ctr, rc;
 
   if(!proof || proof->scheme != GROUPSIG_CPY06_CODE) {
     LOG_EINVAL(&logger, __FILE__, "cpy06_proof_export", __LINE__, LOGERROR);
     return IERROR;
   }
 
+  rc = IOK;
+  ctr = 0;
   cpy06_proof = (cpy06_proof_t *) proof->proof;
 
-  /* See if the current scheme supports the given format */
-  if(!_is_supported_format(format)) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "cpy06_proof_export", __LINE__,
-  		   "The specified format is not supported.", LOGERROR);
+    /* Get the number of bytes to represent the signature */
+  if ((_size = cpy06_proof_get_size(proof)) == -1) {
     return IERROR;
   }
 
-  exim_t wrap = {cpy06_proof, &_exim_h };
-  return exim_export(&wrap, format, dst);
+  if(!(_bytes = mem_malloc(sizeof(byte_t)*_size))) {
+    return IERROR;
+  }
+
+  /* Dump GROUPSIG_CPY06_CODE */
+  _bytes[ctr++] = GROUPSIG_CPY06_CODE;
+
+  /* Dump c */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, cpy06_proof->c) == IERROR)
+    GOTOENDRC(IERROR, cpy06_proof_export);
+  ctr += len;
+
+  /* Dump s */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, cpy06_proof->s) == IERROR)
+    GOTOENDRC(IERROR, cpy06_proof_export);
+  ctr += len;
+
+  /* Prepare the return */
+  if(!*bytes) {
+    *bytes = _bytes;
+  } else {
+    memcpy(*bytes, _bytes, ctr);
+    mem_free(_bytes); _bytes = NULL;
+  }
+  
+  /* Sanity check */
+  if (ctr != _size) {
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "cpy06_proof_export", __LINE__,
+                      EDQUOT, "Unexpected size.", LOGERROR);
+    GOTOENDRC(IERROR, cpy06_proof_export);
+  }
+
+  *size = ctr;
+
+ cpy06_proof_export_end:
+
+  if (rc == IERROR) {
+    if(_bytes) { mem_free(_bytes); _bytes = NULL; }
+  }
+
+  return rc;
 
 }
 
-groupsig_proof_t* cpy06_proof_import(groupsig_proof_format_t format, void *source) {
+groupsig_proof_t* cpy06_proof_import(byte_t *source, uint32_t size) {
+
+  groupsig_proof_t *proof;
+  cpy06_proof_t *cpy06_proof;
+  uint64_t len;
+  byte_t scheme;
+  int rc, ctr;
 
   if(!source) {
     LOG_EINVAL(&logger, __FILE__, "cpy06_proof_import", __LINE__, LOGERROR);
     return NULL;
   }
 
-  /* See if the current scheme supports the given format */
-  if(!_is_supported_format(format)) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "cpy06_proof_import", __LINE__,
-  		   "The specified format is not supported.", LOGERROR);
+  rc = IOK;
+  ctr = 0;
+
+  if(!(proof = cpy06_proof_init())) {
     return NULL;
   }
 
-  exim_t wrap = {NULL, &_exim_h };
-  if(exim_import(format, source, &wrap) != IOK){
-    return NULL;
+  cpy06_proof = proof->proof;
+
+  /* First byte: scheme */
+  scheme = source[ctr++];
+  if(scheme != proof->scheme) {
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "cpy06_proof_import", __LINE__,
+                      EDQUOT, "Unexpected key scheme.", LOGERROR);
+    GOTOENDRC(IERROR, cpy06_proof_import);
   }
 
-  return wrap.eximable;
+  /* Get c */
+  if(!(cpy06_proof->c = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_proof_import);
+  if(pbcext_get_element_Fr_bytes(cpy06_sig->c, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_proof_import);
+  ctr += len;
+
+  /* Get s */
+  if(!(cpy06_proof->s = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_proof_import);
+  if(pbcext_get_element_Fr_bytes(cpy06_sig->sr1, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, cpy06_proof_import);
+  ctr += len;
+
+ cpy06_proof_import_end:
   
-}
+  if(rc == IERROR && proof) { cpy06_proof_free(proof); proof = NULL; }
 
-int cpy06_proof_get_size_in_format(groupsig_proof_t *proof, groupsig_proof_format_t format) {
-
-  if(!proof || proof->scheme != GROUPSIG_CPY06_CODE) {
-    LOG_EINVAL(&logger, __FILE__, "cpy06_proof_get_size_in_format", __LINE__, LOGERROR);
-    return -1;
-  }
-
-  /* See if the current scheme supports the given format */
-  if(!_is_supported_format(format)) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "cpy06_proof_get_size_in_format", __LINE__,
-  		   "The specified format is not supported.", LOGERROR);
-    return -1;
-  }
-
-  exim_t wrap = {proof->proof, &_exim_h };
-  return exim_get_size_in_format(&wrap, format);
-
+  return proof;
+  
 }
 
 /* proof.c ends here */

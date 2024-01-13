@@ -21,8 +21,6 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#include "sysenv.h"
-#include "bigz.h"
 #include "cpy06.h"
 #include "groupsig/cpy06/mem_key.h"
 #include "groupsig/cpy06/gml.h"
@@ -43,12 +41,16 @@ int cpy06_reveal(trapdoor_t *trap, crl_t *crl, gml_t *gml, uint64_t index) {
     return IERROR;
   }
 
+  /* @TODO: Do proper error handling here. I'd bet the following leaks in 
+     case of error (and possibly even w/o errors too). */
+
   if(!(crl_trap = trapdoor_init(trap->scheme))){
     LOG_EINVAL(&logger, __FILE__, "cpy06_reveal", __LINE__, LOGERROR);
     return IERROR;
   }
 
-  /* The tracing trapdoor for the i-th member is the C value computed during join */
+  /* The tracing trapdoor for the i-th member is the C value computed 
+     during join */
   if(!(gml_entry = ((cpy06_gml_entry_t *) gml_get(gml, index)))) {
     return IERROR;
   }
@@ -64,15 +66,18 @@ int cpy06_reveal(trapdoor_t *trap, crl_t *crl, gml_t *gml, uint64_t index) {
       return IERROR;
     }
 
-    if(cpy06_identity_copy(crl_entry->id, gml_entry->id) == IERROR) {
+    if (cpy06_identity_copy(crl_entry->id, gml_entry->id) == IERROR) {
       cpy06_crl_entry_free(crl_entry);
       return IERROR;
     }
 
-    cpy06_trapdoor_copy(crl_trap, trap);
+    if (cpy06_trapdoor_copy(crl_trap, trap) == IERROR) {
+      cpy06_crl_entry_free(crl_entry);
+      return IERROR;
+    }
     crl_entry->trapdoor = crl_trap;
 
-    if(cpy06_crl_insert(crl, crl_entry) == IERROR) {
+    if (cpy06_crl_insert(crl, crl_entry) == IERROR) {
       cpy06_crl_entry_free(crl_entry);
       return IERROR;
     }

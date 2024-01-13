@@ -21,37 +21,22 @@
 #define _CPY06_PROOF_H
 
 #include <stdint.h>
-#include <pbc/pbc.h>
+
 #include "include/proof.h"
+#include "shim/pbc_ext.h"
 #include "cpy06.h"
 
-/**
- * @def CPY06_SUPPORTED_PROOF_FORMATS_N
- * @brief Number of proof formats supported in CPY06.
- */
-#define CPY06_SUPPORTED_PROOF_FORMATS_N 6
-
-/**
- * @var CPY06_SUPPORTED_PROOF_FORMATS
- * @brief List of proof formats supported in CPY06.
- */
-static const int CPY06_SUPPORTED_PROOF_FORMATS[CPY06_SUPPORTED_PROOF_FORMATS_N] = { 
-  GROUPSIG_PROOF_FORMAT_FILE_NULL,
-  GROUPSIG_PROOF_FORMAT_FILE_NULL_B64,
-  GROUPSIG_PROOF_FORMAT_BYTEARRAY,
-  GROUPSIG_PROOF_FORMAT_STRING_NULL_B64,
-  GROUPSIG_PROOF_FORMAT_MESSAGE_NULL,
-  GROUPSIG_PROOF_FORMAT_MESSAGE_NULL_B64,
-};
-
+/* @TODO: The code here can probably simplified/optimized via the crypto/spk.h
+   module (as an spk_rep_t proof). Not sure though, so leaving as technical 
+   debt. */
 
 /**
  * @struct cpy06_proof_t
  * @brief General NIZK proofs of knowledge for CPY06.
  */
 typedef struct {
-  element_t c; /**< */
-  element_t s; /**< */
+  pbcext_element_Fr_t *c; /**< */
+  pbcext_element_Fr_t *s; /**< */
 } cpy06_proof_t;
 
 /** 
@@ -72,38 +57,38 @@ groupsig_proof_t* cpy06_proof_init();
  */
 int cpy06_proof_free(groupsig_proof_t *proof);
 
-/** 
- * @fn int cpy06_proof_init_set_c(cpy06_proof_t *proof, bigz_t c)
- * Initializes the c field of the given proof and sets it to the specified value.
- * 
- * @param[in,out] proof The proof whose c field is to be initialized and set.
- * @param[in] c The value to copy into proof->c.
- * 
- * @return IOK or IERROR
- */
-int cpy06_proof_init_set_c(cpy06_proof_t *proof, bigz_t c);
+/* /\**  */
+/*  * @fn int cpy06_proof_init_set_c(cpy06_proof_t *proof, pbcext_element_Fr_t *c) */
+/*  * Initializes the c field of the given proof and sets it to the specified value. */
+/*  *  */
+/*  * @param[in,out] proof The proof whose c field is to be initialized and set. */
+/*  * @param[in] c The value to copy into proof->c. */
+/*  *  */
+/*  * @return IOK or IERROR */
+/*  *\/ */
+/* int cpy06_proof_init_set_c(cpy06_proof_t *proof, pbcext_element_Fr_t *c); */
+
+/* /\**  */
+/*  * @fn int cpy06_proof_init_set_s(cpy06_proof_t *proof, pbcext_element_Fr_t *s) */
+/*  * Initializes the s field of the given proof and sets it to the specified value. */
+/*  *  */
+/*  * @param[in,out] proof The proof whose s field is to be initialized and set. */
+/*  * @param[in] s The value to copy into proof->s. */
+/*  *  */
+/*  * @return IOK or IERROR */
+/*  *\/ */
+/* int cpy06_proof_init_set_s(cpy06_proof_t *proof, pbcext_element_Fr_t *s); */
 
 /** 
- * @fn int cpy06_proof_init_set_s(cpy06_proof_t *proof, bigz_t s)
- * Initializes the s field of the given proof and sets it to the specified value.
- * 
- * @param[in,out] proof The proof whose s field is to be initialized and set.
- * @param[in] s The value to copy into proof->s.
- * 
- * @return IOK or IERROR
- */
-int cpy06_proof_init_set_s(cpy06_proof_t *proof, bigz_t s);
-
-/** 
- * @fn void* cpy06_proof_copy(void *proof)
+ * @fn int cpy06_proof_copy(groupsig_proof_t *dst, groupsig_proof_t *src)
  * @brief Copies the given proof into a new one.
  *
- * @param[in] proof The proof to copy. 
+ * @param[in,out] dst The destination proof. Initialized by the caller.
+ * @param[in] src The proof to copy.
  * 
- * @return A newly allocated proof (similar to the one received) or NULL
- *  if error.
+ * @return IOK or IERROR.
  */
-void* cpy06_proof_copy(void *proof);
+int cpy06_proof_copy(groupsig_proof_t *dst, groupsig_proof_t *src);
 
 /** 
  * @fn int cpy06_proof_to_string
@@ -116,35 +101,35 @@ void* cpy06_proof_copy(void *proof);
 char* cpy06_proof_to_string(groupsig_proof_t *proof);
 
 /** 
- * @fn int cpy06_proof_get_size_in_format(groupsig_proof_t *proof, 
- *                                        groupsig_proof_format_t format)
- * @brief Returns the size of the proof in the specified format. Useful when you have
- * to export the proof and pre-allocate the destination.
+ * @fn int cpy06_proof_get_size(groupsig_proof_t *proof)
+ * @brief Returns the size of the proof as an array of bytes.
  *
  * @param[in] proof The proof.
- * @param[in] format The format.
  * 
- * @return -1 if error, the size that this proof would have in case of
- *  being exported to the specified format.
+ * @return -1 if error, the size the size that this proof would have in case
+ *  of being exported to an array of bytes.
  */
-int cpy06_proof_get_size_in_format(groupsig_proof_t *proof, groupsig_proof_format_t format);
+int cpy06_proof_get_size(groupsig_proof_t *proof);
 
 /** 
- * @fn int cpy06_proof_export(groupsig_proof_t *proof, 
- *                              groupsig_proof_format_t format, void *dst);
- * @brief Prints the given proof as a base64 string into the specified
- *  file descriptor.
+ * @fn int cpy06_proof_export(byte_t **bytes, 
+ *                            uint32_t *size, 
+ *                            groupsig_proof_t *proof);
+ * @brief Writes a bytearray representation of the given proof, with format:
  *
+ * | CPY06_CODE | sizeof(c) | c | sizeof(s) | s |
+ *
+ * @param[in,out] bytes A pointer to the array that will contain the exported 
+ *  proof. If <i>*bytes</i> is NULL, memory will be internally allocated.
+ * @param[in,out] size Will be set to the number of bytes written in <i>*bytes</i>.
  * @param[in] proof The proof to export.
- * @param[in] format The destination format.
- * @param[in,out] dst The destination (e.g., the filename to store it in).
  * 
  * @return IOK or IERROR with errno updated.
  */
-int cpy06_proof_export(groupsig_proof_t *proof, groupsig_proof_format_t format, void *dst);
+int cpy06_proof_export(byte_t **bytes, uint32_t *size, groupsig_proof_t *proof);
 
 /** 
- * @fn int cpy06_proof_import(groupsig_proof_format_t format, void *source)
+ * @fn int cpy06_proof_import(byte_t *source, uint32_t size)
  * @brief Imports a proof according to the specified format.
  *
  * @param[in] format The format of the proof to import.
@@ -152,21 +137,23 @@ int cpy06_proof_export(groupsig_proof_t *proof, groupsig_proof_format_t format, 
  * 
  * @return IOK or IERROR
  */
-groupsig_proof_t* cpy06_proof_import(groupsig_proof_format_t format, void *source);
+groupsig_proof_t* cpy06_proof_import(byte_t *source, uint32_t size);
 
 /**
  * @var cpy06_proof_handle
  * @brief Set of functions to manage CPY06 proofs.
  */
 static const groupsig_proof_handle_t cpy06_proof_handle = {
-  GROUPSIG_CPY06_CODE, /**< The scheme code. */
-  &cpy06_proof_init, /**< Initalizes proofs. */
-  &cpy06_proof_free, /**< Frees proofs. */
-  &cpy06_proof_get_size_in_format, /**< Gets the size of a proof in the
-				      specified format. */
-  &cpy06_proof_export, /**< Exports proofs. */
-  &cpy06_proof_import, /**< Imports proofs. */
-  &cpy06_proof_to_string /**< Gets printable representations of proofs. */
+  .scheme = GROUPSIG_CPY06_CODE, /**< The scheme code. */
+  .init = &cpy06_proof_init, /**< Initalizes proofs. */
+  .free = &cpy06_proof_free, /**< Frees proofs. */
+  .copy = &cpy06_proof_copy, /**< Copies proofs. */
+  .get_size = &cpy06_proof_get_size, /**< Gets the size of a proof in the
+					specified format. */
+  .gexport = &cpy06_proof_export, /**< Exports proofs. */
+  .gimport = &cpy06_proof_import, /**< Imports proofs. */
+  .to_string = &cpy06_proof_to_string /**< Gets printable representations of
+					 proofs. */
 };
 
 #endif /* _CPY06_PROOF_H */

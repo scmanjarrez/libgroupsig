@@ -306,10 +306,8 @@ char* cpy06_signature_to_string(groupsig_signature_t *sig) {
     strlen("T1: \nT2: \nT3: \nT4: \nT5: \nc: \nsr1: \nsr2: \n") +
     strlen("sd1: \nsd2: \nsx: \nst: \n") + 1;
   
-  if (!(ssig = (char *) malloc(sizeof(char)*ssig_len)))
+  if (!(ssig = (char *) mem_malloc(sizeof(char)*ssig_len)))
     GOTOENDRC(IERROR, cpy06_signature_to_string);
-
-  memset(ssig, 0, sizeof(char)*ssig_len);
 
   sprintf(ssig,
           "T1: %s\n"
@@ -385,7 +383,7 @@ int cpy06_signature_get_size(groupsig_signature_t *sig) {
 
 int cpy06_signature_export(byte_t **bytes,
 			   uint32_t *size,
-			   groupsig_key_t *key) { 
+			   groupsig_signature_t *sig) { 
 
   cpy06_signature_t *cpy06_sig;
   byte_t *_bytes, *__bytes;
@@ -404,7 +402,7 @@ int cpy06_signature_export(byte_t **bytes,
   cpy06_sig = sig->sig;
 
   /* Get the number of bytes to represent the signature */
-  if ((_size = cpy06_signature_get_size(key)) == -1) {
+  if ((_size = cpy06_signature_get_size(sig)) == -1) {
     return IERROR;
   }
 
@@ -504,13 +502,13 @@ int cpy06_signature_export(byte_t **bytes,
 
   *size = ctr;
 
- cpy06_grp_key_export_end:
+ cpy06_signature_export_end:
 
   if (rc == IERROR) {
     if(_bytes) { mem_free(_bytes); _bytes = NULL; }
   }
 
-  return rc;  
+  return rc; 
 
 }
 
@@ -530,7 +528,7 @@ groupsig_signature_t* cpy06_signature_import(byte_t *source, uint32_t size) {
   rc = IOK;
   ctr = 0;
 
-  if(!(key = cpy06_signature_init())) {
+  if(!(sig = cpy06_signature_init())) {
     return NULL;
   }
 
@@ -539,7 +537,7 @@ groupsig_signature_t* cpy06_signature_import(byte_t *source, uint32_t size) {
   /* First byte: scheme */
   scheme = source[ctr++];
   if(scheme != sig->scheme) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "cpy06_grp_key_import", __LINE__,
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "cpy06_signature_import", __LINE__,
                       EDQUOT, "Unexpected key scheme.", LOGERROR);
     GOTOENDRC(IERROR, cpy06_signature_import);
   }
@@ -628,12 +626,11 @@ groupsig_signature_t* cpy06_signature_import(byte_t *source, uint32_t size) {
     GOTOENDRC(IERROR, cpy06_signature_import);
   ctr += len;
 
- cpy06_grp_key_import_end:
+ cpy06_signature_import_end:
   
   if(rc == IERROR && sig) { cpy06_signature_free(sig); sig = NULL; }
-  if(rc == IOK) return sig;
 
-  return NULL;  
+  return sig;  
 
 }
 

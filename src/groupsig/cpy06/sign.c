@@ -24,7 +24,7 @@
 #include "groupsig/cpy06/grp_key.h"
 #include "groupsig/cpy06/mem_key.h"
 #include "groupsig/cpy06/signature.h"
-#include "bigz.h"
+//#include "bigz.h"
 #include "shim/hash.h"
 #include "shim/pbc_ext.h"
 #include "sys/mem.h"
@@ -40,9 +40,9 @@ int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
      that are not specified in the paper but helpful or required for its 
      implementation will be named aux_<name>. */
 
-  pbcext_element_G1_t *B1, *B2, *B3, *B4;
+  pbcext_element_G1_t *B1, *B2, *B3, *B4, *e[3];
   pbcext_element_GT_t *B5, *B6, *aux_e;
-  pbcext_element_Fr_t *r1, *r2, *r3, *d1, *d2;
+  pbcext_element_Fr_t *r1, *r2, *r3, *d1, *d2, *s[3];
   pbcext_element_Fr_t *aux_r1r2, *aux_r3x, *aux_bd1bd2, *aux_br1br2, *aux_bx;
   pbcext_element_Fr_t *br1, *br2, *bd1, *bd2, *bt, *bx, *aux_cmul;
   pbcext_element_G1_t *aux_xbd1, *aux_ybd2;
@@ -216,11 +216,12 @@ int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
     GOTOENDRC(IERROR, cpy06_sign);
 
   if (!(aux_e = pbcext_element_GT_init())) GOTOENDRC(IERROR, cpy06_sign);
+
   /* e = e2^bd1bd2*e3^br1br2*e4^bx */
-  xxx_element_pow3_zn(aux_e, 
-		  cpy06_grpkey->e2, aux_bd1bd2, 
-		  cpy06_grpkey->e3, aux_br1br2,
-		  cpy06_grpkey->e4, aux_bx);
+  e[0] = cpy06_grpkey->e2; e[1] = cpy06_grpkey->e3; e[2] = cpy06_grpkey->e4;
+  s[0] = aux_bd1bd2; s[1] = aux_br1br2; s[2] = aux_bx;
+  if (pbcext_element_pow3_zn(aux_e, e, s, 3) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
 
   if(pbcext_element_GT_mul(B6, B6, aux_e) == IERROR)
     GOTOENDRC(IERROR, cpy06_sign);

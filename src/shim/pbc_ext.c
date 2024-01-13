@@ -741,7 +741,7 @@ int pbcext_element_G1_mul(pbcext_element_G1_t *dst,
 			  pbcext_element_Fr_t *s) {
 
   if (!dst || !e || !s) {
-    LOG_EINVAL(&logger, __FILE__, "pbcext_element_GT_mul", __LINE__, LOGERROR);
+    LOG_EINVAL(&logger, __FILE__, "pbcext_element_G1_mul", __LINE__, LOGERROR);
     return IERROR; 
   }
 
@@ -756,7 +756,7 @@ int pbcext_element_G2_mul(pbcext_element_G2_t *dst,
 			  pbcext_element_Fr_t *s) {
 
   if (!dst || !e || !s) {
-    LOG_EINVAL(&logger, __FILE__, "pbcext_element_GT_mul", __LINE__, LOGERROR);
+    LOG_EINVAL(&logger, __FILE__, "pbcext_element_G2_mul", __LINE__, LOGERROR);
     return IERROR; 
   }
 
@@ -764,6 +764,55 @@ int pbcext_element_G2_mul(pbcext_element_G2_t *dst,
   
   return IOK;
     
+}
+
+int pbcext_element_G1_muln(pbcext_element_G1_t *dst,
+			   pbcext_element_G1_t **e,
+			   pbcext_element_Fr_t **s,
+			   uint32_t n) {
+
+  pbcext_element_G1_t *_dst, *tmp;
+  int rc;
+  uint32_t i;
+  
+  if (!dst || !e || !s || !n) {
+    LOG_EINVAL(&logger, __FILE__, "pbcext_element_G2_muln", __LINE__, LOGERROR);
+    return IERROR;
+  }
+
+  _dst = tmp = NULL;
+  rc = IOK;
+
+  if (!(_dst = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, pbcext_element_G1_muln);
+
+  if (!(_dst = pbcext_element_G1_clear()))
+    GOTOENDRC(IERROR, pbcext_element_G1_muln);
+  
+  if (!(tmp = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, pbcext_element_G1_muln);
+  
+  /* Sets dst to s[0]*e[0]+...s[n-1]*e[n-1] */
+  for (i=0; i<n; i++) {
+
+    if (pbcext_element_G1_mul(tmp, e[i], s[i]) == IERROR)
+      GOTOENDRC(IERROR, pbcext_element_G1_muln);
+
+    if (pbcext_element_G1_add(_dst, _dst, tmp) == IERROR)
+      GOTOENDRC(IERROR, pbcext_element_G1_muln);
+    
+  }
+
+  if (pbcext_element_G1_set(dst, _dst) == IERROR)
+    GOTOENDRC(IERROR, pbcext_element_G1_muln);
+
+ pbcext_element_G1_muln_end:
+
+  if (_dst) { pbcext_element_G1_free(_dst); _dst = NULL; }
+  if (tmp) { pbcext_element_G1_free(tmp); tmp = NULL; }
+
+  return rc;
+  
 }
 
 int pbcext_element_GT_pow(pbcext_element_GT_t *dst,

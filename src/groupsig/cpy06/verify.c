@@ -32,9 +32,9 @@
 /* Public functions */
 int cpy06_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsig_key_t *grpkey) {
 
-  pbcext_element_G1_t *B1, *B2, *B3, *B4, *aux_G1;
+  pbcext_element_G1_t *B1, *B2, *B3, *B4, *aux_G1, *e[3];
   pbcext_element_GT_t *B5, *B6, *aux_GT, *aux_e;
-  pbcext_element_Fr_t *aux_sd1sd2, *aux_sr1sr2, *aux_sx, *c;
+  pbcext_element_Fr_t *aux_sd1sd2, *aux_sr1sr2, *aux_sx, *c, *s[3];
   cpy06_signature_t *cpy06_sig;
   cpy06_grp_key_t *cpy06_grpkey;
   cpy06_sysenv_t *cpy06_sysenv;
@@ -143,10 +143,11 @@ int cpy06_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
   
   if (!(aux_e = pbcext_element_GT_init()))
     GOTOENDRC(IERROR, cpy06_verify);
-  xxx_element_pow3_zn(aux_e, 
-		      cpy06_grpkey->e2, aux_sd1sd2,
-		      cpy06_grpkey->e3, aux_sr1sr2,
-		      cpy06_grpkey->e4, aux_sx);
+
+  e[0] = cpy06_grpkey->e2; e[1] = cpy06_grpkey->e3; e[2] = cpy06_grpkey->e4;
+  s[0] = aux_sd1sd2; s[1] = aux_sr1sr2; s[2] = aux_sx;
+  if (pbcext_element_pow3_zn(aux_e, e, s, 3) == IERROR)
+    GOTOENDRC(IERROR, cpy06_verify);
 
   /* aux_GT = (e(T3,r)/e(q,g2))^c */
   if (pbcext_pairing(aux_GT, cpy06_sig->T3, cpy06_grpkey->r) == IERROR)

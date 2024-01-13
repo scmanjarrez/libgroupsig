@@ -22,8 +22,7 @@
 #include <errno.h>
 
 #include "types.h"
-#include "sysenv.h"
-#include "bigz.h"
+//#include "bigz.h"
 #include "cpy06.h"
 #include "groupsig/cpy06/grp_key.h"
 #include "groupsig/cpy06/mgr_key.h"
@@ -32,57 +31,72 @@
 #include "groupsig/cpy06/identity.h"
 #include "groupsig/cpy06/trapdoor.h"
 
-int cpy06_open(identity_t *id, groupsig_proof_t *proof,
-	       crl_t *crl, groupsig_signature_t *sig, 
-	       groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
+int cpy06_open(identity_t *id,
+	       groupsig_proof_t *proof,
+	       crl_t *crl,
+	       groupsig_signature_t *sig, 
+	       groupsig_key_t *grpkey,
+	       groupsig_key_t *mgrkey,
+	       gml_t *gml) {
 
-  element_t A;
+  pbcext_element_G1_t *A, *e[2];
+  pbcext_element_Fr_t *s[2];
   cpy06_signature_t *cpy06_sig;
   cpy06_grp_key_t *cpy06_grpkey;
   cpy06_mgr_key_t *cpy06_mgrkey;
-  cpy06_sysenv_t *cpy06_sysenv;
-  cpy06_gml_entry_t *entry;
+  cpy06_gml_entry_t *cpy06_entry;
+  cpy06_trapdoor_t *cpy06_trap;
   uint64_t i;
+  int rc;
   uint8_t match;
 
-  if(!id || !sig || sig->scheme != GROUPSIG_CPY06_CODE ||
+  if(!id || id->scheme != GROUPSIG_CPY06_CODE ||
+     !sig || sig->scheme != GROUPSIG_CPY06_CODE ||
      !grpkey || grpkey->scheme != GROUPSIG_CPY06_CODE ||
      !mgrkey || mgrkey->scheme != GROUPSIG_CPY06_CODE ||
-     !gml) {
+     !gml || gml->scheme |= GROUPSIG_CPY06_CODE) {
     LOG_EINVAL(&logger, __FILE__, "cpy06_open", __LINE__, LOGERROR);
     return IERROR;
   }
 
+  A = NULL;
   cpy06_sig = sig->sig;
   cpy06_grpkey = grpkey->key;
   cpy06_mgrkey = mgrkey->key;
-  cpy06_sysenv = sysenv->data;
+  rc = IOK;
+  
 
   /* In the paper, a signature verification process is included within the open
-     procedure to check that the signature is valid. Here, we sepatarate the two
-     processes (verify can always be called before opening...) */
+     procedure to check that the signature is valid. Here, for modularity,
+     we sepatarate the two processes (note that verify MUST always be called 
+     before opening...) */
   
   /* Recover the signer's A as: A = T3/(T1^xi1 * T2^xi2) */
-  element_init_G1(A, cpy06_sysenv->pairing);
-  element_pow2_zn(A, cpy06_sig->T1, cpy06_mgrkey->xi1, cpy06_sig->T2, cpy06_mgrkey->xi2);
-  element_div(A, cpy06_sig->T3, A);
+  if (!(A = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_open);
+
+  /* A = T1^xi1 + T2^xi2 =  */
+  e[0] = cpy06_sig->T1; e[1] = cpy06_sig->T2;
+  s[0] = cpy06_mgrkey->xi1; s[1] = cpy06_mgrkey->xi2;  
+  if (pbcext_element_G1_muln(A, e, s, 2) == IERROR)
+    GOTOENDRC(IERROR, cpy06_open);
+
+  /* A = T3/A */
+  if (pbcext_element_G1_sub(A, cpy06_sig->T3, A) == IERROR)
+    GOTOENDRC(IERROR, cpy06_open);
 
   /* Look up the recovered A in the GML */
   match = 0;
-  for(i=0; i<gml->n; i++) {  
+  for (i=0; i<gml->n; i++) {  
 
-    if(!(entry = gml_get(gml, i))) {
-      element_clear(A);
-      return IERROR;
-    }
+    if (!(cpy06_entry = gml_get(gml, i))) GOTOENDRC(IERROR, cpy06_open);
 
-    if(!element_cmp(((cpy06_trapdoor_t *)entry->trapdoor->trap)->open, A)) {
-
+    cpy06_trap = cpy06_entry->trapdoor->trap;
+    if (!pbcext_element_G1_cmp(cpy06_trap->open, A)) {
+      
       /* Get the identity from the matched entry. */
-      if(cpy06_identity_copy(id, entry->id) == IERROR) {
-	element_clear(A);
-	return IERROR;
-      }
+      if(cpy06_identity_copy(id, entry->id) == IERROR)
+	GOTOENDRC(IERROR, cpy06_open);
 
       match = 1;
       break;
@@ -91,10 +105,12 @@ int cpy06_open(identity_t *id, groupsig_proof_t *proof,
 
   }
 
-  element_clear(A);
+ cpy06_open_end:
+
+  if (A) { pbcext_element_free(A); A = NULL; }
 
   /* No match: FAIL */
-  if(!match) {
+  if (!match) {
     return IFAIL;
   }
 
@@ -119,7 +135,7 @@ int cpy06_open(identity_t *id, groupsig_proof_t *proof,
 
   /* } */
 
-  return IOK;
+  return rc;
 
 }
 
