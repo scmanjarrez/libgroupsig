@@ -33,7 +33,12 @@
 #include "groupsig/cpy06/trapdoor.h"
 #include "groupsig/cpy06/identity.h"
 
-int cpy06_trace(uint8_t *ok, groupsig_signature_t *sig, groupsig_key_t *grpkey, crl_t *crl, groupsig_key_t *mgrkey, gml_t *gml) {
+int cpy06_trace(uint8_t *ok,
+		groupsig_signature_t *sig,
+		groupsig_key_t *grpkey,
+		crl_t *crl,
+		groupsig_key_t *mgrkey,
+		gml_t *gml) {
 
   cpy06_signature_t *cpy06_sig;
   cpy06_grp_key_t *gkey;

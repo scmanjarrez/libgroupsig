@@ -328,11 +328,13 @@ groupsig_key_t* ps16_grp_key_import(byte_t *source, uint32_t size) {
 }
 
 char* ps16_grp_key_to_string(groupsig_key_t *key) {
+  
   char *g, *gg, *X, *Y, *skey;
   uint64_t g_len, gg_len, X_len, Y_len;
   uint32_t skey_len;
   g = NULL; gg = NULL; X = NULL; Y = NULL; skey=NULL;
   ps16_grp_key_t *gkey = (ps16_grp_key_t *) key->key;
+  
   if(pbcext_element_G1_to_string(&g,
                                  &g_len,
                                  10,
@@ -377,10 +379,10 @@ char* ps16_grp_key_to_string(groupsig_key_t *key) {
           g, gg, X, Y);
 
  grp_key_to_string_error:
-  if (g) { free(g); g = NULL; }
-  if (gg) { free(gg); gg = NULL; }
-  if (X) { free(X); X = NULL; }
-  if (Y) { free(Y); Y = NULL; }
+  if (g) { mem_free(g); g = NULL; }
+  if (gg) { mem_free(gg); gg = NULL; }
+  if (X) { mem_free(X); X = NULL; }
+  if (Y) { mem_free(Y); Y = NULL; }
   return skey;
 }
 

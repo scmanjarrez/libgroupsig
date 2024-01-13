@@ -574,7 +574,7 @@ char* cpy06_grp_key_to_string(groupsig_key_t *key) {
 
   skey_len = strlen(q) + strlen(r) + strlen(w) + strlen(x) + strlen(y) +
     strlen(z) + strlen(T5) + strlen(e2) + strlen(e3) + strlen(e4) + strlen(e5) +
-    strlen("q: \nr: \nw: \nx: \ny: \nz: \nT5: e2: \ne3: \ne4: \ne5") + 1;
+    strlen("q: \nr: \nw: \nx: \ny: \nz: \nT5: \ne2: \ne3: \ne4: \ne5: \n") + 1;
   
   if (!(skey = (char *) malloc(sizeof(char)*skey_len)))
     GOTOENDRC(IERROR, cpy06_grp_key_to_string);

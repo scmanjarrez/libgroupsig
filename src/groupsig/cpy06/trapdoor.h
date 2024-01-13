@@ -20,17 +20,18 @@
 #ifndef _CPY06_TRAPDOOR_H
 #define _CPY06_TRAPDOOR_H
 
-#include <pbc/pbc.h>
-#include "bigz.h"
 #include "include/trapdoor.h"
+#include "shim/pbc_ext.h"
 #include "cpy06.h"
 
 /**
  * CPY06 trapdoors.
  */
 typedef struct {
-  element_t open; /**< Open trapdoor. In CPY06, the A value computed during join. */
-  element_t trace; /**< Tracing trapdoor. In CPY06, the C value computed during join. */
+  pbcext_element_G1_t *open; /**< Open trapdoor. 
+				In CPY06, the A value computed during join. */
+  pbcext_element_G1_t *trace; /**< Tracing trapdoor. 
+				 In CPY06, the C value computed during join. */
 } cpy06_trapdoor_t;
 
 /** 
@@ -87,12 +88,14 @@ trapdoor_t* cpy06_trapdoor_from_string(char *strap);
  * @brief Set of functions to manage CPY06 trapdoors.
  */
 static const trapdoor_handle_t cpy06_trapdoor_handle = {
-  GROUPSIG_CPY06_CODE, /**< The scheme code. */
-  &cpy06_trapdoor_init, /**< Initializes trapdoors. */
-  &cpy06_trapdoor_free, /**< Frees trapdoors. */
-  &cpy06_trapdoor_copy, /**< Copies trapdoors. */
-  &cpy06_trapdoor_to_string, /**< Converts trapdoors to printable strings. */
-  &cpy06_trapdoor_from_string /**< Gets trapdoors from printable strings. */
+  .scheme = GROUPSIG_CPY06_CODE, /**< The scheme code. */
+  .init = &cpy06_trapdoor_init, /**< Initializes trapdoors. */
+  .free = &cpy06_trapdoor_free, /**< Frees trapdoors. */
+  .copy = &cpy06_trapdoor_copy, /**< Copies trapdoors. */
+  .to_string = &cpy06_trapdoor_to_string, /**< Converts trapdoors to printable 
+					     strings. */
+  .from_string = &cpy06_trapdoor_from_string /**< Gets trapdoors from printable 
+						strings. */
 };
 
 /** 

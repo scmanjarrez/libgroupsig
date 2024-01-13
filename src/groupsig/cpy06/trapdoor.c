@@ -30,21 +30,19 @@ trapdoor_t* cpy06_trapdoor_init() {
   trapdoor_t *trap;
   cpy06_trapdoor_t *cpy06_trap;
   
-  if(!(trap = (trapdoor_t *) mem_malloc(sizeof(trapdoor_t)))) {
+  if (!(trap = (trapdoor_t *) mem_malloc(sizeof(trapdoor_t)))) {
     return NULL;
   }
 
-  if(!(cpy06_trap = (cpy06_trapdoor_t *) mem_malloc(sizeof(cpy06_trapdoor_t)))) {
+  if (!(cpy06_trap = (cpy06_trapdoor_t *) mem_malloc(sizeof(cpy06_trapdoor_t)))) {
     mem_free(trap); trap = NULL;
     return NULL;
   }
   
-  /* The cpy06_trap->open field is of type element_t (pbc library) and the
-     pairing is necessary to initialize it, hence, it must be initialized
-     and set in the join_mgr function. */
-  
   trap->scheme = GROUPSIG_CPY06_CODE;
   trap->trap = cpy06_trap;
+  cpy06_trap->open = NULL;
+  cpy06_trap->trace = NULL;
   
   return trap;
   
@@ -60,10 +58,16 @@ int cpy06_trapdoor_free(trapdoor_t *trap) {
     return IOK;
   }
 
-  if(trap->trap) {
+  if (trap->trap) {
     cpy06_trap = trap->trap;
-    if(cpy06_trap->open[0].data) element_clear(cpy06_trap->open);
-    if(cpy06_trap->trace[0].data) element_clear(cpy06_trap->trace);
+    if (cpy06_trap->open) {
+      pbcext_element_G1_free(cpy06_trap->open);
+      cpy06_trap->open = NULL;
+    }
+    if (cpy06_trap->trace) {
+      pbcext_element_G1_free(cpy06_trap->trace);
+      cpy06_trap->trace = NULL;
+    }
     mem_free(cpy06_trap); cpy06_trap = NULL;
   }
   
@@ -74,6 +78,9 @@ int cpy06_trapdoor_free(trapdoor_t *trap) {
 }
 
 int cpy06_trapdoor_copy(trapdoor_t *dst, trapdoor_t *src) {
+
+  cpy06_trapdoor_t *cpy06_dst, *cpy06_src;
+  int rc;
   
   if(!dst || dst->scheme != GROUPSIG_CPY06_CODE ||
      !src || src->scheme != GROUPSIG_CPY06_CODE) {
@@ -81,119 +88,140 @@ int cpy06_trapdoor_copy(trapdoor_t *dst, trapdoor_t *src) {
     return IERROR;
   }
 
-  /* Open trapdoor */
-  element_init_same_as(((cpy06_trapdoor_t *) dst->trap)->open,
-		       ((cpy06_trapdoor_t *) src->trap)->open);
+  cpy06_dst = dst->trap;
+  cpy06_src = src->trap;
+  rc = IOK;
 
-  element_set(((cpy06_trapdoor_t *) dst->trap)->open, 
-	      ((cpy06_trapdoor_t *) src->trap)->open);  
+  /* Open trapdoor */
+  if (!(cpy06_dst->open = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_trapdoor_copy);
+
+  if (pbcext_element_G1_set(cpy06_dst->open, cpy06_src->open) == IERROR)
+    GOTOENDRC(IERROR, cpy06_trapdoor_copy);
 
   /* Trace trapdoor */
-  element_init_same_as(((cpy06_trapdoor_t *) dst->trap)->trace,
-		       ((cpy06_trapdoor_t *) src->trap)->trace);
+  if (!(cpy06_dst->trace = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_trapdoor_copy);
 
-  element_set(((cpy06_trapdoor_t *) dst->trap)->trace, 
-	      ((cpy06_trapdoor_t *) src->trap)->trace);  
+  if (pbcext_element_G1_set(cpy06_dst->trace, cpy06_src->trace) == IERROR)
+    GOTOENDRC(IERROR, cpy06_trapdoor_copy);
 
+ cpy06_trapdoor_copy_end:
 
-  return IOK;
+  if (rc == IERROR) {
+    if (cpy06_dst->open) {
+      pbcext_element_G1_free(cpy06_dst->open); cpy06_dst->open = NULL;
+    }
+    if (cpy06_dst->trace) {
+      pbcext_element_G1_free(cpy06_dst->trace); cpy06_dst->trace = NULL;
+    }    
+  }
+
+  return rc;
 
 }
 
 char* cpy06_trapdoor_to_string(trapdoor_t *trap) {
-  
-  char *open_b64, *trace_b64, *b64;
+
+  cpy06_trapdoor_t *cpy06_trap;
+  char *sopen, *strace, *strap;
+  uint64_t sopen_len, strace_len, strap_len;
+  int rc;
   
   if(!trap || trap->scheme != GROUPSIG_CPY06_CODE) {
-    LOG_EINVAL(&logger, __FILE__, "cpy06_trapdoor_to_string", __LINE__, LOGERROR);
-    return NULL;
-  }
-  
-  if(!(open_b64 = pbcext_element_export_b64(((cpy06_trapdoor_t *)trap->trap)->open))) {
+    LOG_EINVAL(&logger, __FILE__, "cpy06_trapdoor_to_string",
+	       __LINE__, LOGERROR);
     return NULL;
   }
 
-  if(!(trace_b64 = pbcext_element_export_b64(((cpy06_trapdoor_t *)trap->trap)->trace))) {
-    mem_free(open_b64); open_b64 = NULL;
-    return NULL;
-  }
+  sopen = strace = strap = NULL;
+  sopen_len = strace_len = strap_len = 0;
+  cpy06_trap = trap->trap;
+  rc = IOK;
 
-  if(!(b64 = mem_malloc(sizeof(char *)*strlen(open_b64)+strlen(trace_b64)+2))) {
-    mem_free(open_b64); open_b64 = NULL;
-    mem_free(trace_b64); trace_b64 = NULL;
-    return NULL;
-  }
-  
+  if (!(sopen = pbcext_element_G1_to_string(&sopen,
+					    &sopen_len,
+					    10,
+					    cpy06_trap->open)))
+    GOTOENDRC(IERROR, cpy06_trapdoor_to_string);
+
+  if (!(strace = pbcext_element_G1_to_string(&strace,
+					     &strace_len,
+					     10,
+					     cpy06_trap->trace)))
+    GOTOENDRC(IERROR, cpy06_trapdoor_to_string);
+
+  if (!(strap = mem_malloc(sizeof(char *)*(sopen_len+strace_len)+2)))
+    GOTOENDRC(IERROR, cpy06_trapdoor_to_string);
+    
   sprintf(b64, "%s %s", open_b64, trace_b64);
-  mem_free(open_b64); open_b64 = NULL;
-  mem_free(trace_b64); trace_b64 = NULL;  
 
-  return b64;
+ cpy06_trapdoor_to_string_end:
+
+  if (rc == IERROR && strap) { mem_free(strap); strap = NULL; }
+  
+  mem_free(sopen); sopen = NULL;
+  mem_free(strace); strace = NULL;  
+
+  return strap;
   
 }
 
 trapdoor_t* cpy06_trapdoor_from_string(char *strap) {
   
   trapdoor_t *trap;
-  cpy06_sysenv_t *env;
+  cpy06_trapdoor_t *cpy06_trap;
   char *sopen, *strace;
   int rc;
   
   if(!strap) {
-    LOG_EINVAL(&logger, __FILE__, "cpy06_trapdoor_from_string", __LINE__, LOGERROR);
+    LOG_EINVAL(&logger, __FILE__, "cpy06_trapdoor_from_string",
+	       __LINE__, LOGERROR);
     return NULL;
   }
+
+  trap = NULL;
+  cpy06_trap = NULL;
+  sopen = strace = NULL;
+  rc = IOK;
   
-  /* Open trapdoors are the A elements of the member keys */
-  env = (cpy06_sysenv_t *) sysenv->data;
+  if (!(sopen = (char *) mem_malloc(sizeof(char)*strlen(strap)+1)))
+    GOTOENDRC(IERROR, cpy06_trapdoor_from_string);
 
-  if(!(sopen = (char *) mem_malloc(sizeof(char)*strlen(strap)+1))) {
-    return NULL;
-  }
+  if (!(strace = (char *) mem_malloc(sizeof(char)*strlen(strap)+1)))
+    GOTOENDRC(IERROR, cpy06_trapdoor_from_string);
 
-  if(!(strace = (char *) mem_malloc(sizeof(char)*strlen(strap)+1))) {
-    mem_free(sopen); sopen = NULL;
-    return NULL;
-  }
-
-  if((rc = sscanf(strap, "%s %s", sopen, strace)) == EOF) {
-    LOG_ERRORCODE(&logger, __FILE__, "cpy06_trapdoor_from_string", __LINE__,
-		  errno, LOGERROR);
-    mem_free(sopen); sopen = NULL;
-    mem_free(strace); strace = NULL;
-    return NULL;
-  }
+  if ((rc = sscanf(strap, "%s %s", sopen, strace)) == EOF)
+    GOTOENDRC(IERROR, cpy06_trapdoor_from_string);
 
   if(rc != 2) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "cpy06_trapdoor_from_string", __LINE__,
 		      EDQUOT, "Corrupted or invalid trapdoor.", LOGERROR);
-    mem_free(sopen); sopen = NULL;
-    mem_free(strace); strace = NULL;
-    return NULL;
+    GOTOENDRC(IERROR, cpy06_trapdoor_from_string);
   }
 
-  if(!(trap = cpy06_trapdoor_init())) {
-    mem_free(sopen); sopen = NULL;
-    mem_free(strace); strace = NULL;
-    return NULL;
-  }
+  if(!(trap = cpy06_trapdoor_init()))
+    GOTOENDRC(IERROR, cpy06_trapdoor_from_string);
+  cpy06_trap = trap->trap;
 
-  element_init_G1(((cpy06_trapdoor_t *) trap->trap)->open, env->pairing);
-  if(pbcext_element_import_b64(((cpy06_trapdoor_t *) trap->trap)->open, sopen) == IERROR) {
-    mem_free(sopen); sopen = NULL;
-    mem_free(strace); strace = NULL;
+  if (!(cpy06_trap->open = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_trapdoor_from_string);
+  
+  if (pbcext_element_G1_from_string(&cpy06_trap->open, sopen, 10) == IERROR)
+    GOTOENDRC(IERROR, cpy06_trapdoor_from_string);
+
+  if (!(cpy06_trap->trace = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_trapdoor_from_string);
+  
+  if (pbcext_element_G1_from_string(&cpy06_trap->trace, strace, 10) == IERROR)
+    GOTOENDR(IERROR, cpy06_trapdoor_from_string);
+
+ cpy06_trapdoor_from_string_end:
+
+  if (rc == IERROR && trap) {
     cpy06_trapdoor_free(trap); trap = NULL;
-    return NULL;
   }
-
-  element_init_G1(((cpy06_trapdoor_t *) trap->trap)->trace, env->pairing);
-  if(pbcext_element_import_b64(((cpy06_trapdoor_t *) trap->trap)->trace, strace) == IERROR) {
-    mem_free(sopen); sopen = NULL;
-    mem_free(strace); strace = NULL;
-    cpy06_trapdoor_free(trap); trap = NULL;
-    return NULL;
-  }
-
+  
   mem_free(sopen); sopen = NULL;
   mem_free(strace); strace = NULL;
   
@@ -209,8 +237,8 @@ int cpy06_trapdoor_cmp(trapdoor_t *t1, trapdoor_t *t2) {
     return IERROR;
   }
 
-  return element_cmp(((cpy06_trapdoor_t *)t1->trap)->open, 
-		     ((cpy06_trapdoor_t *)t2->trap)->open);
+  return pbcext_element_G1_cmp(((cpy06_trapdoor_t *)t1->trap)->open, 
+			       ((cpy06_trapdoor_t *)t2->trap)->open);
 
 }
 
