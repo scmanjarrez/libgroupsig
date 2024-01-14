@@ -215,7 +215,7 @@ char* cpy06_mem_key_to_string(groupsig_key_t *key) {
 
   if (rc == IERROR && skey) { mem_free(skey); skey = NULL; }
   
-  return s;
+  return skey;
 
 }
 

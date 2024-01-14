@@ -31,7 +31,8 @@
 
 int cpy06_init() {
 
-  fprintf("XXXXX REMEMBER TO USE _element_free INSTEAD of _element_clear\n");
+  fprintf(stderr,
+	  "XXXXX REMEMBER TO USE _element_free INSTEAD of _element_clear\n");
 
   if(pbcext_init(BLS12_381) == IERROR) {
     return IERROR;
@@ -41,7 +42,7 @@ int cpy06_init() {
 
 }
 
-int cpy06_config_free(groupsig_config_t *cfg) {
+int cpy06_config_free() {
   return IOK;
 }
 
@@ -50,13 +51,13 @@ int cpy06_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
   cpy06_grp_key_t *gkey;
   cpy06_mgr_key_t *mkey;
   pbcext_element_Fr_t *inv;
+  pbcext_element_G1_t *g1;  
   pbcext_element_G2_t *g2;
   unsigned int d;
   int rc;
 
   if(!grpkey || grpkey->scheme != GROUPSIG_CPY06_CODE ||
      !mgrkey || grpkey->scheme != GROUPSIG_CPY06_CODE ||
-     !config || config->scheme != GROUPSIG_CPY06_CODE ||
      !gml) {
     LOG_EINVAL(&logger, __FILE__, "cpy06_setup", __LINE__, LOGERROR);
     return IERROR;
@@ -115,7 +116,7 @@ int cpy06_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
   if (!(inv = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_setup);
   if (pbcext_element_Fr_invert(inv, mkey->xi1) == IERROR)
     GOTOENDRC(IERROR, cpy06_setup);
-  if (!gkey->x = pbcext_element_G1_init())
+  if (!(gkey->x = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, cpy06_setup);
   if (pbcext_element_G1_mul(gkey->x, gkey->z, inv) == IERROR)
     GOTOENDRC(IERROR, cpy06_setup);
@@ -130,8 +131,11 @@ int cpy06_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
   /* For computation optimizations */
 
   /* T5 = e(g1, W) */
+    if (!(g1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, cpy06_setup);
+  if (pbcext_element_G1_from_string(&g1, BLS12_381_P, 10) == IERROR)
+    GOTOENDRC(IERROR, cpy06_setup);
   if (!(gkey->T5 = pbcext_element_GT_init())) GOTOENDRC(IERROR, cpy06_setup);
-  if (pbcext_pairing(gkey->T5, gkey->g1, gkey->w) == IERROR)
+  if (pbcext_pairing(gkey->T5, g1, gkey->w) == IERROR)
     GOTOENDRC(IERROR, cpy06_setup);
 
   /* e2 = e(z,g2) */
@@ -147,12 +151,12 @@ int cpy06_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
 
   /* e4 = e(g1,g2) */
   if (!(gkey->e4 = pbcext_element_GT_init())) GOTOENDRC(IERROR, cpy06_setup);
-  if (pbcext_pairing(gkey->e4, gkey->g1, gkey->g2) == IERROR)
+  if (pbcext_pairing(gkey->e4, g1, g2) == IERROR)
     GOTOENDRC(IERROR, cpy06_setup);
 
   /* e5 = e(q,g2) */
   if (!(gkey->e5 = pbcext_element_GT_init())) GOTOENDRC(IERROR, cpy06_setup);
-  if (pbcext_pairing(gkey->e5, gkey->q, gkey->g2) == IERROR)
+  if (pbcext_pairing(gkey->e5, gkey->q, g2) == IERROR)
     GOTOENDRC(IERROR, cpy06_setup);    
 
  cpy06_setup_error:
@@ -176,7 +180,8 @@ int cpy06_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
 
   /* Clear data */
   pbcext_element_Fr_free(inv); inv = NULL;
-  pbcext_element_Fr_free(g2); g2 = NULL;
+  pbcext_element_G1_free(g1); g1 = NULL;  
+  pbcext_element_G2_free(g2); g2 = NULL;  
   
   return rc;
 

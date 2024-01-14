@@ -112,10 +112,10 @@ int cpy06_grp_key_free(groupsig_key_t *key) {
       pbcext_element_GT_free(cpy06_key->e3); cpy06_key->e3 = NULL;
     }
     if (cpy06_key->e4) {
-      cpy06_element_GT_free(cpy06_key->e4); cpy06_key->e4 = NULL;
+      pbcext_element_GT_free(cpy06_key->e4); cpy06_key->e4 = NULL;
     }
     if (cpy06_key->e5) {
-      cpy06_element_GT_free(cpy06_key->e5); cpy06_key->e5 = NULL;
+      pbcext_element_GT_free(cpy06_key->e5); cpy06_key->e5 = NULL;
     }
     mem_free(key->key);
     key->key = NULL;
@@ -157,7 +157,7 @@ int cpy06_grp_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
     GOTOENDRC(IERROR, cpy06_grp_key_copy);
   if (!(cpy06_dst->x = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, cpy06_grp_key_copy);
-  if (pbcext_element_set(cpy06_dst->x, cpy06_src->x) == IERROR)
+  if (pbcext_element_G1_set(cpy06_dst->x, cpy06_src->x) == IERROR)
     GOTOENDRC(IERROR, cpy06_grp_key_copy);  
   if (!(cpy06_dst->y = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, cpy06_grp_key_copy);  
@@ -532,7 +532,7 @@ char* cpy06_grp_key_to_string(groupsig_key_t *key) {
   }
 
   cpy06_key = key->key;  
-  g = r = w = x = y = z = T5 = e2 = e3 = e4 = e5 = NULL;
+  q = r = w = x = y = z = T5 = e2 = e3 = e4 = e5 = NULL;
   skey = NULL;
   rc = IOK;
   

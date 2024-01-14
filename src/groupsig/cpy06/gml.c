@@ -360,6 +360,8 @@ int cpy06_gml_entry_export(byte_t **bytes,
 			   gml_entry_t *entry) {
 
   byte_t *_bytes;
+
+  /* @TODO: This should export to bytes, not to a string */
   
   if (!bytes ||
       !size ||

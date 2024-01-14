@@ -162,7 +162,7 @@ int cpy06_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src) {
     GOTOENDRC(IERROR, cpy06_signature_copy);
   if (pbcext_element_G2_set(cpy06_dst->T4, cpy06_src->T4) == IERROR)
     GOTOENDRC(IERROR, cpy06_signature_copy);
-  if (!cpy06_dst->T5 = pbcext_element_GT_init())
+  if (!(cpy06_dst->T5 = pbcext_element_GT_init()))
     GOTOENDRC(IERROR, cpy06_signature_copy);
   if (pbcext_element_GT_set(cpy06_dst->T5, cpy06_src->T5) == IERROR)
     GOTOENDRC(IERROR, cpy06_signature_copy);
@@ -293,14 +293,14 @@ char* cpy06_signature_to_string(groupsig_signature_t *sig) {
   if (pbcext_element_Fr_to_string(&sx, &sx_len, 10, cpy06_sig->sx) == IERROR)
     GOTOENDRC(IERROR, cpy06_signature_to_string);
 
-  if (pbcext_element_G1_to_string(&st, &st_len, 10, cpy06_sig->st) == IERROR)
+  if (pbcext_element_Fr_to_string(&st, &st_len, 10, cpy06_sig->st) == IERROR)
     GOTOENDRC(IERROR, cpy06_signature_to_string);
 
   if (!T1 || !T2 || !T3 || !T4 || !T5 || !c || !sr1 || !sr2 ||
       !sd1 || !sd2 || !sx || !st)
     GOTOENDRC(IERROR, cpy06_signature_to_string);
 
-  skey_len = strlen(T1) + strlen(T2) + strlen(T3) + strlen(T4) + strlen(T5) +
+  ssig_len = strlen(T1) + strlen(T2) + strlen(T3) + strlen(T4) + strlen(T5) +
     strlen(c) + strlen(sr1) + strlen(sr2) + strlen(sd1) + strlen(sd2) +
     strlen(sx) + strlen(st) +
     strlen("T1: \nT2: \nT3: \nT4: \nT5: \nc: \nsr1: \nsr2: \n") +
@@ -370,8 +370,8 @@ int cpy06_signature_get_size(groupsig_signature_t *sig) {
   if (pbcext_element_Fr_byte_size(&ssr2) == IERROR) return -1;
   if (pbcext_element_Fr_byte_size(&ssd1) == IERROR) return -1;
   if (pbcext_element_Fr_byte_size(&ssd2) == IERROR) return -1;
-  if (pbcext_element_Fr_byte_size(&sx) == IERROR) return -1;
-  if (pbcext_element_Fr_byte_size(&st) == IERROR) return -1;
+  if (pbcext_element_Fr_byte_size(&ssx) == IERROR) return -1;
+  if (pbcext_element_Fr_byte_size(&sst) == IERROR) return -1;
 
   size64 = sizeof(uint8_t) + sizeof(int)*12 + sT1 + sT2 + sT3 + sT4 + sT5 +
     sc + ssr1 + ssr2 + ssd1 + ssd2 + ssx + sst;

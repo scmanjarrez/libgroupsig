@@ -31,7 +31,7 @@ if (ALL)
   target_link_libraries (groupsig
     PUBLIC kty04
     PUBLIC bbs04
-    #PUBLIC cpy06
+    PUBLIC cpy06
     PUBLIC gl19
     PUBLIC ps16
     PUBLIC klap20
@@ -79,10 +79,10 @@ install (DIRECTORY "${PROJECT_SOURCE_DIR}/src/include/"
   DESTINATION "include/groupsig"
   FILES_MATCHING PATTERN "*.h")
 
-# Ignore kty04 and cpy06 until I adapt them to the new pbc and join
+# Ignore kty04 until I adapt them to the new pbc and join
 if (ALL)
   add_subdirectory(bbs04)
-  #add_subdirectory(cpy06)
+  add_subdirectory(cpy06)
   add_subdirectory(gl19)
   add_subdirectory(ps16)
   add_subdirectory(klap20)

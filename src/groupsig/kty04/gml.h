@@ -76,11 +76,6 @@ int kty04_gml_entry_get_size(gml_entry_t *entry);
  *                                gml_entry_t *entry)
  * @brief Exports a GML entry into an array of bytes.
  *
- * The used format is:
- *
- * | code (uint8_t) | identity (uint64_t) | size_SS0 | SS0 | size_SS1 | SS1 |
- *   size_ff0 | ff0 | size_ff1 | ff1 |
- *
  * @param[in,out] bytes Will be updated with the exported entry. If *entry is
  *  NULL,  memory will be internally allocated. Otherwise, it must be big enough
  *  to hold all the data.

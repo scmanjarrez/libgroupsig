@@ -20,8 +20,6 @@
 #ifndef _CPY06_H
 #define _CPY06_H
 
-#include <pbc/pbc.h>
-
 #include "key.h"
 #include "gml.h"
 #include "crl.h"
@@ -79,7 +77,7 @@ extern "C" {
  */
 static const groupsig_description_t cpy06_description = {
   GROUPSIG_CPY06_CODE, /**< CPY06's scheme code. */
-  GROUPSIG_CPY06_NAME /**< CPY06's scheme name. */
+  GROUPSIG_CPY06_NAME, /**< CPY06's scheme name. */
   1, /**< CPY06 has a GML. */
   1, /**< CPY06 does have CRL. */
   1, /**< CPY06 uses PBC. */
@@ -103,34 +101,33 @@ static const groupsig_description_t cpy06_description = {
  */
 #define CPY06_D_MAX 1000000000
 
-/**
- * @struct cpy06_genparam_t
- * @brief Structure used for generation of CPY06 pairings.
- */
-typedef struct {
-  size_t bitlimit; /**< The produced groups will be of order at most 2^bitlimit-1. */
-  pbc_param_t param; /**< PBC parameters. */
-  bigz_t r; /**< The characteristic of the generated field. */
-} cpy06_genparam_t;
+/* /\** */
+/*  * @struct cpy06_genparam_t */
+/*  * @brief Structure used for generation of CPY06 pairings. */
+/*  *\/ */
+/* typedef struct { */
+/*   size_t bitlimit; /\**< The produced groups will be of order at most 2^bitlimit-1. *\/ */
+/*   pbc_param_t param; /\**< PBC parameters. *\/ */
+/*   bigz_t r; /\**< The characteristic of the generated field. *\/ */
+/* } cpy06_genparam_t; */
 
-/** 
- * @struct cpy06_config_t
- * @brief The configuration information for the CPY06 scheme.
- */
-typedef struct {
-  unsigned int bitlimit; /**< The order of the created group will be of at 
-			    most bitlimit bits. */
-} cpy06_config_t;
+/* /\**  */
+/*  * @struct cpy06_config_t */
+/*  * @brief The configuration information for the CPY06 scheme. */
+/*  *\/ */
+/* typedef struct { */
+/*   unsigned int bitlimit; /\**< The order of the created group will be of at  */
+/* 			    most bitlimit bits. *\/ */
+/* } cpy06_config_t; */
 
 /* Metadata for the join protocol */
 
-/* 0 means the first message is sent by the manager, 1 means the first message
-   is sent by the member */
-#define CPY06_JOIN_START 1
+/* /\* 0 means the first message is sent by the manager, 1 means the first message */
+/*    is sent by the member *\/ */
+/* #define CPY06_JOIN_START 1 */
 
-/* Number of exchanged messages */
-#define CPY06_JOIN_SEQ 1
-
+/* /\* Number of exchanged messages *\/ */
+/* #define CPY06_JOIN_SEQ 1 */
 
 #define CPY06_DEFAULT_BITLIMIT 160
 
@@ -223,7 +220,9 @@ int cpy06_clear();
  * 
  * @return IOK or IERROR.
  */
-int cpy06_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml);
+int cpy06_setup(groupsig_key_t *grpkey,
+		groupsig_key_t *mgrkey,
+		gml_t *gml);
 
 /**
  * @fn int cpy06_get_joinseq(uint8_t *seq)
@@ -247,7 +246,7 @@ int cpy06_get_joinseq(uint8_t *seq);
 int cpy06_get_joinstart(uint8_t *start);
 
 /** 
- * @fn int cpy06_join_mem(void **mout, groupsig_key_t *memkey,
+ * @fn int cpy06_join_mem(message_t **mout, groupsig_key_t *memkey,
  *			      int seq, void *min, groupsig_key_t *grpkey)
  * @brief Executes the member-side join of the CPY06 scheme.
  *
@@ -263,11 +262,14 @@ int cpy06_get_joinstart(uint8_t *start);
  * 
  * @return IOK or IERROR.
  */
-int cpy06_join_mem(void **mout, groupsig_key_t *memkey,
-		   int seq, void *min, groupsig_key_t *grpkey);
+int cpy06_join_mem(message_t **mout,
+		   groupsig_key_t *memkey,
+		   int seq,
+		   message_t *min,
+		   groupsig_key_t *grpkey);
 
 /** 
- * @fn int cpy06_join_mgr(void **mout, gml_t *gml,
+ * @fn int cpy06_join_mgr(message_t **mout, gml_t *gml,
  *                            groupsig_key_t *mgrkey,
  *                            int seq, void *min, 
  *			      groupsig_key_t *grpkey)
@@ -287,9 +289,11 @@ int cpy06_join_mem(void **mout, groupsig_key_t *memkey,
  * 
  * @return IOK or IERROR.
  */
-int cpy06_join_mgr(void **mout, gml_t *gml,
+int cpy06_join_mgr(message_t **mout,
+		   gml_t *gml,
 		   groupsig_key_t *mgrkey,
-		   int seq, void *min,
+		   int seq,
+		   message_t *min,
 		   groupsig_key_t *grpkey);
 
 /** 
@@ -311,8 +315,11 @@ int cpy06_join_mgr(void **mout, gml_t *gml,
  * 
  * @return IOK or IERROR.
  */
-int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey, 
-	       groupsig_key_t *grpkey, unsigned int seed);
+int cpy06_sign(groupsig_signature_t *sig,
+	       message_t *msg,
+	       groupsig_key_t *memkey, 
+	       groupsig_key_t *grpkey,
+	       unsigned int seed);
 
 /** 
  * @fn int cpy06_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, 
@@ -327,11 +334,13 @@ int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
  * 
  * @return IOK or IERROR.
  */
-int cpy06_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, 
+int cpy06_verify(uint8_t *ok,
+		 groupsig_signature_t *sig,
+		 message_t *msg, 
 		 groupsig_key_t *grpkey);
 
 /** 
- * @fn int cpy06_open(identity_t *id, groupsig_proof_t *proof, 
+ * @fn int cpy06_open(uint64_t *id, groupsig_proof_t *proof, 
  *                    crl_t *crl, groupsig_signature_t *sig, 
  *	              groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml)
  * @brief Opens a CPY06 group signature.
@@ -351,9 +360,13 @@ int cpy06_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg,
  * @return IOK if it was possible to open the signature. IFAIL if the open
  *  trapdoor was not found, IERROR otherwise.
  */
-int cpy06_open(identity_t *id, groupsig_proof_t *proof, crl_t *crl, 
-	       groupsig_signature_t *sig, groupsig_key_t *grpkey, 
-	       groupsig_key_t *mgrkey, gml_t *gml);
+int cpy06_open(uint64_t *id,
+	       groupsig_proof_t *proof,
+	       crl_t *crl, 
+	       groupsig_signature_t *sig,
+	       groupsig_key_t *grpkey, 
+	       groupsig_key_t *mgrkey,
+	       gml_t *gml);
 
 /** 
  * @fn int cpy06_reveal(trapdoor_t *trap, crl_t *crl, gml_t *gml, uint64_t index)
@@ -373,7 +386,10 @@ int cpy06_open(identity_t *id, groupsig_proof_t *proof, crl_t *crl,
  * 
  * @return IOK or IERROR.
  */
-int cpy06_reveal(trapdoor_t *trap, crl_t *crl, gml_t *gml, uint64_t index);
+int cpy06_reveal(trapdoor_t *trap,
+		 crl_t *crl,
+		 gml_t *gml,
+		 uint64_t index);
 
 /** 
  * @fn int cpy06_trace(uint8_t *ok, groupsig_signature_t *sig, 
@@ -396,8 +412,12 @@ int cpy06_reveal(trapdoor_t *trap, crl_t *crl, gml_t *gml, uint64_t index);
  * 
  * @return IOK or IERROR.
  */
-int cpy06_trace(uint8_t *ok, groupsig_signature_t *sig, groupsig_key_t *grpkey, 
-		crl_t *crl, groupsig_key_t *mgrkey, gml_t *gml);
+int cpy06_trace(uint8_t *ok,
+		groupsig_signature_t *sig,
+		groupsig_key_t *grpkey, 
+		crl_t *crl,
+		groupsig_key_t *mgrkey,
+		gml_t *gml);
 
 /** 
  * @fn int cpy06_claim(groupsig_proof_t *proof, groupsig_key_t *memkey, 
@@ -413,8 +433,10 @@ int cpy06_trace(uint8_t *ok, groupsig_signature_t *sig, groupsig_key_t *grpkey,
  * 
  * @return IOK or IERROR.
  */
-int cpy06_claim(groupsig_proof_t *proof, groupsig_key_t *memkey, 
-		groupsig_key_t *grpkey, groupsig_signature_t *sig);
+int cpy06_claim(groupsig_proof_t *proof,
+		groupsig_key_t *memkey, 
+		groupsig_key_t *grpkey,
+		groupsig_signature_t *sig);
 
 /** 
  * @fn int cpy06_claim_verify(uint8_t *ok, groupsig_proof_t *proof, 
@@ -428,8 +450,10 @@ int cpy06_claim(groupsig_proof_t *proof, groupsig_key_t *memkey,
  * 
  * @return IOK or IERROR.
  */
-int cpy06_claim_verify(uint8_t *ok, groupsig_proof_t *proof, 
-		       groupsig_signature_t *sig, groupsig_key_t *grpkey);
+int cpy06_claim_verify(uint8_t *ok,
+		       groupsig_proof_t *proof, 
+		       groupsig_signature_t *sig,
+		       groupsig_key_t *grpkey);
 
 /** 
  * @fn int cpy06_prove_equality(groupsig_proof_t *proof, groupsig_key_t *memkey, 
@@ -448,8 +472,11 @@ int cpy06_claim_verify(uint8_t *ok, groupsig_proof_t *proof,
  * 
  * @return IOK or IERROR.
  */
-int cpy06_prove_equality(groupsig_proof_t *proof, groupsig_key_t *memkey, 
-			 groupsig_key_t *grpkey, groupsig_signature_t **sigs, uint16_t n_sigs);
+int cpy06_prove_equality(groupsig_proof_t *proof,
+			 groupsig_key_t *memkey, 
+			 groupsig_key_t *grpkey,
+			 groupsig_signature_t **sigs,
+			 uint16_t n_sigs);
 
 /** 
  * @fn int cpy06_prove_equality_verify(uint8_t *ok, groupsig_proof_t *proof, 
@@ -466,8 +493,11 @@ int cpy06_prove_equality(groupsig_proof_t *proof, groupsig_key_t *memkey,
  * 
  * @return IOK or IERROR.
  */
-int cpy06_prove_equality_verify(uint8_t *ok, groupsig_proof_t *proof, groupsig_key_t *grpkey,
-				groupsig_signature_t **sigs, uint16_t n_sigs);
+int cpy06_prove_equality_verify(uint8_t *ok,
+				groupsig_proof_t *proof,
+				groupsig_key_t *grpkey,
+				groupsig_signature_t **sigs,
+				uint16_t n_sigs);
 
 /**
  * @var cpy06_groupsig_bundle

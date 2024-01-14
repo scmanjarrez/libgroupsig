@@ -225,7 +225,7 @@ int cpy06_mgr_key_export(byte_t **bytes,
   }
 
   /* Sanity check */
-  if (ctr != size) {
+  if (ctr != _size) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "cpy06_mgr_key_export", __LINE__,
                       EDQUOT, "Unexpected size.", LOGERROR);
     GOTOENDRC(IERROR, cpy06_mgr_key_export);
@@ -289,14 +289,14 @@ groupsig_key_t* cpy06_mgr_key_import(byte_t *source, uint32_t size) {
   ctr += len;
 
   /* Get xi2 */
-  if(!(ps16_key->xi2 = pbcext_element_Fr_init()))
+  if(!(cpy06_key->xi2 = pbcext_element_Fr_init()))
     GOTOENDRC(IERROR, cpy06_mgr_key_import);
   if(pbcext_get_element_Fr_bytes(cpy06_key->xi2, &len, &source[ctr]) == IERROR)
     GOTOENDRC(IERROR, cpy06_mgr_key_import);
   ctr += len;
 
   /* Get gamma */
-  if(!(ps16_key->gamma = pbcext_element_Fr_init()))
+  if(!(cpy06_key->gamma = pbcext_element_Fr_init()))
     GOTOENDRC(IERROR, cpy06_mgr_key_import);
   if(pbcext_get_element_Fr_bytes(cpy06_key->gamma, &len, &source[ctr]) == IERROR)
     GOTOENDRC(IERROR, cpy06_mgr_key_import);
@@ -307,7 +307,7 @@ groupsig_key_t* cpy06_mgr_key_import(byte_t *source, uint32_t size) {
   if(rc == IERROR && key) { cpy06_mgr_key_free(key); key = NULL; }
   if(rc == IOK) return key;  
 
-  return rc;  
+  return key;  
 
 }
 
@@ -354,7 +354,7 @@ char* cpy06_mgr_key_to_string(groupsig_key_t *key) {
 
   snprintf(mgr_key, mgr_key_size,
 	   "xi1: %s\n"
-	   "xi2: %s\n",
+	   "xi2: %s\n"
 	   "gamma: %s\n",
 	   xi1, xi2, gamma);
 
