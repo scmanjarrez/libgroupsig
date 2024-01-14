@@ -786,7 +786,7 @@ int pbcext_element_G1_muln(pbcext_element_G1_t *dst,
   if (!(_dst = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, pbcext_element_G1_muln);
 
-  if (!(_dst = pbcext_element_G1_clear()))
+  if (pbcext_element_G1_clear(_dst) == IERROR)
     GOTOENDRC(IERROR, pbcext_element_G1_muln);
   
   if (!(tmp = pbcext_element_G1_init()))
