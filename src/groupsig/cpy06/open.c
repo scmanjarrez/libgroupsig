@@ -31,7 +31,7 @@
 #include "groupsig/cpy06/identity.h"
 #include "groupsig/cpy06/trapdoor.h"
 
-int cpy06_open(identity_t *id,
+int cpy06_open(uint64_t *id,
 	       groupsig_proof_t *proof,
 	       crl_t *crl,
 	       groupsig_signature_t *sig, 
@@ -44,17 +44,18 @@ int cpy06_open(identity_t *id,
   cpy06_signature_t *cpy06_sig;
   cpy06_grp_key_t *cpy06_grpkey;
   cpy06_mgr_key_t *cpy06_mgrkey;
-  cpy06_gml_entry_t *cpy06_entry;
+  gml_entry_t *gml_entry;
+  cpy06_gml_entry_data_t *cpy06_data;
   cpy06_trapdoor_t *cpy06_trap;
   uint64_t i;
   int rc;
   uint8_t match;
 
-  if(!id || id->scheme != GROUPSIG_CPY06_CODE ||
+  if(!id || 
      !sig || sig->scheme != GROUPSIG_CPY06_CODE ||
      !grpkey || grpkey->scheme != GROUPSIG_CPY06_CODE ||
      !mgrkey || mgrkey->scheme != GROUPSIG_CPY06_CODE ||
-     !gml || gml->scheme |= GROUPSIG_CPY06_CODE) {
+     !gml || gml->scheme != GROUPSIG_CPY06_CODE) {
     LOG_EINVAL(&logger, __FILE__, "cpy06_open", __LINE__, LOGERROR);
     return IERROR;
   }
@@ -89,14 +90,14 @@ int cpy06_open(identity_t *id,
   match = 0;
   for (i=0; i<gml->n; i++) {  
 
-    if (!(cpy06_entry = gml_get(gml, i))) GOTOENDRC(IERROR, cpy06_open);
+    if (!(gml_entry = gml_get(gml, i))) GOTOENDRC(IERROR, cpy06_open);
 
-    cpy06_trap = cpy06_entry->trapdoor->trap;
+    cpy06_data = gml_entry->data;
+    cpy06_trap = cpy06_data->trapdoor->trap;
     if (!pbcext_element_G1_cmp(cpy06_trap->open, A)) {
       
       /* Get the identity from the matched entry. */
-      if(cpy06_identity_copy(id, entry->id) == IERROR)
-	GOTOENDRC(IERROR, cpy06_open);
+      *id = *(uint64_t *) cpy06_data->id->id;
 
       match = 1;
       break;
@@ -107,7 +108,7 @@ int cpy06_open(identity_t *id,
 
  cpy06_open_end:
 
-  if (A) { pbcext_element_free(A); A = NULL; }
+  if (A) { pbcext_element_G1_free(A); A = NULL; }
 
   /* No match: FAIL */
   if (!match) {

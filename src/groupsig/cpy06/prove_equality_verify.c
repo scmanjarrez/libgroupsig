@@ -38,9 +38,11 @@ int cpy06_prove_equality_verify(uint8_t *ok,
   cpy06_proof_t *cpy06_proof;
   hash_t *hash;
   byte_t *bytes;
-  pbcext_element_GT_t *e, *es, *t5c;
   pbcext_element_Fr_t *c;
-  int rc, n;
+  pbcext_element_G1_t *g1;
+  pbcext_element_GT_t *e, *es, *t5c;
+  uint64_t n;
+  int rc;
   uint8_t i;
   
   if(!ok || !proof || proof->scheme != GROUPSIG_CPY06_CODE ||
@@ -73,9 +75,9 @@ int cpy06_prove_equality_verify(uint8_t *ok,
      we divide e(g1,T4)^s/T5^c */  
   if (!(e = pbcext_element_GT_init()))
     GOTOENDRC(IERROR, cpy06_prove_equality_verify);
-  if (!(e5 = pbcext_element_GT_init()))
+  if (!(es = pbcext_element_GT_init()))
     GOTOENDRC(IERROR, cpy06_prove_equality_verify);  
-  if (!(t5c = pbcext_element_GT_init_GT()))
+  if (!(t5c = pbcext_element_GT_init()))
     GOTOENDRC(IERROR, cpy06_prove_equality_verify);  
   
   for (i=0; i<n_sigs; i++) {
@@ -88,7 +90,11 @@ int cpy06_prove_equality_verify(uint8_t *ok,
 
     sig = (cpy06_signature_t *) sigs[i]->sig;
 
-    if (pbcext_pairing(e, gkey->g1, sig->T4) == IERROR)
+    if (!(g1 = pbcext_element_G1_init()))
+      GOTOENDRC(IERROR, cpy06_prove_equality_verify);
+    if (pbcext_element_G1_from_string(&g1, BLS12_381_P, 10) == IERROR)
+      GOTOENDRC(IERROR, cpy06_prove_equality_verify);
+    if (pbcext_pairing(e, g1, sig->T4) == IERROR)
       GOTOENDRC(IERROR, cpy06_prove_equality_verify);
     if (pbcext_element_GT_pow(es, e, cpy06_proof->s) == IERROR)
       GOTOENDRC(IERROR, cpy06_prove_equality_verify);
@@ -119,7 +125,7 @@ int cpy06_prove_equality_verify(uint8_t *ok,
 
     /* ... and T5 */
     bytes = NULL;
-    if(pbcext_element_GT_bytes(&bytes, &n, sig->T5) == IERROR)
+    if(pbcext_element_GT_to_bytes(&bytes, &n, sig->T5) == IERROR)
       GOTOENDRC(IERROR, cpy06_prove_equality_verify);
 
     if(hash_update(hash, bytes, n) == IERROR) 
@@ -150,7 +156,8 @@ int cpy06_prove_equality_verify(uint8_t *ok,
 
   /* Free resources and exit */
  cpy06_prove_equality_verify_end:
-   
+
+  if (g1) { pbcext_element_G1_free(g1); g1 = NULL; }
   if (e) { pbcext_element_GT_free(e); e = NULL; }
   if (es) { pbcext_element_GT_free(es); es = NULL; }
   if (t5c) { pbcext_element_GT_free(t5c); t5c = NULL; }

@@ -43,7 +43,7 @@ int cpy06_trace(uint8_t *ok,
   cpy06_grp_key_t *gkey;
   trapdoor_t *trapi;
   cpy06_trapdoor_t *cpy06_trapi;
-  element_t e;
+  pbcext_element_GT_t *e;
   uint64_t i;
   uint8_t revoked;
 

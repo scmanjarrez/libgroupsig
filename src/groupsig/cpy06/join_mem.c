@@ -44,10 +44,12 @@
 /* @TODO This function still follows the old variable structure for join and 
    I am just changing the interface to remove compiler complaints. But this 
    breaks the functionality! Fix! */
-int cpy06_join_mem(void **mout, groupsig_key_t *memkey,
-		   int seq, void *min, groupsig_key_t *grpkey) {
+int cpy06_join_mem(message_t **mout,
+		   groupsig_key_t *memkey,
+		   int seq,
+		   message_t *min,
+		   groupsig_key_t *grpkey) {
 
-  cpy06_sysenv_t *cpy06_sysenv;
   cpy06_mem_key_t *cpy06_memkey;
   cpy06_grp_key_t *cpy06_grpkey;
   int rc;

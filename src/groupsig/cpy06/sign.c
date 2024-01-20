@@ -40,8 +40,9 @@ int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
      that are not specified in the paper but helpful or required for its 
      implementation will be named aux_<name>. */
 
-  pbcext_element_G1_t *B1, *B2, *B3, *B4, *e[3];
-  pbcext_element_GT_t *B5, *B6, *aux_e;
+  pbcext_element_G1_t *g1, *B1, *B2, *B3, *B4;
+  pbcext_element_G2_t *g2;
+  pbcext_element_GT_t *B5, *B6, *aux_e, *e[3];
   pbcext_element_Fr_t *r1, *r2, *r3, *d1, *d2, *s[3];
   pbcext_element_Fr_t *aux_r1r2, *aux_r3x, *aux_bd1bd2, *aux_br1br2, *aux_bx;
   pbcext_element_Fr_t *br1, *br2, *bd1, *bd2, *bt, *bx, *aux_cmul;
@@ -51,7 +52,8 @@ int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   cpy06_signature_t *cpy06_sig;
   cpy06_grp_key_t *cpy06_grpkey;
   cpy06_mem_key_t *cpy06_memkey;
-  int rc, aux_n;
+  uint64_t aux_n;
+  int rc;
   
   if(!sig || !msg || 
      !memkey || memkey->scheme != GROUPSIG_CPY06_CODE ||
@@ -65,9 +67,8 @@ int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   cpy06_sig = sig->sig;
   cpy06_grpkey = grpkey->key;
   cpy06_memkey = memkey->key;
-  cpy06_sysenv = sysenv->data;
 
-  B1 = B2 = B3 = B4 = NULL;
+  g1 = B1 = B2 = B3 = B4 = NULL;
   B5 = B6 = aux_e = NULL;
   r1 = r2 = r3 = d1 = d2 = NULL;
   aux_r1r2 = aux_r3x = aux_bd1bd2 = aux_br1br2 = aux_bx = NULL;
@@ -82,7 +83,7 @@ int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   if (!(r2 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_sign);
   if (pbcext_element_Fr_random(r2) == IERROR) GOTOENDRC(IERROR, cpy06_sign);
   if (!(r3 = pbcext_element_Fr_init()) == IERROR) GOTOENDRC(IERROR, cpy06_sign);
-  if (pbcext_element_fr_random(r3) == IERROR) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_Fr_random(r3) == IERROR) GOTOENDRC(IERROR, cpy06_sign);
 
   /* d1 = t*r1 */
   if (!(d1 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_sign);
@@ -123,7 +124,7 @@ int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   if (!(cpy06_sig->T4 = pbcext_element_G2_init()))
     GOTOENDRC(IERROR, cpy06_sign);
   if (pbcext_element_G2_mul(cpy06_sig->T4, cpy06_grpkey->w, r3) == IERROR)
-    GOTOENDR(IERROR, cpy06_sign);
+    GOTOENDRC(IERROR, cpy06_sign);
 
   /* T5 = e(g1, T4)^x = e(g1, W)^(r3*x) */
   if (!(aux_r3x = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_sign);
@@ -140,16 +141,16 @@ int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   if (!(br2 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_sign);
   if (pbcext_element_Fr_random(br2) == IERROR) GOTOENDRC(IERROR, cpy06_sign);
   if (!(bd1 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_sign);
-  if (pbcext_element_Gr_random(bd1)) GOTOENDRC(IERROR, cpy06_sign);
-  if (!(bd2 = pbcext_element_init_Zr())) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_Fr_random(bd1)) GOTOENDRC(IERROR, cpy06_sign);
+  if (!(bd2 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_sign);
   if (pbcext_element_Fr_random(bd2) == IERROR) GOTOENDRC(IERROR, cpy06_sign);
   if (!(bt = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_sign);
   if (pbcext_element_Fr_random(bt) == IERROR) GOTOENDRC(IERROR, cpy06_sign);
   if (!(bx = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_sign);
-  if (pbcext_element_random(bx) == IERROR) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_Fr_random(bx) == IERROR) GOTOENDRC(IERROR, cpy06_sign);
 
   /* B1 = X^br1 */
-  if (!(B1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, cpy60_sign);
+  if (!(B1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, cpy06_sign);
   if (pbcext_element_G1_mul(B1, cpy06_grpkey->x, br1) == IERROR)
     GOTOENDRC(IERROR, cpy06_sign);
 
@@ -179,8 +180,11 @@ int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
     GOTOENDRC(IERROR, cpy06_sign);
 
   /* B5 = e(g1,T4)^bx */
+  if (!(g1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_G1_from_string(&g1, BLS12_381_P, 10) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
   if (!(B5 = pbcext_element_GT_init())) GOTOENDRC(IERROR, cpy06_sign);
-  if (pbcext_element_pairing(B5, cpy06_grpkey->g1, cpy06_sig->T4) == IERROR)
+  if (pbcext_pairing(B5, g1, cpy06_sig->T4) == IERROR)
     GOTOENDRC(IERROR, cpy06_sign);
   if (pbcext_element_GT_pow(B5, B5, bx) == IERROR)
     GOTOENDRC(IERROR, cpy06_sign);
@@ -188,8 +192,11 @@ int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   /* B6 = e(T3,g2)^bt * e(z,g2)^(-bd1-bd2) * e(z,r)^(-br1-br2) * e(g1,g2)^(-bx) */
   
   /* [temp] B6 = e(T3,g2)^bt */
+  if (!(g2 = pbcext_element_G2_init())) GOTOENDRC(IERROR, cpy06_sign);
+  if (pbcext_element_G2_from_string(&g2, BLS12_381_Q, 10) == IERROR)
+    GOTOENDRC(IERROR, cpy06_sign);
   if (!(B6 = pbcext_element_GT_init())) GOTOENDRC(IERROR, cpy06_sign);
-  if (pbcext_element_pairing(B6, cpy06_sig->T3, cpy06_grpkey->g2) == IERROR)
+  if (pbcext_pairing(B6, cpy06_sig->T3, g2) == IERROR)
     GOTOENDRC(IERROR, cpy06_sign);
   if (pbcext_element_GT_pow(B6, B6, bt) == IERROR)
     GOTOENDRC(IERROR, cpy06_sign);
@@ -197,7 +204,7 @@ int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   /* aux_e: the rest (with the help of the optimizations is easier...) */
   
   /* (-bd1-bd2) */
-  if (!(aux_bd1bd2 = pbcex_element_Fr_init())) GOTOENDRC(IERROR, cpy06_sign);
+  if (!(aux_bd1bd2 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_sign);
   if (pbcext_element_Fr_neg(aux_bd1bd2, bd1) == IERROR)
     GOTOENDRC(IERROR, cpy06_sign);
   if (pbcext_element_Fr_sub(aux_bd1bd2, aux_bd1bd2, bd2) == IERROR)
@@ -220,7 +227,7 @@ int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   /* e = e2^bd1bd2*e3^br1br2*e4^bx */
   e[0] = cpy06_grpkey->e2; e[1] = cpy06_grpkey->e3; e[2] = cpy06_grpkey->e4;
   s[0] = aux_bd1bd2; s[1] = aux_br1br2; s[2] = aux_bx;
-  if (pbcext_element_pow3_zn(aux_e, e, s, 3) == IERROR)
+  if (pbcext_element_GT_pown(aux_e, e, s, 3) == IERROR)
     GOTOENDRC(IERROR, cpy06_sign);
 
   if(pbcext_element_GT_mul(B6, B6, aux_e) == IERROR)
@@ -326,7 +333,7 @@ int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   if(hash_finalize(aux_c) == IERROR) GOTOENDRC(IERROR, cpy06_sign);
 
   /* Get c as the element associated to the obtained hash value */
-  if (!(cpy06_sig->c = pbcext_element_Fr_init(a)))
+  if (!(cpy06_sig->c = pbcext_element_Fr_init()))
     GOTOENDRC(IERROR, cpy06_sign);
   if (pbcext_element_Fr_from_hash(cpy06_sig->c,
 				  aux_c->hash,
@@ -339,11 +346,11 @@ int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
 
   /* sr1 = br1 + c*r1 */
   if (!(cpy06_sig->sr1 = pbcext_element_Fr_init()))
-    GOTOENDRC(IERROR, cpy06);
+    GOTOENDRC(IERROR, cpy06_sign);
   if (pbcext_element_Fr_mul(aux_cmul, cpy06_sig->c, r1) == IERROR)
-    GOTOENDRC(IERROR, cpy06);
+    GOTOENDRC(IERROR, cpy06_sign);
   if (pbcext_element_Fr_add(cpy06_sig->sr1, br1, aux_cmul) == IERROR)
-    GOTOENDRC(IERROR, cpy06);
+    GOTOENDRC(IERROR, cpy06_sign);
 
   /* sr2 = br2 + c*r2 */
   if (!(cpy06_sig->sr2 = pbcext_element_Fr_init()))
@@ -382,74 +389,76 @@ int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
     GOTOENDRC(IERROR, cpy06_sign);
   if (pbcext_element_Fr_mul(aux_cmul, cpy06_sig->c, cpy06_memkey->t) == IERROR)
     GOTOENDRC(IERROR, cpy06_sign);
-  if (pbcext_element_fr_add(cpy06_sig->st, bt, aux_cmul) == IERROR)
+  if (pbcext_element_Fr_add(cpy06_sig->st, bt, aux_cmul) == IERROR)
     GOTOENDRC(IERROR, cpy06_sign);
 
  cpy06_sign_end:
 
   if (rc == IERROR) {
     if (cpy06_sig->T1) {
-      pbcext_element_G1_clear(cpy06_sig->T1); cpy06_sig->T1 = NULL;
+      pbcext_element_G1_free(cpy06_sig->T1); cpy06_sig->T1 = NULL;
     }
     if (cpy06_sig->T2) {
-      pbcext_element_G1_clear(cpy06_sig->T2); cpy06_sig->T2 = NULL;
+      pbcext_element_G1_free(cpy06_sig->T2); cpy06_sig->T2 = NULL;
     }
     if (cpy06_sig->T3) {
-      pbcext_element_G1_clear(cpy06_sig->T3); cpy06_sig->T3 = NULL;
+      pbcext_element_G1_free(cpy06_sig->T3); cpy06_sig->T3 = NULL;
     }
     if (cpy06_sig->T4) {
-      pbcext_element_G2_clear(cpy06_sig->T4); cpy06_sig->T4 = NULL;
+      pbcext_element_G2_free(cpy06_sig->T4); cpy06_sig->T4 = NULL;
     }
     if (cpy06_sig->T5) {
-      pbcext_element_GT_clear(cpy06_sig->T5); cpy06_sig->T5 = NULL;
+      pbcext_element_GT_free(cpy06_sig->T5); cpy06_sig->T5 = NULL;
     }
     if (cpy06_sig->c) {
-      pbcext_element_Fr_clear(cpy06_sig->c); cpy06_sig->c = NULL;
+      pbcext_element_Fr_free(cpy06_sig->c); cpy06_sig->c = NULL;
     }
     if (cpy06_sig->sr1) {
-      pbcext_element_Fr_clear(cpy06_sig->sr1); cpy06_sig->sr1 = NULL;
+      pbcext_element_Fr_free(cpy06_sig->sr1); cpy06_sig->sr1 = NULL;
     }
     if (cpy06_sig->sr2) {
-      pbcext_element_Fr_clear(cpy06_sig->sr2); cpy06_sig->sr2 = NULL;
+      pbcext_element_Fr_free(cpy06_sig->sr2); cpy06_sig->sr2 = NULL;
     }
     if (cpy06_sig->sd1) {
-      pbcext_element_Fr_clear(cpy06_sig->sd1); cpy06_sig->sd1 = NULL;
+      pbcext_element_Fr_free(cpy06_sig->sd1); cpy06_sig->sd1 = NULL;
     }
     if (cpy06_sig->sd2) {
-      pbcext_element_Fr_clear(cpy06_sig->sd2); cpy06_sig->sd2 = NULL;
+      pbcext_element_Fr_free(cpy06_sig->sd2); cpy06_sig->sd2 = NULL;
     }
     if (cpy06_sig->sx) {
-      pbcext_element_Fr_clear(cpy06_sig->sx); cpy06_sig->sx = NULL;
+      pbcext_element_Fr_free(cpy06_sig->sx); cpy06_sig->sx = NULL;
     }
     if (cpy06_sig->st) {
-      pbcext_element_Fr_clear(cpy06_sig->st); cpy06_sig->st = NULL;
+      pbcext_element_Fr_free(cpy06_sig->st); cpy06_sig->st = NULL;
     }
   }
 
-  if (B1) { pbcext_element_G1_clear(B1); B1 = NULL; }
-  if (B2) { pbcext_element_G1_clear(B2); B2 = NULL; }
-  if (B3) { pbcext_element_G1_clear(B3); B3 = NULL; }
-  if (B4) { pbcext_element_G1_clear(B4); B4 = NULL; }
-  if (B5) { pbcext_element_GT_clear(B5); B5 = NULL; }
-  if (B6) { pbcext_element_GT_clear(B6); B6 = NULL; }
-  if (r1) { pbcext_element_Fr_clear(r1); r1 = NULL; }
-  if (r2) { pbcext_element_Fr_clear(r2); r2 = NULL; }
-  if (r3) { pbcext_element_Fr_clear(r3); r3 = NULL; }
-  if (aux_r1r2) { pbcext_element_Fr_clear(aux_r1r2); aux_r1r2 = NULL; }  
-  if (aux_r3x) { pbcext_element_Fr_clear(aux_r3x); aux_r3x = NULL; }
-  if (aux_e) { pbcext_element_GT_clear(aux_e); aux_e = NULL; }
-  if (br1) { pbcext_element_Fr_clear(br1); aux_br1 = NULL; }
-  if (br2) { pbcext_element_Fr_clear(br2); aux_br2 = NULL; }
-  if (bd1) { pbcext_element_Fr_clear(bd1); aux_bd1 = NULL; }
-  if (bd2) { pbcext_element_Fr_clear(bd2); aux_bd2 = NULL; }
-  if (bx) { pbcext_element_Fr_clear(bx); aux_bx = NULL; }
-  if (bt) { pbcext_element_Fr_clear(bt); aux_bt = NULL; }
-  if (aux_xbd1) { pbcext_element_G1_clear(xbd1); aux_xbd1 = NULL; }
-  if (aux_ybd2) { pbcext_element_G1_clear(ybd2); aux_ybd2 = NULL; }
-  if (aux_bd1bd2) { pbcext_element_Fr_clear(aux_bd1bd2); aux_bd1bd2 = NULL; }
-  if (aux_br1br2) { pbcext_element_Fr_clear(aux_br1br2); aux_br1br2 = NULL; }
-  if (aux_bx) { pbcext_element_Fr_clear(aux_bx); aux_bx = NULL; }
-  if (aux_cmul) { pbcext_element_Fr_clear(aux_cmul); aux_cmul = NULL; }
+  if (g1) { pbcext_element_G1_free(g1); g1 = NULL; }
+  if (g2) { pbcext_element_G2_free(g2); g2 = NULL; }
+  if (B1) { pbcext_element_G1_free(B1); B1 = NULL; }
+  if (B2) { pbcext_element_G1_free(B2); B2 = NULL; }
+  if (B3) { pbcext_element_G1_free(B3); B3 = NULL; }
+  if (B4) { pbcext_element_G1_free(B4); B4 = NULL; }
+  if (B5) { pbcext_element_GT_free(B5); B5 = NULL; }
+  if (B6) { pbcext_element_GT_free(B6); B6 = NULL; }
+  if (r1) { pbcext_element_Fr_free(r1); r1 = NULL; }
+  if (r2) { pbcext_element_Fr_free(r2); r2 = NULL; }
+  if (r3) { pbcext_element_Fr_free(r3); r3 = NULL; }
+  if (aux_r1r2) { pbcext_element_Fr_free(aux_r1r2); aux_r1r2 = NULL; }  
+  if (aux_r3x) { pbcext_element_Fr_free(aux_r3x); aux_r3x = NULL; }
+  if (aux_e) { pbcext_element_GT_free(aux_e); aux_e = NULL; }
+  if (br1) { pbcext_element_Fr_free(br1); br1 = NULL; }
+  if (br2) { pbcext_element_Fr_free(br2); br2 = NULL; }
+  if (bd1) { pbcext_element_Fr_free(bd1); bd1 = NULL; }
+  if (bd2) { pbcext_element_Fr_free(bd2); bd2 = NULL; }
+  if (bx) { pbcext_element_Fr_free(bx); bx = NULL; }
+  if (bt) { pbcext_element_Fr_free(bt); bt = NULL; }
+  if (aux_xbd1) { pbcext_element_G1_free(aux_xbd1); aux_xbd1 = NULL; }
+  if (aux_ybd2) { pbcext_element_G1_free(aux_ybd2); aux_ybd2 = NULL; }
+  if (aux_bd1bd2) { pbcext_element_Fr_free(aux_bd1bd2); aux_bd1bd2 = NULL; }
+  if (aux_br1br2) { pbcext_element_Fr_free(aux_br1br2); aux_br1br2 = NULL; }
+  if (aux_bx) { pbcext_element_Fr_free(aux_bx); aux_bx = NULL; }
+  if (aux_cmul) { pbcext_element_Fr_free(aux_cmul); aux_cmul = NULL; }
   if(aux_bytes) { mem_free(aux_bytes); aux_bytes = NULL; }
   if(aux_c) { hash_free(aux_c); aux_c = NULL; }
 

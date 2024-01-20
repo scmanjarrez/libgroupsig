@@ -42,7 +42,8 @@ int cpy06_prove_equality(groupsig_proof_t *proof,
   byte_t *bytes;
   hash_t *hash;
   pbcext_element_Fr_t *r;
-  pbcext_element_GT *e, *er;
+  pbcext_element_G1_t *g1;
+  pbcext_element_GT_t *e, *er;
   uint64_t n;
   int rc;
   uint8_t i;
@@ -104,7 +105,11 @@ int cpy06_prove_equality(groupsig_proof_t *proof,
 
     cpy06_sig = (cpy06_signature_t *) sig->sig;
 
-    if (pbcext_pairing(e, gkey->g1, cpy06_sig->T4) == IERROR)
+    if (!(g1 = pbcext_element_G1_init()))
+      GOTOENDRC(IERROR, cpy06_prove_equality);
+    if (pbcext_element_G1_from_string(&g1, BLS12_381_P, 10) == IERROR)
+      GOTOENDRC(IERROR, cpy06_prove_equality);
+    if (pbcext_pairing(e, g1, cpy06_sig->T4) == IERROR)
       GOTOENDRC(IERROR, cpy06_prove_equality);
     if (pbcext_element_GT_pow(er, e, r) == IERROR)
       GOTOENDRC(IERROR, cpy06_prove_equality);
@@ -169,6 +174,7 @@ int cpy06_prove_equality(groupsig_proof_t *proof,
  cpy06_prove_equality_end:
  
   if (r) { pbcext_element_Fr_free(r); r = NULL; }
+  if (g1) { pbcext_element_G1_free(g1); g1 = NULL; }
   if (e) { pbcext_element_GT_free(e); e = NULL; }
   if (er) { pbcext_element_GT_free(er); er = NULL; }
   if (hash) { hash_free(hash); hash = NULL; }

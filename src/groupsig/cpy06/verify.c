@@ -32,15 +32,16 @@
 /* Public functions */
 int cpy06_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsig_key_t *grpkey) {
 
-  pbcext_element_G1_t *B1, *B2, *B3, *B4, *aux_G1, *e[3];
-  pbcext_element_GT_t *B5, *B6, *aux_GT, *aux_e;
+  pbcext_element_G1_t *g1, *B1, *B2, *B3, *B4, *aux_G1;
+  pbcext_element_G2_t *g2;
+  pbcext_element_GT_t *B5, *B6, *aux_GT, *aux_e, *e[3];
   pbcext_element_Fr_t *aux_sd1sd2, *aux_sr1sr2, *aux_sx, *c, *s[3];
   cpy06_signature_t *cpy06_sig;
   cpy06_grp_key_t *cpy06_grpkey;
-  cpy06_sysenv_t *cpy06_sysenv;
   hash_t *aux_c;
   byte_t *aux_bytes;
-  int aux_n, rc;
+  uint64_t aux_n;
+  int rc;
 
   if(!ok || !msg || !sig || sig->scheme != GROUPSIG_CPY06_CODE ||
      !grpkey || grpkey->scheme != GROUPSIG_CPY06_CODE) {
@@ -50,7 +51,6 @@ int cpy06_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
   
   cpy06_sig = sig->sig;
   cpy06_grpkey = grpkey->key;
-  cpy06_sysenv = sysenv->data;
   rc = IOK;
 
   B1 = B2 = B3 = B4 = aux_G1 = NULL;
@@ -62,7 +62,7 @@ int cpy06_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
   /* Re-derive B1, B2, B3, B4, B5 and B6 from the signature */
   
   /* B1 = X^sr1/T1^c */
-  if (!(aux_G1 = pbcext_element_G1_init))
+  if (!(aux_G1 = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, cpy06_verify);
   if (pbcext_element_G1_mul(aux_G1, cpy06_sig->T1, cpy06_sig->c) == IERROR)
     GOTOENDRC(IERROR, cpy06_verify);
@@ -74,7 +74,7 @@ int cpy06_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
     GOTOENDRC(IERROR, cpy06_verify);
 
   /* B2 = X^sr2/T2^c */
-  if (pbcext_element_mul(aux_G1, cpy06_sig->T2, cpy06_sig->c) == IERROR)
+  if (pbcext_element_G1_mul(aux_G1, cpy06_sig->T2, cpy06_sig->c) == IERROR)
     GOTOENDRC(IERROR, cpy06_verify);
   if (!(B2 = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, cpy06_verify);
@@ -90,11 +90,11 @@ int cpy06_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
     GOTOENDRC(IERROR, cpy06_verify);
   if (pbcext_element_G1_mul(B3, cpy06_sig->T1, cpy06_sig->st) == IERROR)
     GOTOENDRC(IERROR, cpy06_verify);
-  if (pbcext_element_G1_div(B3, B3, aux_G1) == IERROR)
+  if (pbcext_element_G1_sub(B3, B3, aux_G1) == IERROR)
     GOTOENDRC(IERROR, cpy06_verify);
 
   /* B4 = T2^st/Y^sd2 */
-  if (pbcext_element_mul(aux_G1, cpy06_grpkey->y, cpy06_sig->sd2) == IERROR)
+  if (pbcext_element_G1_mul(aux_G1, cpy06_grpkey->y, cpy06_sig->sd2) == IERROR)
     GOTOENDRC(IERROR, cpy06_verify);
   if (!(B4 = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, cpy06_verify);
@@ -104,15 +104,18 @@ int cpy06_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
     GOTOENDRC(IERROR, cpy06_verify);
 
   /* B5 = e(g1,T4)^sx * T5^(-c) */
+  if (!(g1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, cpy06_verify);
+  if (pbcext_element_G1_from_string(&g1, BLS12_381_P, 10) == IERROR)
+    GOTOENDRC(IERROR, cpy06_verify);
   if (!(aux_GT = pbcext_element_GT_init()))
     GOTOENDRC(IERROR, cpy06_verify);
-  if (pbcext_element_pow(aux_GT, cpy06_sig->T5, cpy06_sig->c) == IERROR)
+  if (pbcext_element_GT_pow(aux_GT, cpy06_sig->T5, cpy06_sig->c) == IERROR)
     GOTOENDRC(IERROR, cpy06_verify);
   if (pbcext_element_GT_inv(aux_GT, aux_GT) == IERROR)
     GOTOENDRC(IERROR, cpy06_verify);
   if (!(B5 = pbcext_element_GT_init()))
     GOTOENDRC(IERROR, cpy06_verify);
-  if (pbcext_pairing(B5, cpy06_grpkey->g1, cpy06_sig->T4) == IERROR)
+  if (pbcext_pairing(B5, g1, cpy06_sig->T4) == IERROR)
     GOTOENDRC(IERROR, cpy06_verify);
   if (pbcext_element_GT_pow(B5, B5, cpy06_sig->sx) == IERROR)
     GOTOENDRC(IERROR, cpy06_verify);
@@ -146,13 +149,13 @@ int cpy06_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
 
   e[0] = cpy06_grpkey->e2; e[1] = cpy06_grpkey->e3; e[2] = cpy06_grpkey->e4;
   s[0] = aux_sd1sd2; s[1] = aux_sr1sr2; s[2] = aux_sx;
-  if (pbcext_element_pow3_zn(aux_e, e, s, 3) == IERROR)
+  if (pbcext_element_GT_pown(aux_e, e, s, 3) == IERROR)
     GOTOENDRC(IERROR, cpy06_verify);
 
   /* aux_GT = (e(T3,r)/e(q,g2))^c */
   if (pbcext_pairing(aux_GT, cpy06_sig->T3, cpy06_grpkey->r) == IERROR)
     GOTOENDRC(IERROR, cpy06_verify);
-  if (pbext_element_GT_div(aux_GT, aux_GT, cpy06_grpkey->e5) == IERROR)
+  if (pbcext_element_GT_div(aux_GT, aux_GT, cpy06_grpkey->e5) == IERROR)
     GOTOENDRC(IERROR, cpy06_verify);
   if (pbcext_element_GT_pow(aux_GT, aux_GT, cpy06_sig->c) == IERROR)
     GOTOENDRC(IERROR, cpy06_verify);
@@ -160,14 +163,17 @@ int cpy06_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
   /* B6 = e(T3,g2)^st * aux_e * aux_GT */
   if (!(B6 = pbcext_element_GT_init()))
     GOTOENDRC(IERROR, cpy06_verify);
-  if (pbcext_pairing(B6, cpy06_sig->T3, cpy06_grpkey->g2) == IERROR)
+  if (!(g2 = pbcext_element_G2_init())) GOTOENDRC(IERROR, cpy06_verify);
+  if (pbcext_element_G2_from_string(&g2, BLS12_381_Q, 10) == IERROR)
+    GOTOENDRC(IERROR, cpy06_verify);  
+  if (pbcext_pairing(B6, cpy06_sig->T3, g2) == IERROR)
     GOTOENDRC(IERROR, cpy06_verify);
   if (pbcext_element_GT_pow(B6, B6, cpy06_sig->st) == IERROR)
     GOTOENDRC(IERROR, cpy06_verify);
   if (pbcext_element_GT_mul(B6, B6, aux_e) == IERROR)
     GOTOENDRC(IERROR, cpy06_verify);
   if (pbcext_element_GT_mul(B6, B6, aux_GT) == IERROR)
-    GOTOENDRC(IERROR, cpy06_verify),
+    GOTOENDRC(IERROR, cpy06_verify);
 
   /* Recompute the hash-challenge c */
 
@@ -276,7 +282,7 @@ int cpy06_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
     GOTOENDRC(IERROR, cpy06_verify);
 
   /* Compare the result with the received challenge */
-  if(element_cmp(cpy06_sig->c, c)) { /* Different: sig fail */
+  if(pbcext_element_Fr_cmp(cpy06_sig->c, c)) { /* Different: sig fail */
     *ok = 0;
   } else { /* Same: sig OK */
     *ok = 1;
@@ -284,19 +290,20 @@ int cpy06_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
 
  cpy06_verify_end:
 
-  if (B1) { pbcext_element_G1_clear(B1); B1 = NULL; }
-  if (B2) { pbcext_element_G1_clear(B2); B2 = NULL; }
-  if (B3) { pbcext_element_G1_clear(B3); B3 = NULL; }
-  if (B4) { pbcext_element_G1_clear(B4); B4 = NULL; }
-  if (B5) { pbcext_element_GT_clear(B5); B5 = NULL; }
-  if (B6) { pbcext_element_GT_clear(B6); B6 = NULL; }
-  if (aux_G1) { pbcext_element_G1_clear(aux_G1); aux_G1 = NULL; }
-  if (aux_GT) { pbcext_element_GT_clear(aux_GT); aux_GT = NULL; }
-  if (aux_e) { pbcext_element_GT_clear(aux_e); aux_e = NULL; }
-  if (aux_sd1sd2) { pbcext_element_Fr_clear(aux_sd1sd2); aux_sd1sd2 = NULL; }
-  if (aux_sr1sr2) { pbcext_element_Fr_clear(aux_sr1sr2); aux_sr1sr2 = NULL; }
-  if (aux_sx) { pbcext_element_Fr_clear(aux_sx); aux_sx = NULL; }
-  if (c) { pbcext_element_Fr_clear(c); c = NULL; }  
+  if (g1) { pbcext_element_G1_free(g1); g1 = NULL; }
+  if (B1) { pbcext_element_G1_free(B1); B1 = NULL; }
+  if (B2) { pbcext_element_G1_free(B2); B2 = NULL; }
+  if (B3) { pbcext_element_G1_free(B3); B3 = NULL; }
+  if (B4) { pbcext_element_G1_free(B4); B4 = NULL; }
+  if (B5) { pbcext_element_GT_free(B5); B5 = NULL; }
+  if (B6) { pbcext_element_GT_free(B6); B6 = NULL; }
+  if (aux_G1) { pbcext_element_G1_free(aux_G1); aux_G1 = NULL; }
+  if (aux_GT) { pbcext_element_GT_free(aux_GT); aux_GT = NULL; }
+  if (aux_e) { pbcext_element_GT_free(aux_e); aux_e = NULL; }
+  if (aux_sd1sd2) { pbcext_element_Fr_free(aux_sd1sd2); aux_sd1sd2 = NULL; }
+  if (aux_sr1sr2) { pbcext_element_Fr_free(aux_sr1sr2); aux_sr1sr2 = NULL; }
+  if (aux_sx) { pbcext_element_Fr_free(aux_sx); aux_sx = NULL; }
+  if (c) { pbcext_element_Fr_free(c); c = NULL; }  
   if(aux_bytes) { mem_free(aux_bytes); aux_bytes = NULL; }
   if(aux_c) { hash_free(aux_c); aux_c = NULL; }
 

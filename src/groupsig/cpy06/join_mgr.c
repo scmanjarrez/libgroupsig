@@ -46,17 +46,21 @@ int cpy06_get_joinstart(uint8_t *start) {
    I am just changing the interface to remove compiler complaints. But this 
    breaks the functionality! Fix! */
 //gml_t *gml, groupsig_key_t *memkey, groupsig_key_t *mgrkey, groupsig_key_t *grpkey) {
-int cpy06_join_mgr(void **mout, gml_t *gml,
+int cpy06_join_mgr(message_t **mout,
+		   gml_t *gml,
 		   groupsig_key_t *mgrkey,
-		   int seq, void *min,
+		   int seq,
+		   message_t *min,
 		   groupsig_key_t *grpkey) {
 
   groupsig_key_t *memkey;
   cpy06_mem_key_t *cpy06_memkey;
   cpy06_mgr_key_t *cpy06_mgrkey;
   cpy06_grp_key_t *cpy06_grpkey;
-  cpy06_gml_entry_t *cpy06_entry;
+  gml_entry_t *gml_entry;
+  cpy06_gml_entry_data_t *cpy06_data;
   cpy06_trapdoor_t *cpy06_trap;
+  pbcext_element_G1_t *g1;
   pbcext_element_Fr_t *gammat;
   int rc;
 
@@ -72,7 +76,7 @@ int cpy06_join_mgr(void **mout, gml_t *gml,
   cpy06_grpkey = (cpy06_grp_key_t *) grpkey->key;
   rc = IOK;
   gammat = NULL;
-  cpy06_entry = NULL;
+  cpy06_data = NULL;
   cpy06_trap = NULL;
 
   /* /\* x \in_R Z^*_p (@todo Should be non-adaptively chosen by member) *\/ */
@@ -86,7 +90,10 @@ int cpy06_join_mgr(void **mout, gml_t *gml,
     GOTOENDRC(IERROR, cpy06_join_mgr);
 
   /* A = (q*g_1^x)^(1/t+\gamma) */
-  if (!(gamat = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_join_mgr);
+  if (!(g1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, cpy06_join_mgr);
+  if (pbcext_element_G1_from_string(&g1, BLS12_381_P, 10) == IERROR)
+    GOTOENDRC(IERROR, cpy06_join_mgr);
+  if (!(gammat = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_join_mgr);
   if (pbcext_element_Fr_add(gammat,
 			    cpy06_mgrkey->gamma,
 			    cpy06_memkey->t) == IERROR)
@@ -96,10 +103,10 @@ int cpy06_join_mgr(void **mout, gml_t *gml,
   if (!(cpy06_memkey->A = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, cpy06_join_mgr);
   if (pbcext_element_G1_mul(cpy06_memkey->A,
-			    cpy06_grpkey->g1,
+			    g1,
 			    cpy06_memkey->x) == IERROR)
     GOTOENDRC(IERROR, cpy06_join_mgr);
-  if (pbcext_element__G1_add(cpy06_memkey->A,
+  if (pbcext_element_G1_add(cpy06_memkey->A,
 			     cpy06_memkey->A,
 			     cpy06_grpkey->q) == IERROR)
     GOTOENDRC(IERROR, cpy06_join_mgr);
@@ -112,10 +119,11 @@ int cpy06_join_mgr(void **mout, gml_t *gml,
   if(gml) {
 
     /* Initialize the GML entry */
-    if(!(cpy06_entry = cpy06_gml_entry_init()))
+    if(!(gml_entry = cpy06_gml_entry_init()))
       GOTOENDRC(IERROR, cpy06_join_mgr);
 
-    cpy06_trap = (cpy06_trapdoor_t *) cpy06_entry->trapdoor->trap;
+    cpy06_data = gml_entry->data;
+    cpy06_trap = (cpy06_trapdoor_t *) cpy06_data->trapdoor->trap;
 
     /* Open trapdoor */
     if (!(cpy06_trap->open = pbcext_element_G1_init()))
@@ -127,14 +135,14 @@ int cpy06_join_mgr(void **mout, gml_t *gml,
     if (!(cpy06_trap->trace = pbcext_element_G1_init()))
       GOTOENDRC(IERROR, cpy06_join_mgr);
     if (pbcext_element_G1_mul(cpy06_trap->trace,
-			      cpy06_grpkey->g1,
+			      g1,
 			      cpy06_memkey->x))
       GOTOENDRC(IERROR, cpy06_join_mgr);
 
     /* Currently, CPY06 identities are just uint64_t's */
-    *(cpy06_identity_t *) cpy06_entry->id->id = gml->n;
+    *(cpy06_identity_t *) cpy06_data->id->id = gml->n;
     
-    if(gml_insert(gml, cpy06_entry) == IERROR)
+    if(gml_insert(gml, gml_entry) == IERROR)
       GOTOENDRC(IERROR, cpy06_join_mgr);
     
   }
@@ -142,18 +150,19 @@ int cpy06_join_mgr(void **mout, gml_t *gml,
  cpy06_join_mgr_end:
 
   if (rc == IERROR) {
-    if (cpy06_entry) {
-      cpy06_gml_entry_free(cpy06_entry); cpy06_entry = NULL;
+    if (gml_entry) {
+      cpy06_gml_entry_free(gml_entry); gml_entry = NULL;
     }
     if (cpy06_memkey->t) {
-      pbcext_element_Fr_free(cpy06_memkey_t); cpy06_memkey->t = NULL;
+      pbcext_element_Fr_free(cpy06_memkey->t); cpy06_memkey->t = NULL;
     }
     if (cpy06_memkey->A) {
       pbcext_element_G1_free(cpy06_memkey->A); cpy06_memkey->A = NULL;
     }
   }
 
-  if (gammat) { pbcext_element_G1_clear(gammat); gammat = NULL; }
+    if (gammat) { pbcext_element_G1_free(g1); g1 = NULL; }
+  if (gammat) { pbcext_element_Fr_free(gammat); gammat = NULL; }
   
   return rc;
 

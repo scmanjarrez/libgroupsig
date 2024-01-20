@@ -114,7 +114,7 @@ int cpy06_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
 
   /* X = Z^(\xi_1^-1) */
   if (!(inv = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_setup);
-  if (pbcext_element_Fr_invert(inv, mkey->xi1) == IERROR)
+  if (pbcext_element_Fr_inv(inv, mkey->xi1) == IERROR)
     GOTOENDRC(IERROR, cpy06_setup);
   if (!(gkey->x = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, cpy06_setup);
@@ -159,7 +159,7 @@ int cpy06_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
   if (pbcext_pairing(gkey->e5, gkey->q, g2) == IERROR)
     GOTOENDRC(IERROR, cpy06_setup);    
 
- cpy06_setup_error:
+ cpy06_setup_end:
 
   if (rc == IERROR) {
     if (mkey->xi1) { pbcext_element_Fr_free(mkey->xi1); mkey->xi1 = NULL; }    
