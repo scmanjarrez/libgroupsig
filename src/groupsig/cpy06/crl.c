@@ -44,7 +44,8 @@ static int _is_supported_format(crl_format_t format) {
   
 }
 
-static cpy06_crl_entry_t* _crl_entry_import_file(FILE *fd, crl_format_t format,
+static cpy06_crl_entry_t* _crl_entry_import_file(FILE *fd,
+						 crl_format_t format,
 						 uint8_t *eof) {
 
   cpy06_crl_entry_t *entry;

@@ -71,7 +71,7 @@ int cpy06_gml_free(gml_t *gml) {
 
 }
 
-int cpy06_gml_insert(gml_t *gml, void *entry) {
+int cpy06_gml_insert(gml_t *gml, gml_entry_t *entry) {
 
   if(!gml || gml->scheme != GROUPSIG_CPY06_CODE) {
     LOG_EINVAL(&logger, __FILE__, "cpy06_gml_insert", __LINE__, LOGERROR);
@@ -79,7 +79,7 @@ int cpy06_gml_insert(gml_t *gml, void *entry) {
   }
 
   if(!(gml->entries = (gml_entry_t **) 
-       realloc(gml->entries, sizeof(cpy06_gml_entry_t *)*(gml->n+1)))) {
+       realloc(gml->entries, sizeof(gml_entry_t *)*(gml->n+1)))) {
     LOG_ERRORCODE(&logger, __FILE__, "cpy06_gml_insert",
 		  __LINE__, errno, LOGERROR);
     return IERROR;
@@ -116,7 +116,7 @@ int cpy06_gml_remove(gml_t *gml, uint64_t index) {
 
 }
 
-void* cpy06_gml_get(gml_t *gml, uint64_t index) {
+gml_entry_t* cpy06_gml_get(gml_t *gml, uint64_t index) {
 
   if(!gml || gml->scheme != GROUPSIG_CPY06_CODE) {
     LOG_EINVAL(&logger, __FILE__, "cpy06_gml_get", __LINE__, LOGERROR);
@@ -337,12 +337,13 @@ int cpy06_gml_entry_free(gml_entry_t *entry) {
 int cpy06_gml_entry_get_size(gml_entry_t *entry) {
 
   byte_t *bytes;
+  uint64_t size;
 
   if (!entry ||
       entry->scheme != GROUPSIG_CPY06_CODE) {
     LOG_EINVAL(&logger, __FILE__, "cpy06_gml_entry_get_size",
 	       __LINE__, LOGERROR);
-    return -1    
+    return -1;    
   }
 
   if (!(bytes = (byte_t *) cpy06_gml_entry_to_string(entry)))
@@ -356,7 +357,7 @@ int cpy06_gml_entry_get_size(gml_entry_t *entry) {
 }
 
 int cpy06_gml_entry_export(byte_t **bytes,
-			   uint32_t size,
+			   uint32_t *size,
 			   gml_entry_t *entry) {
 
   byte_t *_bytes;
@@ -365,12 +366,12 @@ int cpy06_gml_entry_export(byte_t **bytes,
   
   if (!bytes ||
       !size ||
-      !entry || entry->scheme |= GROUPSIG_CPY06_CODE) {
+      !entry || entry->scheme != GROUPSIG_CPY06_CODE) {
     LOG_EINVAL(&logger, __FILE__, "cpy06_gml_entry_export", __LINE__, LOGERROR);
     return IERROR;
   }
 
-  if (!(_bytes = (byte_t *) kty04_gml_entry_to_string(entry))) return IERROR;
+  if (!(_bytes = (byte_t *) cpy06_gml_entry_to_string(entry))) return IERROR;
 
   *size = strlen(_bytes);
   *bytes = _bytes;  
@@ -449,10 +450,10 @@ char* cpy06_gml_entry_to_string(gml_entry_t *entry) {
 
   /* Get the string representations of the entry's fields */
   if (!(sid = identity_to_string(data->id)))
-    GOTOENDRC(IERROR, cpy06_gml_entry_to_string_end);
+    GOTOENDRC(IERROR, cpy06_gml_entry_to_string);
   
   if (!(strapdoor = trapdoor_to_string(data->trapdoor)))
-    GOTOENDRC(IERROR, cpy06_gml_entry_to_string_end);
+    GOTOENDRC(IERROR, cpy06_gml_entry_to_string);
   
   /* Calculate the length of the entry, adding a tab */
   sentry_len = strlen(sid)+strlen(strapdoor)+strlen("\t\t")+1;
@@ -468,7 +469,7 @@ char* cpy06_gml_entry_to_string(gml_entry_t *entry) {
   mem_free(sid); sid = NULL;
   mem_free(strapdoor); strapdoor = NULL;
 
-  if (rc == IERROR) { memfree(sentry); sentry = NULL; }
+  if (rc == IERROR) { mem_free(sentry); sentry = NULL; }
 
   return sentry;
  

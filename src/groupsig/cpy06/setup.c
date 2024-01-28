@@ -131,7 +131,7 @@ int cpy06_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
   /* For computation optimizations */
 
   /* T5 = e(g1, W) */
-    if (!(g1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, cpy06_setup);
+  if (!(g1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, cpy06_setup);
   if (pbcext_element_G1_from_string(&g1, BLS12_381_P, 10) == IERROR)
     GOTOENDRC(IERROR, cpy06_setup);
   if (!(gkey->T5 = pbcext_element_GT_init())) GOTOENDRC(IERROR, cpy06_setup);
