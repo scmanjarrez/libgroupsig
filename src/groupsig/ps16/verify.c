@@ -26,6 +26,10 @@
 #include "shim/hash.h"
 #include "sys/mem.h"
 
+#ifndef BLAKE
+#include <openssl/evp.h>
+#endif
+
 #ifdef SHA3
 #define SHA_DIGEST_LENGTH 64
 #else
