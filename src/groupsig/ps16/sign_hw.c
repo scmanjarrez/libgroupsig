@@ -125,7 +125,7 @@ int ps16_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey,
 
   /* Complete the sig */
   if (!(ps16_sig->c = pbcext_element_Fr_init())) GOTOENDRC(IERROR, ps16_sign);
-  if (pbcext_element_Fr_from_hash(ps16_sig->c, aux_c, SHA_DIGEST_LENGTH) == IERROR)
+  if (pbcext_element_Fr_from_hash(ps16_sig->c, aux_c, HASH_DIGEST_LENGTH) == IERROR)
     GOTOENDRC(IERROR, ps16_sign);
 
   if (!(ps16_sig->s = pbcext_element_Fr_init())) GOTOENDRC(IERROR, ps16_sign);

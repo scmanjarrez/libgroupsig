@@ -27,9 +27,9 @@
 #include "bigz.h"
 
 #ifdef SHA3
-#define SHA_DIGEST_LENGTH 64
+#define HASH_DIGEST_LENGTH 64
 #else
-#define SHA_DIGEST_LENGTH 32
+#define HASH_DIGEST_LENGTH 32
 #endif
 
 /* Private functions */
@@ -391,7 +391,7 @@ int kty04_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
 
   kty04_grp_key_t *gkey;
   kty04_signature_t *kty04_sig;
-  byte_t sc[SHA_DIGEST_LENGTH+1];
+  byte_t sc[HASH_DIGEST_LENGTH+1];
   // SHA_CTX sha;
 	EVP_MD_CTX *mdctx;
   bigz_t c, *B;
@@ -496,7 +496,7 @@ int kty04_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
   }
 
   /* Calculate the hash */
-  memset(sc, 0, SHA_DIGEST_LENGTH+1);
+  memset(sc, 0, HASH_DIGEST_LENGTH+1);
   if(EVP_DigestFinal_ex(mdctx, sc, NULL) != 1) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_verify", __LINE__, EDQUOT,
 			"EVP_DigestFinal_ex", LOGERROR);
@@ -504,7 +504,7 @@ int kty04_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
   }
 
   /* Now, we have to get c = h(message,B[1],...,B[z],A[1],...,A[m]) as an mpz */
-  if(!(c = bigz_import(sc, SHA_DIGEST_LENGTH))) GOTOENDRC(IERROR, kty04_verify);
+  if(!(c = bigz_import(sc, HASH_DIGEST_LENGTH))) GOTOENDRC(IERROR, kty04_verify);
 
   /* Check the hash */
   errno = 0;

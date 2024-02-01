@@ -30,9 +30,9 @@
 #include "bigz.h"
 
 #ifdef SHA3
-#define SHA_DIGEST_LENGTH 64
+#define HASH_DIGEST_LENGTH 64
 #else
-#define SHA_DIGEST_LENGTH 32
+#define HASH_DIGEST_LENGTH 32
 #endif
 
 /* Private functions */
@@ -527,7 +527,7 @@ int kty04_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   kty04_grp_key_t *gkey;
   kty04_mem_key_t *mkey;
   kty04_signature_t *kty04_sig;
-  byte_t aux_sc[SHA_DIGEST_LENGTH+1];
+  byte_t aux_sc[HASH_DIGEST_LENGTH+1];
   bigz_t k, kk, r, hh, *A, *tw, *B, c, *sw;
   // SHA_CTX aux_sha;
   EVP_MD_CTX *mdctx;
@@ -672,7 +672,7 @@ int kty04_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   }
 
   /* Calculate the hash */
-  memset(aux_sc, 0, SHA_DIGEST_LENGTH+1);
+  memset(aux_sc, 0, HASH_DIGEST_LENGTH+1);
   if(EVP_DigestFinal_ex(mdctx, aux_sc, NULL) != 1) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_sign", __LINE__, EDQUOT,
 			"EVP_DigestFinal_ex", LOGERROR);
@@ -680,7 +680,7 @@ int kty04_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   }
 
   /* Now, we have to get c = h(message,B[1],...,B[z],A[1]...,A[m]) as an mpz */
-  if(!(c = bigz_import(aux_sc, SHA_DIGEST_LENGTH))) GOTOENDRC(IERROR, kty04_sign);
+  if(!(c = bigz_import(aux_sc, HASH_DIGEST_LENGTH))) GOTOENDRC(IERROR, kty04_sign);
   if(bigz_set(kty04_sig->c, c) == IERROR) GOTOENDRC(IERROR, kty04_sign);
 
   /* For the calculations of the sw's we are only interested in the k LSbits of c. */

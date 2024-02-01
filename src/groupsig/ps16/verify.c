@@ -31,9 +31,9 @@
 #endif
 
 #ifdef SHA3
-#define SHA_DIGEST_LENGTH 64
+#define HASH_DIGEST_LENGTH 64
 #else
-#define SHA_DIGEST_LENGTH 32
+#define HASH_DIGEST_LENGTH 32
 #endif
 
 /* Private functions */
@@ -52,7 +52,7 @@ int ps16_verify(uint8_t *ok,
 #ifdef BLAKE
   hash_t *aux_c;
 #else
-  byte_t aux_sc[SHA_DIGEST_LENGTH+1];
+  byte_t aux_sc[HASH_DIGEST_LENGTH+1];
 #endif
   byte_t *aux_bytes;
   uint64_t len;
@@ -175,7 +175,7 @@ int ps16_verify(uint8_t *ok,
 		      "EVP_DigestUpdate", LOGERROR);
     GOTOENDRC(IERROR, ps16_verify);
   }
-  memset(aux_sc, 0, SHA_DIGEST_LENGTH+1);
+  memset(aux_sc, 0, HASH_DIGEST_LENGTH+1);
 #endif
 
 #ifdef BLAKE
@@ -194,7 +194,7 @@ int ps16_verify(uint8_t *ok,
   if (pbcext_element_Fr_from_hash(c, aux_c->hash, aux_c->length) == IERROR)
     GOTOENDRC(IERROR, ps16_verify);
 #else
-  if (pbcext_element_Fr_from_hash(c, aux_sc, SHA_DIGEST_LENGTH) == IERROR)
+  if (pbcext_element_Fr_from_hash(c, aux_sc, HASH_DIGEST_LENGTH) == IERROR)
     GOTOENDRC(IERROR, ps16_verify);
 #endif
 

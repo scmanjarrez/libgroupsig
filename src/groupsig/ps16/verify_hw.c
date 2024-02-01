@@ -123,7 +123,7 @@ int ps16_verify(uint8_t *ok,
 
   /* Complete the sig */
   if (!(c = pbcext_element_Fr_init())) GOTOENDRC(IERROR, ps16_verify);
-  if (pbcext_element_Fr_from_hash(c, aux_c, SHA_DIGEST_LENGTH) == IERROR)
+  if (pbcext_element_Fr_from_hash(c, aux_c, HASH_DIGEST_LENGTH) == IERROR)
     GOTOENDRC(IERROR, ps16_verify);
 
   /* Compare the result with the received challenge */

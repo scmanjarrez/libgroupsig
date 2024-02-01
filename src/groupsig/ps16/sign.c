@@ -33,9 +33,9 @@
 #endif
 
 #ifdef SHA3
-#define SHA_DIGEST_LENGTH 64
+#define HASH_DIGEST_LENGTH 64
 #else
-#define SHA_DIGEST_LENGTH 32
+#define HASH_DIGEST_LENGTH 32
 #endif
 
 /* Private functions */
@@ -48,7 +48,7 @@ int ps16_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey,
 #ifdef BLAKE
   hash_t *aux_c;
 #else
-  byte_t aux_sc[SHA_DIGEST_LENGTH+1];
+  byte_t aux_sc[HASH_DIGEST_LENGTH+1];
 #endif
   byte_t *aux_bytes;
   ps16_signature_t *ps16_sig;
@@ -176,7 +176,7 @@ int ps16_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey,
 		      "EVP_DigestUpdate", LOGERROR);
     GOTOENDRC(IERROR, ps16_sign);
   }
-  memset(aux_sc, 0, SHA_DIGEST_LENGTH+1);
+  memset(aux_sc, 0, HASH_DIGEST_LENGTH+1);
 #endif
 
 #ifdef BLAKE
@@ -195,7 +195,7 @@ int ps16_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey,
   if (pbcext_element_Fr_from_hash(ps16_sig->c, aux_c->hash, aux_c->length) == IERROR)
     GOTOENDRC(IERROR, ps16_sign);
 #else
-  if (pbcext_element_Fr_from_hash(ps16_sig->c, aux_sc, SHA_DIGEST_LENGTH) == IERROR)
+  if (pbcext_element_Fr_from_hash(ps16_sig->c, aux_sc, HASH_DIGEST_LENGTH) == IERROR)
     GOTOENDRC(IERROR, ps16_sign);
 #endif
 
