@@ -23,16 +23,19 @@ else ()
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 endif ()
 
-if (BLAKE)
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DBLAKE")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBLAKE")
+# If -DSHA2 present, use SHA2 in PS16 (original is BLAKE)
+if (SHA2)
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSHA2")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSHA2")
 endif ()
 
+# If -DSHA3 present, use SHA3 in PS16/KTY04
 if (SHA3)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSHA3")
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSHA3")
 endif ()
 
+# If -DHW3 present, then pass -DHW3 to gcc (only affects if -DHW present too)
 if (HW3)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DHW3")
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHW3")
@@ -115,15 +118,17 @@ add_subdirectory (${PROJECT_SOURCE_DIR}/src/shim)
 add_subdirectory (${PROJECT_SOURCE_DIR}/src/crypto)
 add_subdirectory (${PROJECT_SOURCE_DIR}/src/math)
 add_subdirectory (${PROJECT_SOURCE_DIR}/src/misc)
+# if -DHW present, then load src/hw code
 if (HW)
   add_subdirectory (${PROJECT_SOURCE_DIR}/src/hw)
 endif ()
 add_subdirectory (${PROJECT_SOURCE_DIR}/src/groupsig)
 add_subdirectory (${PROJECT_SOURCE_DIR}/src/tools)
 
-# create an executable test_kty04 located in tests/kty04.c that links all the libraries compiled
-add_executable(demos tests/demos.c tests/kty04.c tests/ps16.c tests/utils.c)
-target_include_directories(demos PUBLIC tests)
+# create an executable "demos" to run the basic tests (without compiling gtest)
+add_executable(demos src/test/basic/demos.c src/test/basic/kty04.c src/test/basic/ps16.c src/test/basic/utils.c)
+target_include_directories(demos PUBLIC src/test/basic)
+# if -DHW present, then load PYNQ dependencies as well
 # We need to export LD_LIBRARY_PATH with the path to mcl -> export LD_LIBRARY_PATH=$PWD/external/lib/:$LD_LIBRARY_PATH
 if (HW)
   target_link_libraries(demos kty04 ps16 crypto pynq groupsig cma pthread)

@@ -28,14 +28,13 @@
 #include "shim/pbc_ext.h"
 #include "sys/mem.h"
 
-#ifndef BLAKE
+#if defined (SHA2) || defined (SHA3)
 #include <openssl/evp.h>
-#endif
-
 #ifdef SHA3
 #define HASH_DIGEST_LENGTH 64
 #else
 #define HASH_DIGEST_LENGTH 32
+#endif
 #endif
 
 /* Private functions */
@@ -45,10 +44,10 @@ int ps16_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey,
 
   pbcext_element_Fr_t *t, *k;
   pbcext_element_GT_t *e;
-#ifdef BLAKE
-  hash_t *aux_c;
-#else
+#if defined (SHA2) || defined (SHA3)
   byte_t aux_sc[HASH_DIGEST_LENGTH+1];
+#else
+  hash_t *aux_c;
 #endif
   byte_t *aux_bytes;
   ps16_signature_t *ps16_sig;
@@ -69,7 +68,7 @@ int ps16_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey,
   ps16_memkey = memkey->key;
   t = k = NULL;
   e = NULL;
-#ifdef BLAKE
+#if !defined(SHA2) && !defined(SHA3)
   aux_c = NULL;
 #endif
   aux_bytes = NULL;
@@ -102,9 +101,7 @@ int ps16_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey,
   if (pbcext_element_GT_pow(e, e, k) == IERROR) GOTOENDRC(IERROR, ps16_sign);
 
   /* c = hash(ps16_sig->sigma1,ps16_sig->sigma2,e,m); */
-#ifdef BLAKE
-  if (!(aux_c = hash_init(HASH_BLAKE2))) GOTOENDRC(IERROR, ps16_sign);
-#else
+#if defined (SHA2) || defined (SHA3)
   EVP_MD_CTX *mdctx;
   if((mdctx = EVP_MD_CTX_new()) == NULL) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "ps16_sign", __LINE__, EDQUOT,
@@ -120,82 +117,85 @@ int ps16_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey,
 		      "EVP_DigestInit_ex", LOGERROR);
     GOTOENDRC(IERROR, ps16_sign);
   }
+#else
+  if (!(aux_c = hash_init(HASH_BLAKE2))) GOTOENDRC(IERROR, ps16_sign);
 #endif
 
   if (pbcext_element_G1_to_bytes(&aux_bytes, &len, ps16_sig->sigma1) == IERROR)
     GOTOENDRC(IERROR, ps16_sign);
   /* Put the message into the hash */
-#ifdef BLAKE
-  if (hash_update(aux_c, aux_bytes, len) == IERROR)
-    GOTOENDRC(IERROR, ps16_sign);
-#else
+#if defined (SHA2) || defined (SHA3)
   if(EVP_DigestUpdate(mdctx, aux_bytes, (int)len) != 1) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "ps16_sign", __LINE__, EDQUOT,
 		      "EVP_DigestUpdate", LOGERROR);
     GOTOENDRC(IERROR, ps16_sign);
   }
+#else
+  if (hash_update(aux_c, aux_bytes, len) == IERROR)
+    GOTOENDRC(IERROR, ps16_sign);
 #endif
   mem_free(aux_bytes); aux_bytes = NULL;
 
   if (pbcext_element_G1_to_bytes(&aux_bytes, &len, ps16_sig->sigma2) == IERROR)
     GOTOENDRC(IERROR, ps16_sign);
 
-#ifdef BLAKE
-  if (hash_update(aux_c, aux_bytes, len) == IERROR)
-    GOTOENDRC(IERROR, ps16_sign);
-#else
+#if defined (SHA2) || defined (SHA3)
   if(EVP_DigestUpdate(mdctx, aux_bytes, (int)len) != 1) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "ps16_sign", __LINE__, EDQUOT,
 		      "EVP_DigestUpdate", LOGERROR);
     GOTOENDRC(IERROR, ps16_sign);
   }
+#else
+  if (hash_update(aux_c, aux_bytes, len) == IERROR)
+    GOTOENDRC(IERROR, ps16_sign);
 #endif
   mem_free(aux_bytes); aux_bytes = NULL;
 
   if (pbcext_element_GT_to_bytes(&aux_bytes, &len, e) == IERROR)
     GOTOENDRC(IERROR, ps16_sign);
 
-#ifdef BLAKE
-  if (hash_update(aux_c, aux_bytes, len) == IERROR)
-    GOTOENDRC(IERROR, ps16_sign);
-#else
+#if defined (SHA2) || defined (SHA3)
   if(EVP_DigestUpdate(mdctx, aux_bytes, (int)len) != 1) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "ps16_sign", __LINE__, EDQUOT,
 		      "EVP_DigestUpdate", LOGERROR);
     GOTOENDRC(IERROR, ps16_sign);
   }
+#else
+  if (hash_update(aux_c, aux_bytes, len) == IERROR)
+    GOTOENDRC(IERROR, ps16_sign);
 #endif
   mem_free(aux_bytes); aux_bytes = NULL;
 
-#ifdef BLAKE
-  if (hash_update(aux_c, msg->bytes, msg->length) == IERROR)
-    GOTOENDRC(IERROR, ps16_sign);
-#else
+#if defined (SHA2) || defined (SHA3)
   if(EVP_DigestUpdate(mdctx, msg->bytes, msg->length) != 1) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "ps16_sign", __LINE__, EDQUOT,
 		      "EVP_DigestUpdate", LOGERROR);
     GOTOENDRC(IERROR, ps16_sign);
   }
   memset(aux_sc, 0, HASH_DIGEST_LENGTH+1);
+#else
+  if (hash_update(aux_c, msg->bytes, msg->length) == IERROR)
+    GOTOENDRC(IERROR, ps16_sign);
 #endif
 
-#ifdef BLAKE
-  if (hash_finalize(aux_c) == IERROR) GOTOENDRC(IERROR, ps16_sign);
-#else
+#if defined (SHA2) || defined (SHA3)
   if(EVP_DigestFinal_ex(mdctx, aux_sc, NULL) != 1) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "ps16_sign", __LINE__, EDQUOT,
 			"EVP_DigestFinal_ex", LOGERROR);
       GOTOENDRC(IERROR, ps16_sign);
   }
+#else
+  if (hash_finalize(aux_c) == IERROR) GOTOENDRC(IERROR, ps16_sign);
 #endif
 
   /* Complete the sig */
   if (!(ps16_sig->c = pbcext_element_Fr_init())) GOTOENDRC(IERROR, ps16_sign);
-#ifdef BLAKE
-  if (pbcext_element_Fr_from_hash(ps16_sig->c, aux_c->hash, aux_c->length) == IERROR)
+
+#if defined (SHA2) || defined (SHA3)
+  if (pbcext_element_Fr_from_hash(ps16_sig->c, aux_sc, HASH_DIGEST_LENGTH) == IERROR)
     GOTOENDRC(IERROR, ps16_sign);
 #else
-  if (pbcext_element_Fr_from_hash(ps16_sig->c, aux_sc, HASH_DIGEST_LENGTH) == IERROR)
+  if (pbcext_element_Fr_from_hash(ps16_sig->c, aux_c->hash, aux_c->length) == IERROR)
     GOTOENDRC(IERROR, ps16_sign);
 #endif
 
@@ -210,7 +210,7 @@ int ps16_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey,
   if (k) { pbcext_element_Fr_free(k); k = NULL; }
   if (t) { pbcext_element_Fr_free(t); t = NULL; }
   if (e) { pbcext_element_GT_free(e); e = NULL; }
-#ifdef BLAKE
+#if !defined(SHA2) && !defined(SHA3)
   if (aux_c) { hash_free(aux_c); aux_c = NULL; }
 #endif
   if (aux_bytes) { mem_free(aux_bytes); aux_bytes = NULL; }

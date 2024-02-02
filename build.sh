@@ -1,11 +1,13 @@
 #!/bin/bash
 
+set -x
+
 usage() {
-    echo "Usage: $0 [--keep-mcl][--hw]"
+    echo "Usage: $0 [--keep-mcl][--sha2|sha3|hw|hw3]"
     echo "  --keep-mcl: do not rebuild mcl"
-    echo "  --blake: compile using BLAKE hash function (SW). Default SHA2"
-    echo "  --sha3: compile using SHA3 hash function (SW)"
-    echo "  --hw/hw3: compile using HW SHA2/SHA3 hash functions"
+    echo "  --sha2: compile using SHA2 in PS16 (SW). Default BLAKE"
+    echo "  --sha3: compile using SHA3 in PS16/KTY04 (SW)"
+    echo "  --hw/hw3: compile using SHA2/SHA3 (HW) in PS16/KTY04, requires PYNQ"
 }
 
 keep_mcl() {
@@ -19,65 +21,25 @@ rebuild() {
 }
 
 build() {
-    local blake
-    if [ -z $BLAKE ]; then
-        blake=""
-    else
-        blake="-DBLAKE=1"
-    fi
-    local sha3
-    if [ -z $SHA3 ]; then
-        sha3=""
-    else
-        sha3="-DSHA3=1"
-    fi
-    local hw
-    if [ -z $HW ]; then
-        hw=
-    else
-        hw="-DHW=1"
-    fi
-    if [ -z $HW3 ]; then
-        hw3=
-    else
-        hw3="-DHW3=1"
-    fi
-    local arch=$(uname -m)
-    local comp
-    if [[ "$arch" == arm* ]] || [[ "$arch" == aarch* ]]; then
-        comp="-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++"
-    else
-        comp=
-    fi
-    cd build && cmake $comp -DCMAKE_BUILD_TYPE=DEBUG -DALL=1 $blake $sha3 $hw $hw3 .. \
-        && make VERBOSE=1
+    [ -n "$DEBUG" ] && debug="-DCMAKE_BUILD_TYPE=DEBUG" && verbose="VERBOSE=1"
+    [ -n "$SHA2" ] && sha2="-DSHA2=1"
+    [ -n "$SHA3" ] && sha3="-DSHA3=1"
+    [ -n "$HW" ] && hw="-DHW=1"
+    [ -n "$HW3" ] && hw3="-DHW3=1"
+    [[ "$(uname -a)" =~ (arm|aarch) ]] && comp="-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++"
+    cd build && cmake -DALL=1 $comp $debug $sha2 $sha3 $hw $hw3 .. \
+        && make $verbose
 }
 
-if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
-    usage
-    exit
-fi
+for arg in "$@"; do
+    [[ "$arg" == -h || "$arg" == --help ]] && usage && exit
+    [[ "$arg" == --debug ]] && DEBUG=1
+    [[ "$arg" == --keep-mcl ]] && KEEPMCL=1
+    [[ "$arg" == --sha2 ]] && SHA2=1
+    [[ "$arg" == --sha3 ]] && SHA3=1
+    [[ "$arg" == --hw ]] && HW=1
+    [[ "$arg" == --hw3 ]] && HW=1 && HW3=1
+done
 
-if [ "$1" == "--keep-mcl" ] || [ "$2" == "--keep-mcl" ]; then
-    KEEPMCL=1
-fi
-if [ "$1" == "--blake" ] || [ "$2" == "--blake" ]; then
-    BLAKE=1
-fi
-if [ "$1" == "--sha3" ] || [ "$2" == "--sha3" ]; then
-    SHA3=1
-fi
-if [ "$1" == "--hw" ] || [ "$2" == "--hw" ]; then
-    HW=1
-fi
-if [ "$1" == "--hw3" ] || [ "$2" == "--hw3" ]; then
-    HW=1
-    HW3=1
-fi
-
-if [ -n "$KEEPMCL" ]; then
-    keep_mcl
-else
-    rebuild
-fi
+[ -n "$KEEPMCL" ] && keep_mcl || rebuild
 build
