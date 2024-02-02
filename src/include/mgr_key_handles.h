@@ -22,7 +22,6 @@
 
 #include "mgr_key.h"
 #include "groupsig/kty04/mgr_key.h"
-#ifdef ALL
 #include "groupsig/bbs04/mgr_key.h"
 /* #include "groupsig/cpy06/mgr_key.h" */
 #include "groupsig/gl19/mgr_key.h"
@@ -30,7 +29,6 @@
 #include "groupsig/klap20/mgr_key.h"
 #include "groupsig/dl21/mgr_key.h"
 #include "groupsig/dl21seq/mgr_key.h"
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,11 +38,7 @@ extern "C" {
  * @def GROUPSIG_MGR_KEY_HANDLES_N
  * @brief Number of supported bundles of manager key handles.
  */
-#ifdef ALL
 #define GROUPSIG_MGR_KEY_HANDLES_N 7
-#else
-#define GROUPSIG_MGR_KEY_HANDLES_N 1
-#endif
 
 /**
  * @var GROUPSIG_MGR_KEY_HANDLES
@@ -52,7 +46,6 @@ extern "C" {
  */
 static const mgr_key_handle_t *GROUPSIG_MGR_KEY_HANDLES[GROUPSIG_MGR_KEY_HANDLES_N] = {
   &kty04_mgr_key_handle,
-#ifdef ALL
   &bbs04_mgr_key_handle,
   /* &cpy06_mgr_key_handle, */
   &gl19_mgr_key_handle,
@@ -60,7 +53,6 @@ static const mgr_key_handle_t *GROUPSIG_MGR_KEY_HANDLES[GROUPSIG_MGR_KEY_HANDLES
   &klap20_mgr_key_handle,
   &dl21_mgr_key_handle,
   &dl21seq_mgr_key_handle,
-#endif
 };
 
 #ifdef __cplusplus

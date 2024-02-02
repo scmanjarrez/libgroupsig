@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -24,7 +24,7 @@
 #define _GNU_SOURCE
 #include <getopt.h>
 #include <unistd.h>
-#include <sys/types.h>        
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <stdarg.h>
 #include <libgen.h>
@@ -74,7 +74,7 @@ struct option long_options[] = {
 typedef struct {
 
   uint8_t scheme;
-  
+
   /* Directories */
 
   /* Group signature */
@@ -95,7 +95,7 @@ char* str_ncat(int n, const char *fmt, ...) {
   char **s, *str;
   uint64_t len;
   int i;
-  
+
   if(!fmt || n <= 0) {
     fprintf(stderr, "Error: %s\n", strerror(EINVAL));
     return NULL;
@@ -103,13 +103,13 @@ char* str_ncat(int n, const char *fmt, ...) {
 
   if(!(s = (char **) mem_malloc(sizeof(char *)*n))) {
     return NULL;
-  } 
+  }
 
   len = 0;
   va_start(ap, fmt);
   for(i=0; i<n; i++) {
     s[i] = va_arg(ap, char *);
-    len += strlen(s[i]);    
+    len += strlen(s[i]);
   }
   va_end(ap);
 
@@ -200,7 +200,7 @@ static int _options_parse(options_t *opt, int argc, char **argv) {
     fprintf(stderr, "Error: Wrong scheme %s\n", argv[1]);
     return IERROR;
   }
-  
+
   if(groupsig_init(opt->scheme, time(NULL)) == IERROR) {
     return IERROR;
   }
@@ -500,7 +500,7 @@ int main(int argc, char **argv) {
   if(!(prof = profile_begin("group_create.prf"))) {
     return IERROR;
   }
-  
+
   for(i=0; i<opt.n; i++) {
 #endif
 
@@ -513,14 +513,12 @@ int main(int argc, char **argv) {
     if(!(mgrkey = groupsig_mgr_key_init(opt.scheme))) {
       return IERROR;
     }
-#ifdef ALL
     /* In GL19, we have two manager keys */
     if(opt.scheme == GROUPSIG_GL19_CODE) {
       if(!(mgrkey2 = groupsig_mgr_key_init(opt.scheme))) {
 	return IERROR;
       }
     }
-#endif
 
     if(!(gs = groupsig_get_groupsig_from_code(opt.scheme))) {
       return IERROR;
@@ -529,14 +527,14 @@ int main(int argc, char **argv) {
     if(!(grpkey = groupsig_grp_key_init(opt.scheme))) {
       return IERROR;
     }
-    
+
     gml = NULL;
     if(gs->desc->has_gml) {
       if(!(gml = gml_init(opt.scheme))) {
 	fprintf(stderr, "Error: invalid GML.\n");
 	return IERROR;
       }
-    }    
+    }
 
 #ifdef PROFILE
     if(profile_get_time(&tv_begin, &clck_begin, &cycle_begin) == IERROR) {
@@ -553,7 +551,6 @@ int main(int argc, char **argv) {
       return IERROR;
     }
 
-#ifdef ALL
     /* In GL19, we have to call the setup function twice. */
     if (opt.scheme == GROUPSIG_GL19_CODE) {
       if(groupsig_setup(opt.scheme, grpkey, mgrkey2, gml) == IERROR) {
@@ -561,7 +558,6 @@ int main(int argc, char **argv) {
 	return IERROR;
       }
     }
-#endif
 
 #ifdef PROFILE
     if(!profile_skip && profile_get_time(&tv_end, &clck_end, &cycle_end) == IOK) {
@@ -569,7 +565,7 @@ int main(int argc, char **argv) {
     }
 
 #endif
-    
+
     /* Manager key */
     if(!(keyfile = str_ncat(3, "%s %s %s", dir_gs_mgr,
           "/", DFLT_MGRKEY_FILE))) {
@@ -578,7 +574,7 @@ int main(int argc, char **argv) {
 
     b_mgrkey = NULL;
     if(groupsig_mgr_key_export(&b_mgrkey, &b_len, mgrkey) == IERROR) {
-      fprintf(stderr, "Error: Could not export manager key.\n");      
+      fprintf(stderr, "Error: Could not export manager key.\n");
       return IERROR;
     }
 
@@ -590,7 +586,6 @@ int main(int argc, char **argv) {
 
     mem_free(keyfile);
 
-#ifdef ALL
     /* In GL19, we have two manager keys */
     if(opt.scheme == GROUPSIG_GL19_CODE) {
 
@@ -609,12 +604,11 @@ int main(int argc, char **argv) {
 	return IERROR;
       }
       mem_free(b_mgrkey); b_mgrkey = NULL;
-      
+
       mem_free(keyfile);
-	  
+
     }
-#endif
-  
+
     /* Group key */
     if(!(keyfile = str_ncat(3, "%s %s %s", dir_gs_grp, "/", DFLT_GRPKEY_FILE))) {
       return IERROR;
@@ -630,7 +624,7 @@ int main(int argc, char **argv) {
       return IERROR;
     }
     mem_free(b_grpkey); b_grpkey = NULL;
-  
+
     mem_free(keyfile);
 
     /* GML */
@@ -638,7 +632,7 @@ int main(int argc, char **argv) {
       if(!(keyfile = str_ncat(3, "%s %s %s", dir_gs_mgr, "/", DFLT_GML_FILE))) {
 	return IERROR;
       }
-      
+
       /* Dump the GML into a byte array */
       b_gml = NULL;
       if(gml_export(&b_gml, &gml_len, gml) == IERROR) {
@@ -654,29 +648,29 @@ int main(int argc, char **argv) {
 	fclose(fd); fd = NULL;
 	return IERROR;
       }
-      
-      fclose(fd); fd = NULL;    
+
+      fclose(fd); fd = NULL;
       mem_free(keyfile); keyfile = NULL;
-      
+
     }
 
     /* 3. Done. Free stuff. */
     groupsig_mgr_key_free(mgrkey); mgrkey = NULL;
     groupsig_grp_key_free(grpkey); grpkey = NULL;
-    
+
     if(gs->desc->has_gml) {
       gml_free(gml); gml = NULL;
     }
-    
+
 #ifdef PROFILE
   }
 
   profile_free(prof); prof = NULL;
 #endif
-  
+
   groupsig_clear(opt.scheme);
   mem_free(dir_gs_mgr); dir_gs_mgr = NULL;
-  mem_free(dir_gs_grp); dir_gs_grp = NULL;  
+  mem_free(dir_gs_grp); dir_gs_grp = NULL;
   mem_free(dir_gs_mem); dir_gs_mem = NULL;
   mem_free(opt.gs_base); opt.gs_base = NULL;
   mem_free(opt.gs_mgr); opt.gs_mgr = NULL;

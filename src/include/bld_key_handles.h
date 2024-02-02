@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,9 +21,7 @@
 #define _BLD_KEY_HANDLES_H
 
 #include "bld_key.h"
-#ifdef ALL
 #include "groupsig/gl19/bld_key.h"
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,20 +31,14 @@ extern "C" {
  * @def GROUPSIG_BLD_KEY_HANDLES_N
  * @brief Number of known handles of blinding key schemes.
  */
-#ifdef ALL
 #define GROUPSIG_BLD_KEY_HANDLES_N 1
-#else
-#define GROUPSIG_BLD_KEY_HANDLES_N 0
-#endif
 
 /**
  * @var GROUPSIG_BLD_KEY_HANDLES
  * @brief List of handles of supported blinding key schemes.
  */
-static const bld_key_handle_t *GROUPSIG_BLD_KEY_HANDLES[GROUPSIG_BLD_KEY_HANDLES_N] = { 
-#ifdef ALL
+static const bld_key_handle_t *GROUPSIG_BLD_KEY_HANDLES[GROUPSIG_BLD_KEY_HANDLES_N] = {
     &gl19_bld_key_handle,
-#endif
 };
 
 #ifdef __cplusplus
