@@ -310,6 +310,7 @@ int cpy06_crl_entry_cmp_id(void *entry1, void *entry2) {
 int cpy06_crl_entry_cmp_trapdoors(void *entry1, void *entry2) {
 
   cpy06_crl_entry_t *e1, *e2;
+  cpy06_trapdoor_t *t1, *t2;
 
   if(!entry1 || !entry2) {
     LOG_EINVAL(&logger, __FILE__, "cpy06_crl_entry_cmp_trapdoors", __LINE__, LOGERROR);
@@ -318,9 +319,10 @@ int cpy06_crl_entry_cmp_trapdoors(void *entry1, void *entry2) {
 
   e1 = (cpy06_crl_entry_t *) entry1;
   e2 = (cpy06_crl_entry_t *) entry2;
+  t1 = (cpy06_trapdoor_t *) e1->trapdoor->trap;
+  t2 = (cpy06_trapdoor_t *) e2->trapdoor->trap;  
 
-  return element_cmp(((cpy06_trapdoor_t *) e1->trapdoor->trap)->open, 
-		     ((cpy06_trapdoor_t *) e2->trapdoor->trap)->open);
+  return pbcext_element_G1_cmp(t1->open, t2->open);
 
 }
 
@@ -552,9 +554,12 @@ int cpy06_crl_entry_exists(crl_t *crl, void *entry) {
 
 }
 
+// @TODO: When this fails, returns IERROR=1, which is interpreted
+// as an existing trapdoor. Caller must check errno!!
 int cpy06_crl_trapdoor_exists(crl_t *crl, trapdoor_t *trap) {
 
   cpy06_crl_entry_t *entry;
+  cpy06_trapdoor_t *_trap;
   int exists;
 
   if(!crl || crl->scheme != GROUPSIG_CPY06_CODE ||
@@ -567,12 +572,21 @@ int cpy06_crl_trapdoor_exists(crl_t *crl, trapdoor_t *trap) {
     return IERROR;
   }
 
-  element_init_Zr(((cpy06_trapdoor_t *) entry->trapdoor->trap)->open,
-		  ((cpy06_sysenv_t *) sysenv->data)->pairing);
-  element_set(((cpy06_trapdoor_t *) entry->trapdoor->trap)->open, 
-	      ((cpy06_trapdoor_t *) trap->trap)->open);
+  _trap = (cpy06_trapdoor_t *) entry->trapdoor->trap;
+  if (!(_trap->open = pbcext_element_G1_init())) {
+    cpy06_crl_entry_free(entry); entry = NULL;
+    return IERROR;
+  }
+    
+  if (pbcext_element_G1_set(_trap->open, 
+			    ((cpy06_trapdoor_t *) trap->trap)->open) == IERROR) {
+    cpy06_crl_entry_free(entry); entry = NULL;
+    return IERROR;    
+  }
 
   exists = cpy06_crl_entry_exists(crl, entry);
+
+ cpy06_crl_trapdoor_exists_end:
   cpy06_crl_entry_free(entry); entry = NULL;
 
   return exists;  

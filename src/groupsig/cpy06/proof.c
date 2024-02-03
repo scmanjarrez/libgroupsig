@@ -36,6 +36,7 @@
 groupsig_proof_t* cpy06_proof_init() {
 
   groupsig_proof_t *proof;
+  cpy06_proof_t *cpy06_proof;
 
   if(!(proof = (groupsig_proof_t *) mem_malloc(sizeof(groupsig_proof_t)))) {
     return NULL;
@@ -46,9 +47,10 @@ groupsig_proof_t* cpy06_proof_init() {
     mem_free(proof); proof = NULL;
     return NULL;
   }
+  cpy06_proof = proof->proof;
   
-  proof->c = NULL;
-  proof->s = NULL;
+  cpy06_proof->c = NULL;
+  cpy06_proof->s = NULL;
 
   return proof;
 }
@@ -65,8 +67,12 @@ int cpy06_proof_free(groupsig_proof_t *proof) {
 
   if(proof->proof) {
     cpy06_proof = proof->proof;
-    if (pbcext_element_Fr_free(cpy06_proof->c); cpy06_proof->c = NULL; }
-    if (pbcext_element_Fr_free(cpy06_proof->s); cpy06_proof->s = NULL; }
+    if (cpy06_proof->c) {
+      pbcext_element_Fr_free(cpy06_proof->c); cpy06_proof->c = NULL;
+    }
+    if (cpy06_proof->s) {
+      pbcext_element_Fr_free(cpy06_proof->s); cpy06_proof->s = NULL;
+    }
     mem_free(proof->proof); proof->proof = NULL;
   }
 
@@ -123,10 +129,10 @@ char* cpy06_proof_to_string(groupsig_proof_t *proof) {
   sc = ss = sproof = NULL;
   rc = IOK;
 
-  if (pbcext_element_Fr_to_string(sc, &sc_len, 10, cpy06_proof->c) == IERROR)
+  if (pbcext_element_Fr_to_string(&sc, &sc_len, 10, cpy06_proof->c) == IERROR)
     GOTOENDRC(IERROR, cpy06_proof_to_string);
 
-  if (pbcext_element_Fr_to_string(ss, &ss_len, 10, cpy06_proof->s) == IERROR)
+  if (pbcext_element_Fr_to_string(&ss, &ss_len, 10, cpy06_proof->s) == IERROR)
     GOTOENDRC(IERROR, cpy06_proof_to_string);
 
   if (!sc || !ss) GOTOENDRC(IERROR, cpy06_proof_to_string);
@@ -274,14 +280,14 @@ groupsig_proof_t* cpy06_proof_import(byte_t *source, uint32_t size) {
   /* Get c */
   if(!(cpy06_proof->c = pbcext_element_Fr_init()))
     GOTOENDRC(IERROR, cpy06_proof_import);
-  if(pbcext_get_element_Fr_bytes(cpy06_sig->c, &len, &source[ctr]) == IERROR)
+  if(pbcext_get_element_Fr_bytes(cpy06_proof->c, &len, &source[ctr]) == IERROR)
     GOTOENDRC(IERROR, cpy06_proof_import);
   ctr += len;
 
   /* Get s */
   if(!(cpy06_proof->s = pbcext_element_Fr_init()))
     GOTOENDRC(IERROR, cpy06_proof_import);
-  if(pbcext_get_element_Fr_bytes(cpy06_sig->sr1, &len, &source[ctr]) == IERROR)
+  if(pbcext_get_element_Fr_bytes(cpy06_proof->s, &len, &source[ctr]) == IERROR)
     GOTOENDRC(IERROR, cpy06_proof_import);
   ctr += len;
 

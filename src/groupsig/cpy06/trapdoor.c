@@ -23,7 +23,7 @@
 #include "sys/mem.h"
 #include "misc/misc.h"
 #include "groupsig/cpy06/trapdoor.h"
-#include "wrappers/pbc_ext.h"
+#include "shim/pbc_ext.h"
 
 trapdoor_t* cpy06_trapdoor_init() {
   
@@ -139,22 +139,22 @@ char* cpy06_trapdoor_to_string(trapdoor_t *trap) {
   cpy06_trap = trap->trap;
   rc = IOK;
 
-  if (!(sopen = pbcext_element_G1_to_string(&sopen,
-					    &sopen_len,
-					    10,
-					    cpy06_trap->open)))
+  if (pbcext_element_G1_to_string(&sopen,
+				  &sopen_len,
+				  10,
+				  cpy06_trap->open) == IERROR)
     GOTOENDRC(IERROR, cpy06_trapdoor_to_string);
-
-  if (!(strace = pbcext_element_G1_to_string(&strace,
-					     &strace_len,
-					     10,
-					     cpy06_trap->trace)))
+  
+  if (pbcext_element_G1_to_string(&strace,
+				  &strace_len,
+				  10,
+				  cpy06_trap->trace) == IERROR)
     GOTOENDRC(IERROR, cpy06_trapdoor_to_string);
 
   if (!(strap = mem_malloc(sizeof(char *)*(sopen_len+strace_len)+2)))
     GOTOENDRC(IERROR, cpy06_trapdoor_to_string);
     
-  sprintf(b64, "%s %s", open_b64, trace_b64);
+  sprintf(strap, "%s %s", sopen, strace);
 
  cpy06_trapdoor_to_string_end:
 
@@ -214,7 +214,7 @@ trapdoor_t* cpy06_trapdoor_from_string(char *strap) {
     GOTOENDRC(IERROR, cpy06_trapdoor_from_string);
   
   if (pbcext_element_G1_from_string(&cpy06_trap->trace, strace, 10) == IERROR)
-    GOTOENDR(IERROR, cpy06_trapdoor_from_string);
+    GOTOENDRC(IERROR, cpy06_trapdoor_from_string);
 
  cpy06_trapdoor_from_string_end:
 
