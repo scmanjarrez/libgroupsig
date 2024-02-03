@@ -23,7 +23,7 @@
 #include "identity.h"
 #include "groupsig/kty04/identity.h"
 #ifdef ALL
-/* #include "groupsig/cpy06/identity.h" */
+#include "groupsig/cpy06/identity.h"
 #include "groupsig/gl19/identity.h"
 #include "groupsig/dl21/identity.h"
 #include "groupsig/dl21seq/identity.h"

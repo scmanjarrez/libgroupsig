@@ -27,6 +27,19 @@ if (ALL)
     pthread)
   add_test(NAME BBS04Test COMMAND BBS04Test)
 
+  # Tests for CPY06
+  add_executable(CPY06Test test_cpy06.cpp)
+  target_link_libraries(CPY06Test
+    PUBLIC
+    groupsig
+    big
+    sys
+    logger
+    gtest_main
+    gtest
+    pthread)
+  add_test(NAME CPY06Test COMMAND CPY06Test)
+
   # Tests for PS16
   add_executable(PS16Test test_ps16.cpp)
   target_link_libraries(PS16Test

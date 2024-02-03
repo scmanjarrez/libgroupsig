@@ -69,7 +69,7 @@ int ps16_setup(groupsig_key_t *grpkey,
   if(pbcext_element_Fr_random(mkey->x) == IERROR)
     GOTOENDRC(IERROR, ps16_setup);
   if(!(mkey->y = pbcext_element_Fr_init())) GOTOENDRC(IERROR, ps16_setup);
-  if(pbcext_element_Fr_random(mkey->y))
+  if(pbcext_element_Fr_random(mkey->y) == IERROR)
     GOTOENDRC(IERROR, ps16_setup);
   
   /* Set group key */

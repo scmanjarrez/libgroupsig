@@ -37,7 +37,7 @@ static const groupsig_t *GROUPSIG_REGISTERED_GROUPSIGS[GROUPSIG_REGISTERED_GROUP
   &kty04_groupsig_bundle,
 #ifdef ALL
   &bbs04_groupsig_bundle,
-  /* &cpy06_groupsig_bundle, */
+  &cpy06_groupsig_bundle,
   &gl19_groupsig_bundle,
   &ps16_groupsig_bundle,
   &klap20_groupsig_bundle,

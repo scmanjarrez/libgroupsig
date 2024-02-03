@@ -25,7 +25,7 @@
 #include "kty04.h"
 #ifdef ALL
 #include "bbs04.h"
-/* #include "cpy06.h" */
+#include "cpy06.h"
 #include "gl19.h"
 #include "ps16.h"
 #include "klap20.h"

@@ -31,15 +31,16 @@
 
 int cpy06_init() {
 
-  fprintf(stderr,
-	  "XXXXX REMEMBER TO USE _element_free INSTEAD of _element_clear\n");
-
   if(pbcext_init(BLS12_381) == IERROR) {
     return IERROR;
   }  
   
   return IOK;
 
+}
+
+int cpy06_clear() {
+  return IOK;
 }
 
 int cpy06_config_free() {

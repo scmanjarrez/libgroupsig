@@ -82,6 +82,45 @@ int cpy06_proof_free(groupsig_proof_t *proof) {
 
 }
 
+int cpy06_proof_copy(groupsig_proof_t *dst, groupsig_proof_t *src) {
+
+  cpy06_proof_t *cpy06_dst, *cpy06_src;
+  
+  if (!dst || !src) {
+    LOG_EINVAL(&logger, __FILE__, "cpy06_proof_copy", __LINE__, LOGERROR);
+    return IERROR;
+  }
+
+  cpy06_dst = dst->proof;
+  cpy06_src = src->proof;
+
+  if (!cpy06_dst || !cpy06_src) {
+    LOG_EINVAL(&logger, __FILE__, "cpy06_proof_copy", __LINE__, LOGERROR);
+    return IERROR;    
+  }
+
+  if (!(cpy06_dst->c = pbcext_element_Fr_init())) return IERROR;
+
+  if (pbcext_element_Fr_set(cpy06_dst->c, cpy06_src->c) == IERROR) {
+    pbcext_element_Fr_free(cpy06_dst->c); cpy06_dst->c = NULL;
+    return IERROR;    
+  }
+  
+  if (!(cpy06_dst->s = pbcext_element_Fr_init())) {
+    pbcext_element_Fr_free(cpy06_dst->c); cpy06_dst->c = NULL;
+    return IERROR;
+  }
+
+  if (pbcext_element_Fr_set(cpy06_dst->s, cpy06_src->s) == IERROR) {
+    pbcext_element_Fr_free(cpy06_dst->c); cpy06_dst->c = NULL;
+    pbcext_element_Fr_free(cpy06_dst->s); cpy06_dst->s = NULL;
+    return IERROR;    
+  }
+
+  return IOK;
+  
+}
+
 /* int cpy06_proof_init_set_c(cpy06_proof_t *proof, bigz_t c) { */
 
 /*   if(!proof || !c) { */
@@ -155,7 +194,7 @@ char* cpy06_proof_to_string(groupsig_proof_t *proof) {
 
 }
 
-int cpy06_proof_get_size_in_format(groupsig_proof_t *proof) {
+int cpy06_proof_get_size(groupsig_proof_t *proof) {
 
   cpy06_proof_t *cpy06_proof;
   uint64_t size64, sc, ss;
