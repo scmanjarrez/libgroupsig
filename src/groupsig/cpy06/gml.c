@@ -297,7 +297,7 @@ gml_entry_t* cpy06_gml_entry_init() {
 
  cpy06_gml_entry_init_end:
 
-  if (rc == IERROR) cpy06_gml_entry_free(entry); entry = NULL;
+  if (rc == IERROR) { cpy06_gml_entry_free(entry); entry = NULL; }
   
   return entry;
 

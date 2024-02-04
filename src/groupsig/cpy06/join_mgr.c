@@ -62,16 +62,19 @@ int cpy06_join_mgr(message_t **mout,
   cpy06_trapdoor_t *cpy06_trap;
   pbcext_element_G1_t *g1;
   pbcext_element_Fr_t *gammat;
+  message_t *_mout;
+  byte_t *bkey;
+  uint32_t size;
   int rc;
 
-  if(!mout || !gml || gml->scheme != GROUPSIG_CPY06_CODE ||
+  if(!mout ||
+     !gml || gml->scheme != GROUPSIG_CPY06_CODE ||
      !mgrkey || mgrkey->scheme != GROUPSIG_CPY06_CODE ||
      !grpkey || grpkey->scheme != GROUPSIG_CPY06_CODE) {
     LOG_EINVAL(&logger, __FILE__, "cpy06_join_mgr", __LINE__, LOGERROR);
     return IERROR;
   }
   
-  cpy06_memkey = (cpy06_mem_key_t *) memkey->key;
   cpy06_mgrkey = (cpy06_mgr_key_t *) mgrkey->key;
   cpy06_grpkey = (cpy06_grp_key_t *) grpkey->key;
   rc = IOK;
@@ -79,9 +82,14 @@ int cpy06_join_mgr(message_t **mout,
   cpy06_data = NULL;
   cpy06_trap = NULL;
 
-  /* /\* x \in_R Z^*_p (@todo Should be non-adaptively chosen by member) *\/ */
-  /* element_init_Zr(cpy06_memkey->x, cpy06_grpkey->pairing); */
-  /* element_random(cpy06_memkey->x); */
+  if (!(memkey = cpy06_mem_key_init())) GOTOENDRC(IERROR, cpy06_join_mgr);
+  cpy06_memkey = (cpy06_mem_key_t *) memkey->key;  
+
+  /* x \in_R Z^*_p (@todo Should be non-adaptively chosen by member) */
+  if (!(cpy06_memkey->x = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_join_mgr);
+  if (pbcext_element_Fr_random(cpy06_memkey->x) == IERROR)
+    GOTOENDRC(IERROR, cpy06_join_mgr);
 
   /* t \in_R Z^*_p */
   if (!(cpy06_memkey->t = pbcext_element_Fr_init()))
@@ -144,6 +152,23 @@ int cpy06_join_mgr(message_t **mout,
     
     if(gml_insert(gml, gml_entry) == IERROR)
       GOTOENDRC(IERROR, cpy06_join_mgr);
+
+    /* Write the memkey into mout */
+    bkey = NULL;
+    if (cpy06_mem_key_export(&bkey, &size, memkey) == IERROR)
+      GOTOENDRC(IERROR, cpy06_join_mgr);
+
+    if(!*mout) {
+      if(!(_mout = message_from_bytes(bkey, size)))
+	GOTOENDRC(IERROR, cpy06_join_mgr);
+      *mout = _mout;
+      
+    } else {
+      
+      _mout = *mout;
+      if(message_set_bytes(_mout, bkey, size) == IERROR)
+	GOTOENDRC(IERROR, cpy06_join_mgr);
+    }
     
   }
 
@@ -161,7 +186,7 @@ int cpy06_join_mgr(message_t **mout,
     }
   }
 
-    if (gammat) { pbcext_element_G1_free(g1); g1 = NULL; }
+  if (g1) { pbcext_element_G1_free(g1); g1 = NULL; }
   if (gammat) { pbcext_element_Fr_free(gammat); gammat = NULL; }
   
   return rc;

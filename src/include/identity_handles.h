@@ -38,7 +38,7 @@ extern "C" {
  * @brief Number of supported identity handles.
  */
 #ifdef ALL
-#define IDENTITY_HANDLES_N 4
+#define IDENTITY_HANDLES_N 5
 #else
 #define IDENTITY_HANDLES_N 1
 #endif
@@ -50,7 +50,8 @@ extern "C" {
 static const identity_handle_t *IDENTITY_HANDLES[IDENTITY_HANDLES_N] = {
   &kty04_identity_handle,
 #ifdef ALL
-  /* &cpy06_identity_handle, */
+  &kty04_identity_handle,
+  &cpy06_identity_handle,
   &gl19_identity_handle,
   &dl21_identity_handle,
   &dl21seq_identity_handle,
