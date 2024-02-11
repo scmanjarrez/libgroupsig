@@ -408,7 +408,7 @@ gml_entry_t* cpy06_gml_entry_import(byte_t *bytes, uint32_t size) {
   data = (cpy06_gml_entry_data_t *) entry->data;
 
   sid = strtok(input, "\t");
-  strapdoor = strtok(NULL, "\t");
+  strapdoor = strtok(NULL, "\n");
 
   if (!(data->id = identity_from_string(GROUPSIG_CPY06_CODE, sid)))
     GOTOENDRC(IERROR, cpy06_gml_entry_import);
@@ -456,13 +456,13 @@ char* cpy06_gml_entry_to_string(gml_entry_t *entry) {
     GOTOENDRC(IERROR, cpy06_gml_entry_to_string);
   
   /* Calculate the length of the entry, adding a tab */
-  sentry_len = strlen(sid)+strlen(strapdoor)+strlen("\t\t")+1;
+  sentry_len = strlen(sid)+strlen(strapdoor)+strlen("\t\n")+1;
   
   if (!(sentry = (char *) malloc(sizeof(char)*sentry_len)))
     GOTOENDRC(IERROR, cpy06_gml_entry_to_string);
   
   memset(sentry, 0, sentry_len*sizeof(char));
-  sprintf(sentry, "%s\t%s\t", sid, strapdoor);
+  sprintf(sentry, "%s\t%s\n", sid, strapdoor);
 
  cpy06_gml_entry_to_string_end:
   

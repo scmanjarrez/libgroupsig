@@ -154,7 +154,7 @@ char* cpy06_trapdoor_to_string(trapdoor_t *trap) {
   if (!(strap = mem_malloc(sizeof(char *)*(sopen_len+strace_len)+2)))
     GOTOENDRC(IERROR, cpy06_trapdoor_to_string);
     
-  sprintf(strap, "%s %s", sopen, strace);
+  sprintf(strap, "%s|%s", sopen, strace);
 
  cpy06_trapdoor_to_string_end:
 
@@ -185,20 +185,23 @@ trapdoor_t* cpy06_trapdoor_from_string(char *strap) {
   sopen = strace = NULL;
   rc = IOK;
   
-  if (!(sopen = (char *) mem_malloc(sizeof(char)*strlen(strap)+1)))
-    GOTOENDRC(IERROR, cpy06_trapdoor_from_string);
+  /* if (!(sopen = (char *) mem_malloc(sizeof(char)*strlen(strap)+1))) */
+  /*   GOTOENDRC(IERROR, cpy06_trapdoor_from_string); */
 
-  if (!(strace = (char *) mem_malloc(sizeof(char)*strlen(strap)+1)))
-    GOTOENDRC(IERROR, cpy06_trapdoor_from_string);
+  /* if (!(strace = (char *) mem_malloc(sizeof(char)*strlen(strap)+1))) */
+  /*   GOTOENDRC(IERROR, cpy06_trapdoor_from_string); */
 
-  if ((rc = sscanf(strap, "%s %s", sopen, strace)) == EOF)
-    GOTOENDRC(IERROR, cpy06_trapdoor_from_string);
+  /* if ((rc = sscanf(strap, "%s %s", sopen, strace)) == EOF) */
+  /*   GOTOENDRC(IERROR, cpy06_trapdoor_from_string);   */
 
-  if(rc != 2) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "cpy06_trapdoor_from_string", __LINE__,
-		      EDQUOT, "Corrupted or invalid trapdoor.", LOGERROR);
-    GOTOENDRC(IERROR, cpy06_trapdoor_from_string);
-  }
+  /* if(rc != 2) { */
+  /*   LOG_ERRORCODE_MSG(&logger, __FILE__, "cpy06_trapdoor_from_string", __LINE__, */
+  /* 		      EDQUOT, "Corrupted or invalid trapdoor.", LOGERROR); */
+  /*   GOTOENDRC(IERROR, cpy06_trapdoor_from_string); */
+  /* } */
+
+  sopen = strtok(strap, "|");
+  strace = strtok(NULL, "|");
 
   if(!(trap = cpy06_trapdoor_init()))
     GOTOENDRC(IERROR, cpy06_trapdoor_from_string);
@@ -222,8 +225,8 @@ trapdoor_t* cpy06_trapdoor_from_string(char *strap) {
     cpy06_trapdoor_free(trap); trap = NULL;
   }
   
-  mem_free(sopen); sopen = NULL;
-  mem_free(strace); strace = NULL;
+  /* mem_free(sopen); sopen = NULL; */
+  /* mem_free(strace); strace = NULL; */
   
   return trap;
   
