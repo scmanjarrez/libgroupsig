@@ -36,7 +36,7 @@ class TestGroupOps(unittest.TestCase):
         self.cnvkey = group2['mgrkey']
         self.grpkey = group2['grpkey']
         self.memkeys = []
-        
+
     def tearDown(self):
         groupsig.clear(self.code)
 
@@ -54,7 +54,7 @@ class TestGroupOps(unittest.TestCase):
         self.addMember()
         self.assertEqual(len(self.memkeys), n_members+1)
         self.assertNotEqual(self.memkeys[n_members], ffi.NULL)
-        
+
     # Accepts a valid signature for a message passed as a string
     def test_acceptValidSignatureString(self):
         self.addMember()
@@ -89,7 +89,7 @@ class TestGroupOps(unittest.TestCase):
         sig1 = groupsig.sign(b"Hello, World1!", self.memkeys[0], self.grpkey)
         sig2 = groupsig.sign(b"Hello, World2!", self.memkeys[0], self.grpkey)
         b = groupsig.verify(sig1, b"Hello, World1!", self.grpkey)
-        self.assertTrue(b)        
+        self.assertTrue(b)
         b = groupsig.verify(sig2, b"Hello, World2!", self.grpkey)
         self.assertTrue(b)
         bkey = bldkey.bldkey_random(self.code, self.grpkey)
@@ -107,11 +107,11 @@ class TestGroupOps(unittest.TestCase):
     # Successfully blind-converts-unblinds two signature by different members
     def test_blindConvertUnblindDifferentMembers(self):
         self.addMember()
-        self.addMember()        
+        self.addMember()
         sig1 = groupsig.sign(b"Hello, World1!", self.memkeys[0], self.grpkey)
         sig2 = groupsig.sign(b"Hello, World2!", self.memkeys[1], self.grpkey)
         b = groupsig.verify(sig1, b"Hello, World1!", self.grpkey)
-        self.assertTrue(b)        
+        self.assertTrue(b)
         b = groupsig.verify(sig2, b"Hello, World2!", self.grpkey)
         self.assertTrue(b)
         bkey = bldkey.bldkey_random(self.code, self.grpkey)
@@ -120,7 +120,7 @@ class TestGroupOps(unittest.TestCase):
         out = groupsig.blind(self.grpkey, sig2, "Hello, World2!", bkey)
         bsig2 = out["bsig"]
         bkey_pub = bldkey.bldkey_import(constants.GL19_CODE,
-                                        bldkey.bldkey_export_pub(bkey))        
+                                        bldkey.bldkey_export_pub(bkey))
         csigs = groupsig.convert([bsig1, bsig2], self.grpkey, bkey_pub, mgrkey=self.cnvkey)
         nym1 = groupsig.unblind(csigs[0], bkey)
         nym2 = groupsig.unblind(csigs[1], bkey)
@@ -132,7 +132,7 @@ class TestGroupOps(unittest.TestCase):
         sig1 = groupsig.sign(b"Hello, World1!", self.memkeys[0], self.grpkey)
         sig2 = groupsig.sign(b"Hello, World2!", self.memkeys[0], self.grpkey)
         b = groupsig.verify(sig1, b"Hello, World1!", self.grpkey)
-        self.assertTrue(b)        
+        self.assertTrue(b)
         b = groupsig.verify(sig2, b"Hello, World2!", self.grpkey)
         self.assertTrue(b)
         bkey = bldkey.bldkey_random(self.code, self.grpkey)
@@ -141,7 +141,7 @@ class TestGroupOps(unittest.TestCase):
         out = groupsig.blind(self.grpkey, sig2, "Hello, World2!", bkey)
         bsig2 = out["bsig"]
         bkey_pub = bldkey.bldkey_import(constants.GL19_CODE,
-                                        bldkey.bldkey_export_pub(bkey))        
+                                        bldkey.bldkey_export_pub(bkey))
         csigs1 = groupsig.convert([bsig1], self.grpkey, bkey_pub, mgrkey=self.cnvkey)
         csigs2 = groupsig.convert([bsig2], self.grpkey, bkey_pub, mgrkey=self.cnvkey)
         nym1 = groupsig.unblind(csigs1[0], bkey)
@@ -153,11 +153,11 @@ class TestMessageOps(unittest.TestCase):
 
     def setUp(self):
         self.msg = message.message_from_string("Hello, World!")
-    
+
     def tearDown(self):
         #message.message_free(self.msg)
         return
-        
+
     def test_messageExportImport(self):
         b64 = message.message_to_base64(self.msg)
         msg = message.message_from_base64(b64)
@@ -169,7 +169,7 @@ class TestMessageOps(unittest.TestCase):
         msg_str = message.message_to_string(self.msg)
         self.assertGreater(len(msg_str), 0)
         self.assertTrue(set(msg_str).issubset(set(string.printable)))
-        
+
 # Tests for signature operations
 class TestSignatureOps(unittest.TestCase):
 
@@ -196,7 +196,7 @@ class TestSignatureOps(unittest.TestCase):
         self.memkeys = []
         self.addMember()
         self.sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey)
-        
+
     def tearDown(self):
         groupsig.clear(self.code)
 
@@ -206,7 +206,7 @@ class TestSignatureOps(unittest.TestCase):
         sig = signature.signature_import(self.code, sig_str)
         b = groupsig.verify(sig, "Hello, World!", self.grpkey)
         self.assertTrue(b)
-                        
+
     # Prints a string (this just checks the produced string is not empty)
     def test_sigToString(self):
         sig_str = signature.signature_to_string(self.sig)
@@ -242,7 +242,7 @@ class TestBlindSignatureOps(unittest.TestCase):
         bkey = bldkey.bldkey_random(self.code, self.grpkey)
         out = groupsig.blind(self.grpkey, self.sig, "Hello, World!", bkey)
         self.bsig = out["bsig"]
-        
+
     def tearDown(self):
         groupsig.clear(self.code)
 
@@ -254,7 +254,7 @@ class TestBlindSignatureOps(unittest.TestCase):
         # method returns ffi.NULL. Maybe implementing a cmp function for
         # blindsigs  would be good for testing this (and also in general?)
         self.assertIsNot(ffi.NULL, bsig)
-                        
+
     # Prints a string (this just checks the produced string is not empty)
     def test_blindsigToString(self):
         bsig_str = blindsig.blindsig_to_string(self.bsig)
@@ -274,7 +274,7 @@ class TestGrpkeyOps(unittest.TestCase):
         group2 = groupsig.setup(constants.GL19_CODE, grpkey1);
         self.cnvkey = group2['mgrkey']
         self.grpkey = group2['grpkey']
-        
+
     def tearDown(self):
         groupsig.clear(self.code)
 
@@ -300,7 +300,7 @@ class TestIssuerkeyOps(unittest.TestCase):
         group2 = groupsig.setup(constants.GL19_CODE, grpkey1);
         self.cnvkey = group2['mgrkey']
         self.grpkey = group2['grpkey']
-        
+
     def tearDown(self):
         groupsig.clear(self.code)
 
@@ -326,7 +326,7 @@ class TestConverterkeyOps(unittest.TestCase):
         group2 = groupsig.setup(constants.GL19_CODE, grpkey1);
         self.cnvkey = group2['mgrkey']
         self.grpkey = group2['grpkey']
-        
+
     def tearDown(self):
         groupsig.clear(self.code)
 
@@ -337,7 +337,7 @@ class TestConverterkeyOps(unittest.TestCase):
         # This is quite useless, as import returns an exception if the FFI
         # method returns ffi.NULL. Maybe implementing a cmp function for
         # manager keys would be good for testing this (and also in general?)
-        self.assertIsNot(ffi.NULL, ckey)        
+        self.assertIsNot(ffi.NULL, ckey)
 
 # Tests for member key operations
 class TestMemkeyOps(unittest.TestCase):
@@ -362,7 +362,7 @@ class TestMemkeyOps(unittest.TestCase):
         self.cnvkey = group2['mgrkey']
         self.grpkey = group2['grpkey']
         self.addMember()
-        
+
     def tearDown(self):
         groupsig.clear(self.code)
 
@@ -387,9 +387,9 @@ class TestBldkeyOps(unittest.TestCase):
         self.isskey = group1['mgrkey']
         group2 = groupsig.setup(constants.GL19_CODE, grpkey1);
         self.cnvkey = group2['mgrkey']
-        self.grpkey = group2['grpkey']        
+        self.grpkey = group2['grpkey']
         self.bldkey = bldkey.bldkey_random(self.code, self.grpkey)
-        
+
     def tearDown(self):
         groupsig.clear(self.code)
 
@@ -409,70 +409,70 @@ class TestBldkeyOps(unittest.TestCase):
         # This is quite useless, as import returns an exception if the FFI
         # method returns ffi.NULL. Maybe implementing a cmp function for
         # bld keys would be good for testing this (and also in general?)
-        self.assertIsNot(ffi.NULL, bkey)        
-                                
+        self.assertIsNot(ffi.NULL, bkey)
+
 # Define test suites
 def suiteGroupOps():
-    suiteGroupOps = unittest.TestSuite()    
-    suiteGroupOps.addTest(WidgetTestCase('test_groupCreate'))
-    suiteGroupOps.addTest(WidgetTestCase('test_addMember'))
-    suiteGroupOps.addTest(WidgetTestCase('test_acceptValidSignatureString'))
-    suiteGroupOps.addTest(WidgetTestCase('test_rejectValidSignatureWrongMessageString'))
-    suiteGroupOps.addTest(WidgetTestCase('test_acceptValidSignatureBytes'))
-    suiteGroupOps.addTest(WidgetTestCase('test_rejectValidSignatureWrongMessageBytes'))
-    suiteGroupOps.addTest(WidgetTestCase('test_blindConvertUnblindSameMember'))
-    suiteGroupOps.addTest(WidgetTestCase('test_blindConvertUnblindDifferentMembers'))
-    suiteGroupOps.addTest(WidgetTestCase('test_nonTransitiveConvert'))
+    suiteGroupOps = unittest.TestSuite()
+    suiteGroupOps.addTest(TestGroupOps('test_groupCreate'))
+    suiteGroupOps.addTest(TestGroupOps('test_addMember'))
+    suiteGroupOps.addTest(TestGroupOps('test_acceptValidSignatureString'))
+    suiteGroupOps.addTest(TestGroupOps('test_rejectValidSignatureWrongMessageString'))
+    suiteGroupOps.addTest(TestGroupOps('test_acceptValidSignatureBytes'))
+    suiteGroupOps.addTest(TestGroupOps('test_rejectValidSignatureWrongMessageBytes'))
+    suiteGroupOps.addTest(TestGroupOps('test_blindConvertUnblindSameMember'))
+    suiteGroupOps.addTest(TestGroupOps('test_blindConvertUnblindDifferentMembers'))
+    suiteGroupOps.addTest(TestGroupOps('test_nonTransitiveConvert'))
     return suiteGroupOps
 
 def suiteMsgOps():
-    suiteMsgOps = unittest.TestSuite()    
-    suiteMsgOps.addTest(WidgetTestCase('test_messageExportImport'))
-    suiteMsgOps.addTest(WidgetTestCase('test_messageToString'))
+    suiteMsgOps = unittest.TestSuite()
+    suiteMsgOps.addTest(TestMessageOps('test_messageExportImport'))
+    suiteMsgOps.addTest(TestMessageOps('test_messageToString'))
     return suiteMsgOps
-        
+
 def suiteSigOps():
-    suiteSigOps = unittest.TestSuite()    
-    suiteSigOps.addTest(WidgetTestCase('test_sigExportImport'))
-    suiteSigOps.addTest(WidgetTestCase('test_sigToString'))
+    suiteSigOps = unittest.TestSuite()
+    suiteSigOps.addTest(TestSignatureOps('test_sigExportImport'))
+    suiteSigOps.addTest(TestSignatureOps('test_sigToString'))
     return suiteSigOps
 
 def suiteBlindsigOps():
-    suiteBlindsigOps = unittest.TestSuite()    
-    suiteBlindsigOps.addTest(WidgetTestCase('test_blindsigExportImport'))
-    suiteBlindsigOps.addTest(WidgetTestCase('test_blindsigToString'))
-    return suiteBlindsigops
+    suiteBlindsigOps = unittest.TestSuite()
+    suiteBlindsigOps.addTest(TestBlindSignatureOps('test_blindsigExportImport'))
+    suiteBlindsigOps.addTest(TestBlindSignatureOps('test_blindsigToString'))
+    return suiteBlindsigOps
 
 def suiteGrpkeyOps():
-    suiteGrpkeyOps = unittest.TestSuite()    
-    suiteGrpkeyOps.addTest(WidgetTestCase('test_grpkeyExportImport'))
+    suiteGrpkeyOps = unittest.TestSuite()
+    suiteGrpkeyOps.addTest(TestGrpkeyOps('test_grpkeyExportImport'))
     return suiteGrpkeyOps
 
 def suiteIssuerkeyOps():
-    suiteIssuerkeyOps = unittest.TestSuite()    
-    suiteIssuerkeyOps.addTest(WidgetTestCase('test_isskeyExportImport'))
+    suiteIssuerkeyOps = unittest.TestSuite()
+    suiteIssuerkeyOps.addTest(TestIssuerkeyOps('test_isskeyExportImport'))
     return suiteIssuerkeyOps
 
 def suiteConverterkeyOps():
-    suiteConverterkeyOps = unittest.TestSuite()    
-    suiteConverterkeyOps.addTest(WidgetTestCase('test_cnvkeyExportImport'))
+    suiteConverterkeyOps = unittest.TestSuite()
+    suiteConverterkeyOps.addTest(TestConverterkeyOps('test_cnvkeyExportImport'))
     return suiteConverterkeyOps
 
 def suiteMemkeyOps():
-    suiteMemkeyOps = unittest.TestSuite()    
-    suiteMemkeyOps.addTest(WidgetTestCase('test_memkeyExportImport'))
+    suiteMemkeyOps = unittest.TestSuite()
+    suiteMemkeyOps.addTest(TestMemkeyOps('test_memkeyExportImport'))
     return suiteMemkeyOps
 
 def suiteBldkeyOps():
-    suiteBldkeyOps = unittest.TestSuite()    
-    suiteBldkeyOps.addTest(WidgetTestCase('test_bldkeyExportImport'))
-    suiteBldkeyOps.addTest(WidgetTestCase('test_bldkeyExportImportPub'))    
-    return suiteBldkeyOps  
-        
+    suiteBldkeyOps = unittest.TestSuite()
+    suiteBldkeyOps.addTest(TestBldkeyOps('test_bldkeyExportImport'))
+    suiteBldkeyOps.addTest(TestBldkeyOps('test_bldkeyExportImportPub'))
+    return suiteBldkeyOps
+
 if __name__ == '__main__':
     runner = unittest.TextTestRunner()
     runner.run(suiteGroupOps())
-    runner.run(suiteMsgOps())    
+    runner.run(suiteMsgOps())
     runner.run(suiteSigOps())
     runner.run(suiteBlindsigOps())
     runner.run(suiteGrpkeyOps())

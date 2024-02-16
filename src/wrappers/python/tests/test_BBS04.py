@@ -31,7 +31,7 @@ class TestGroupOps(unittest.TestCase):
         self.grpkey = group['grpkey']
         self.gml = group['gml']
         self.memkeys = []
-        
+
     def tearDown(self):
         groupsig.clear(self.code)
 
@@ -48,7 +48,7 @@ class TestGroupOps(unittest.TestCase):
         self.addMember()
         self.assertEqual(len(self.memkeys), n_members+1)
         self.assertNotEqual(self.memkeys[n_members], ffi.NULL)
-        
+
     # Accepts a valid signature for a message passed as a string
     def test_acceptValidSignatureString(self):
         self.addMember()
@@ -84,7 +84,7 @@ class TestGroupOps(unittest.TestCase):
         sig = groupsig.sign(b"Hello, World!", self.memkeys[1], self.grpkey)
         gsopen = groupsig.open(sig, self.mgrkey, self.grpkey, gml = self.gml)
         self.assertEqual(gsopen["index"], 1)
-        
+
 # Tests for signature operations
 class TestSignatureOps(unittest.TestCase):
 
@@ -106,7 +106,7 @@ class TestSignatureOps(unittest.TestCase):
         self.memkeys = []
         self.addMember()
         self.sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey)
-        
+
     def tearDown(self):
         groupsig.clear(self.code)
 
@@ -116,7 +116,7 @@ class TestSignatureOps(unittest.TestCase):
         sig = signature.signature_import(self.code, sig_str)
         b = groupsig.verify(sig, "Hello, World!", self.grpkey)
         self.assertTrue(b)
-                        
+
     # Prints a string (this just checks the produced string is not empty)
     def test_sigToString(self):
         sig_str = signature.signature_to_string(self.sig)
@@ -134,7 +134,7 @@ class TestGrpkeyOps(unittest.TestCase):
         self.mgrkey = group['mgrkey']
         self.grpkey = group['grpkey']
         self.gml = group['gml']
-        
+
     def tearDown(self):
         groupsig.clear(self.code)
 
@@ -158,7 +158,7 @@ class TestManagerkeyOps(unittest.TestCase):
         self.mgrkey = group['mgrkey']
         self.grpkey = group['grpkey']
         self.gml = group['gml']
-        
+
     def tearDown(self):
         groupsig.clear(self.code)
 
@@ -180,7 +180,7 @@ class TestMemkeyOps(unittest.TestCase):
         msg2 = groupsig.join_mem(1, self.grpkey, msgin = msg1)
         usk = msg2['memkey']
         self.memkey = usk
-        
+
     # Creates a group, adds a member and generates a signature
     def setUp(self):
         groupsig.init(constants.BBS04_CODE, 0)
@@ -190,7 +190,7 @@ class TestMemkeyOps(unittest.TestCase):
         self.grpkey = group['grpkey']
         self.gml = group['gml']
         self.addMember()
-        
+
     def tearDown(self):
         groupsig.clear(self.code)
 
@@ -212,7 +212,7 @@ class TestGmlOps(unittest.TestCase):
         msg2 = groupsig.join_mem(1, self.grpkey, msgin = msg1)
         usk = msg2['memkey']
         self.memkey = usk
-        
+
     # Creates a group, adds a member and generates a signature
     def setUp(self):
         groupsig.init(constants.BBS04_CODE, 0)
@@ -222,7 +222,7 @@ class TestGmlOps(unittest.TestCase):
         self.grpkey = group['grpkey']
         self.gml = group['gml']
         self.addMember()
-        
+
     def tearDown(self):
         groupsig.clear(self.code)
 
@@ -233,46 +233,46 @@ class TestGmlOps(unittest.TestCase):
         # This is quite useless, as import returns an exception if the FFI
         # method returns ffi.NULL. Maybe implementing a cmp function for
         # GMLs would be good for testing this (and also in general?)
-        self.assertIsNot(ffi.NULL, _gml)   
-                                
+        self.assertIsNot(ffi.NULL, _gml)
+
 # Define test suites
 def suiteGroupOps():
-    suiteGroupOps = unittest.TestSuite()    
-    suiteGroupOps.addTest(WidgetTestCase('test_groupCreate'))
-    suiteGroupOps.addTest(WidgetTestCase('test_addMember'))
-    suiteGroupOps.addTest(WidgetTestCase('test_acceptValidSignatureString'))
-    suiteGroupOps.addTest(WidgetTestCase('test_rejectValidSignatureWrongMessageString'))
-    suiteGroupOps.addTest(WidgetTestCase('test_acceptValidSignatureBytes'))
-    suiteGroupOps.addTest(WidgetTestCase('test_rejectValidSignatureWrongMessageBytes'))
-    suiteGroupOps.addTest(WidgetTestCase('test_openSignature'))
+    suiteGroupOps = unittest.TestSuite()
+    suiteGroupOps.addTest(TestGroupOps('test_groupCreate'))
+    suiteGroupOps.addTest(TestGroupOps('test_addMember'))
+    suiteGroupOps.addTest(TestGroupOps('test_acceptValidSignatureString'))
+    suiteGroupOps.addTest(TestGroupOps('test_rejectValidSignatureWrongMessageString'))
+    suiteGroupOps.addTest(TestGroupOps('test_acceptValidSignatureBytes'))
+    suiteGroupOps.addTest(TestGroupOps('test_rejectValidSignatureWrongMessageBytes'))
+    suiteGroupOps.addTest(TestGroupOps('test_openSignature'))
     return suiteGroupOps
-        
+
 def suiteSigOps():
-    suiteSigOps = unittest.TestSuite()    
-    suiteSigOps.addTest(WidgetTestCase('test_sigExportImport'))
-    suiteSigOps.addTest(WidgetTestCase('test_sigToString'))
+    suiteSigOps = unittest.TestSuite()
+    suiteSigOps.addTest(TestSignatureOps('test_sigExportImport'))
+    suiteSigOps.addTest(TestSignatureOps('test_sigToString'))
     return suiteSigOps
 
 def suiteGrpkeyOps():
-    suiteGrpkeyOps = unittest.TestSuite()    
-    suiteGrpkeyOps.addTest(WidgetTestCase('test_grpkeyExportImport'))
+    suiteGrpkeyOps = unittest.TestSuite()
+    suiteGrpkeyOps.addTest(TestGrpkeyOps('test_grpkeyExportImport'))
     return suiteGrpkeyOps
 
 def suiteManagerkeyOps():
-    suiteManagerkeyOps = unittest.TestSuite()    
-    suiteManagerkeyOps.addTest(WidgetTestCase('test_mgrkeyExportImport'))
+    suiteManagerkeyOps = unittest.TestSuite()
+    suiteManagerkeyOps.addTest(TestManagerkeyOps('test_mgrkeyExportImport'))
     return suiteManagerkeyOps
 
 def suiteMemkeyOps():
-    suiteMemkeyOps = unittest.TestSuite()    
-    suiteMemkeyOps.addTest(WidgetTestCase('test_memkeyExportImport'))
+    suiteMemkeyOps = unittest.TestSuite()
+    suiteMemkeyOps.addTest(TestMemkeyOps('test_memkeyExportImport'))
     return suiteMemkeyOps
 
 def suiteGmlOps():
-    suiteGmlOps = unittest.TestSuite()    
-    suiteGmlOps.addTest(WidgetTestCase('test_gmlExportImport'))
+    suiteGmlOps = unittest.TestSuite()
+    suiteGmlOps.addTest(TestGmlOps('test_gmlExportImport'))
     return suiteGmlOps
-        
+
 if __name__ == '__main__':
     runner = unittest.TextTestRunner()
     runner.run(suiteGroupOps())
