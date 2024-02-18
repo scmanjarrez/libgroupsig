@@ -447,6 +447,8 @@ int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   if (aux_r1r2) { pbcext_element_Fr_free(aux_r1r2); aux_r1r2 = NULL; }  
   if (aux_r3x) { pbcext_element_Fr_free(aux_r3x); aux_r3x = NULL; }
   if (aux_e) { pbcext_element_GT_free(aux_e); aux_e = NULL; }
+  if (d1) { pbcext_element_Fr_free(d1); d1 = NULL; }
+  if (d2) { pbcext_element_Fr_free(d2); d2 = NULL; }  
   if (br1) { pbcext_element_Fr_free(br1); br1 = NULL; }
   if (br2) { pbcext_element_Fr_free(br2); br2 = NULL; }
   if (bd1) { pbcext_element_Fr_free(bd1); bd1 = NULL; }
@@ -459,8 +461,8 @@ int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   if (aux_br1br2) { pbcext_element_Fr_free(aux_br1br2); aux_br1br2 = NULL; }
   if (aux_bx) { pbcext_element_Fr_free(aux_bx); aux_bx = NULL; }
   if (aux_cmul) { pbcext_element_Fr_free(aux_cmul); aux_cmul = NULL; }
-  if(aux_bytes) { mem_free(aux_bytes); aux_bytes = NULL; }
-  if(aux_c) { hash_free(aux_c); aux_c = NULL; }
+  if (aux_bytes) { mem_free(aux_bytes); aux_bytes = NULL; }
+  if (aux_c) { hash_free(aux_c); aux_c = NULL; }
 
   return rc;
   

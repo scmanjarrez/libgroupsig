@@ -61,6 +61,7 @@ int cpy06_prove_equality(groupsig_proof_t *proof,
      debt. */
 
   e = er = NULL;
+  g1 = NULL;
   r = NULL;
   bytes = NULL;
   hash = NULL;
@@ -92,6 +93,10 @@ int cpy06_prove_equality(groupsig_proof_t *proof,
     GOTOENDRC(IERROR, cpy06_prove_equality);
   if (!(er = pbcext_element_GT_init()))
     GOTOENDRC(IERROR, cpy06_prove_equality);
+  if (!(g1 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_prove_equality);
+  if (pbcext_element_G1_from_string(&g1, BLS12_381_P, 10) == IERROR)
+    GOTOENDRC(IERROR, cpy06_prove_equality);
 
   for(i=0; i<n_sigs; i++) {
 
@@ -105,10 +110,6 @@ int cpy06_prove_equality(groupsig_proof_t *proof,
 
     cpy06_sig = (cpy06_signature_t *) sig->sig;
 
-    if (!(g1 = pbcext_element_G1_init()))
-      GOTOENDRC(IERROR, cpy06_prove_equality);
-    if (pbcext_element_G1_from_string(&g1, BLS12_381_P, 10) == IERROR)
-      GOTOENDRC(IERROR, cpy06_prove_equality);
     if (pbcext_pairing(e, g1, cpy06_sig->T4) == IERROR)
       GOTOENDRC(IERROR, cpy06_prove_equality);
     if (pbcext_element_GT_pow(er, e, r) == IERROR)

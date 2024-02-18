@@ -288,12 +288,8 @@ gml_entry_t* cpy06_gml_entry_init() {
 	(cpy06_gml_entry_data_t *) malloc(sizeof(cpy06_gml_entry_data_t))))
     GOTOENDRC(IERROR, cpy06_gml_entry_init);
   data = (cpy06_gml_entry_data_t *) entry->data;
-
-  if (!(data->id = identity_init(GROUPSIG_CPY06_CODE)))
-    GOTOENDRC(IERROR, cpy06_gml_entry_init);
-
-  if (!(data->trapdoor = trapdoor_init(GROUPSIG_CPY06_CODE)))
-    GOTOENDRC(IERROR, cpy06_gml_entry_init);
+  data->id = NULL;
+  data->trapdoor = NULL;
 
  cpy06_gml_entry_init_end:
 
@@ -347,8 +343,9 @@ int cpy06_gml_entry_get_size(gml_entry_t *entry) {
   }
 
   if (!(bytes = (byte_t *) cpy06_gml_entry_to_string(entry)))
-    return -1;
+    return -1;  
   size = strlen(bytes);
+  mem_free(bytes); bytes = NULL;  
 
   if (size >= INT_MAX) return -1;
 

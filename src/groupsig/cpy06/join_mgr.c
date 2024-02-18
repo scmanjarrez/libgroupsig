@@ -131,6 +131,8 @@ int cpy06_join_mgr(message_t **mout,
       GOTOENDRC(IERROR, cpy06_join_mgr);
 
     cpy06_data = gml_entry->data;
+    if (!(cpy06_data->trapdoor = trapdoor_init(GROUPSIG_CPY06_CODE)))
+      GOTOENDRC(IERROR, cpy06_join_mgr);
     cpy06_trap = (cpy06_trapdoor_t *) cpy06_data->trapdoor->trap;
 
     /* Open trapdoor */
@@ -148,6 +150,8 @@ int cpy06_join_mgr(message_t **mout,
       GOTOENDRC(IERROR, cpy06_join_mgr);
 
     /* Currently, CPY06 identities are just uint64_t's */
+    if (!(cpy06_data->id = identity_init(GROUPSIG_CPY06_CODE)))
+      GOTOENDRC(IERROR, cpy06_join_mgr);
     *(cpy06_identity_t *) cpy06_data->id->id = gml->n;
     
     if(gml_insert(gml, gml_entry) == IERROR)
@@ -188,6 +192,8 @@ int cpy06_join_mgr(message_t **mout,
 
   if (g1) { pbcext_element_G1_free(g1); g1 = NULL; }
   if (gammat) { pbcext_element_Fr_free(gammat); gammat = NULL; }
+  if (memkey) { cpy06_mem_key_free(memkey); memkey = NULL; }
+  if (bkey) { mem_free(bkey); bkey = NULL; }
   
   return rc;
 

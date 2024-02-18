@@ -291,6 +291,7 @@ int cpy06_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
  cpy06_verify_end:
 
   if (g1) { pbcext_element_G1_free(g1); g1 = NULL; }
+  if (g2) { pbcext_element_G2_free(g2); g2 = NULL; }
   if (B1) { pbcext_element_G1_free(B1); B1 = NULL; }
   if (B2) { pbcext_element_G1_free(B2); B2 = NULL; }
   if (B3) { pbcext_element_G1_free(B3); B3 = NULL; }
@@ -298,7 +299,7 @@ int cpy06_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
   if (B5) { pbcext_element_GT_free(B5); B5 = NULL; }
   if (B6) { pbcext_element_GT_free(B6); B6 = NULL; }
   if (aux_G1) { pbcext_element_G1_free(aux_G1); aux_G1 = NULL; }
-  if (aux_GT) { pbcext_element_GT_free(aux_GT); aux_GT = NULL; }
+  if (aux_GT) { pbcext_element_GT_free(aux_GT); aux_GT = NULL; }  
   if (aux_e) { pbcext_element_GT_free(aux_e); aux_e = NULL; }
   if (aux_sd1sd2) { pbcext_element_Fr_free(aux_sd1sd2); aux_sd1sd2 = NULL; }
   if (aux_sr1sr2) { pbcext_element_Fr_free(aux_sr1sr2); aux_sr1sr2 = NULL; }

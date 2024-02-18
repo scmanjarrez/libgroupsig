@@ -58,6 +58,7 @@ int cpy06_prove_equality_verify(uint8_t *ok,
      debt. */
   
   e = es = t5c = NULL;
+  g1 = NULL;
   c = NULL;
   hash = NULL;
   bytes = NULL;
@@ -78,7 +79,11 @@ int cpy06_prove_equality_verify(uint8_t *ok,
   if (!(es = pbcext_element_GT_init()))
     GOTOENDRC(IERROR, cpy06_prove_equality_verify);  
   if (!(t5c = pbcext_element_GT_init()))
-    GOTOENDRC(IERROR, cpy06_prove_equality_verify);  
+    GOTOENDRC(IERROR, cpy06_prove_equality_verify);
+  if (!(g1 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_prove_equality_verify);
+  if (pbcext_element_G1_from_string(&g1, BLS12_381_P, 10) == IERROR)
+    GOTOENDRC(IERROR, cpy06_prove_equality_verify);
   
   for (i=0; i<n_sigs; i++) {
 
@@ -90,10 +95,6 @@ int cpy06_prove_equality_verify(uint8_t *ok,
 
     sig = (cpy06_signature_t *) sigs[i]->sig;
 
-    if (!(g1 = pbcext_element_G1_init()))
-      GOTOENDRC(IERROR, cpy06_prove_equality_verify);
-    if (pbcext_element_G1_from_string(&g1, BLS12_381_P, 10) == IERROR)
-      GOTOENDRC(IERROR, cpy06_prove_equality_verify);
     if (pbcext_pairing(e, g1, sig->T4) == IERROR)
       GOTOENDRC(IERROR, cpy06_prove_equality_verify);
     if (pbcext_element_GT_pow(es, e, cpy06_proof->s) == IERROR)
