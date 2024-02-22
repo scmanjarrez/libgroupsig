@@ -14,9 +14,11 @@ usage() {
 }
 
 keep_ext() {
-    mv build/external build/mclproject-prefix build/gtest-project-prefix /tmp
+    mv build/external build/mclproject-prefix /tmp
+    [ -d build/gtest-project-prefix ] && mv /build/gtest-project-prefix /tmp
     rm -rf build && mkdir build
-    mv /tmp/external /tmp/mclproject-prefix /tmp/gtest-project-prefix build
+    mv /tmp/external /tmp/mclproject-prefix build
+    [ -d /tmp/gtest-project-prefix ] && mv /tmp/gtest-project-prefix build
 }
 
 rebuild() {
@@ -31,8 +33,8 @@ build() {
     [ -n "$HW" ] && hw="-DHW=1"
     [ -n "$HW3" ] && hw3="-DHW3=1"
     [[ "$(uname -a)" =~ (arm|aarch) ]] && comp="-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++"
-    cd build && cmake $gtest $comp $debug $sha2 $sha3 $hw $hw3 .. \
-        && make $verbose && cd -
+    cmake -B build $gtest $comp $debug $sha2 $sha3 $hw $hw3 \
+        && make -C build $verbose
 }
 
 for arg in "$@"; do
@@ -50,9 +52,10 @@ for arg in "$@"; do
 done
 
 if [ -z "$SKIP" ]; then
-    [ -n "$KEEPEXT" ] && keep_ext || rebuild
+    [ -n "$KEEPEXT" ] && keep_ext
+    [ -z "$KEEPEXT" ] && rebuild
     build
 fi
 
-[ -n "$TEST" ] && cd build && make test && cd -
+[ -n "$TEST" ] && make -C build test
 [ -n "$BTEST" ] && build/bin/demos ps16 && build/bin/demos kty04
