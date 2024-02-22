@@ -24,6 +24,7 @@ import pygroupsig.bbs04_build
 import pygroupsig.ps16_build
 import pygroupsig.klap20_build
 import pygroupsig.kty04_build
+import pygroupsig.cpy06_build
 #import pygroupsig.dl21_build
 #import pygroupsig.dl21seq_build
 
@@ -111,6 +112,7 @@ c_bbs04_path =  path.Path("../../../build/lib/libbbs04.a").abspath()
 c_ps16_path =  path.Path("../../../build/lib/libps16.a").abspath()
 c_klap20_path =  path.Path("../../../build/lib/libklap20.a").abspath()
 c_kty04_path =  path.Path("../../../build/lib/libkty04.a").abspath()
+c_cpy06_path =  path.Path("../../../build/lib/libcpy06.a").abspath()
 c_dl21_path =  path.Path("../../../build/lib/libdl21.a").abspath()
 c_dl21seq_path =  path.Path("../../../build/lib/libdl21seq.a").abspath()
 c_logger_path =  path.Path("../../../build/lib/liblogger.a").abspath()
@@ -133,6 +135,7 @@ ffibuilder.set_source("_groupsig",
                       r"""
                       #include "groupsig.h"
                       #include "kty04.h"
+                      #include "cpy06.h"
                       #include "klap20.h"
                       #include "gl19.h"
                       #include "ps16.h"
@@ -153,6 +156,7 @@ ffibuilder.set_source("_groupsig",
                           c_ps16_path,
                           c_klap20_path,
                           c_kty04_path,
+                          c_cpy06_path,
                           c_dl21_path,
                           c_dl21seq_path,
                           c_logger_path,
