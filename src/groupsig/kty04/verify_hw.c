@@ -29,10 +29,10 @@
 
 #ifdef HW3
 #include "hw/params3.h"
-#define SHA_DIGEST_LENGTH SIZE_SHA3/8
+#define HASH_DIGEST_LENGTH SIZE_SHA3/8
 #else
 #include "hw/params.h"
-#define SHA_DIGEST_LENGTH SIZE_SHA2/8
+#define HASH_DIGEST_LENGTH SIZE_SHA2/8
 #endif
 
 /* Private functions */
@@ -394,7 +394,7 @@ int kty04_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
 
   kty04_grp_key_t *gkey;
   kty04_signature_t *kty04_sig;
-  /* byte_t sc[SHA_DIGEST_LENGTH+1]; */
+  /* byte_t sc[HASH_DIGEST_LENGTH+1]; */
   byte_t *sc;
   // SHA_CTX sha;
   /* EVP_MD_CTX *mdctx; */
@@ -503,7 +503,7 @@ int kty04_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
   }
 
   /* Calculate the hash */
-  /* memset(sc, 0, SHA_DIGEST_LENGTH+1); */
+  /* memset(sc, 0, HASH_DIGEST_LENGTH+1); */
   /* if(EVP_DigestFinal_ex(mdctx, sc, NULL) != 1) { */
   /*   LOG_ERRORCODE_MSG(&logger, __FILE__, "kty04_verify", __LINE__, EDQUOT, */
   /*   		"EVP_DigestFinal_ex", LOGERROR); */
@@ -513,7 +513,7 @@ int kty04_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
   sc = hash_message_hw(to_be_hashed, msg_len);
 
   /* Now, we have to get c = h(message,B[1],...,B[z],A[1],...,A[m]) as an mpz */
-  if(!(c = bigz_import(sc, SHA_DIGEST_LENGTH))) GOTOENDRC(IERROR, kty04_verify);
+  if(!(c = bigz_import(sc, HASH_DIGEST_LENGTH))) GOTOENDRC(IERROR, kty04_verify);
 
   /* Check the hash */
   errno = 0;

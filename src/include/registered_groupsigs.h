@@ -23,7 +23,6 @@
 /* Registered groupsigs */
 #include "groupsig.h"
 #include "kty04.h"
-#ifdef ALL
 #include "bbs04.h"
 #include "cpy06.h"
 #include "gl19.h"
@@ -31,7 +30,6 @@
 #include "klap20.h"
 #include "dl21.h"
 #include "dl21seq.h"
-#endif
 
 #ifdef __cplusplus
 extern "C" {

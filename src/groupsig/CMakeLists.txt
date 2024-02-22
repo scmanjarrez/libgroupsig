@@ -1,21 +1,16 @@
- set(src
-   groupsig.c
-   grp_key.c
-   mgr_key.c
-   mem_key.c
-   bld_key.c
-   signature.c
-   blindsig.c
-   proof.c
-   identity.c
-   trapdoor.c
-   gml.c
-   crl.c)
-
-if (ALL)
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DALL")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DALL")
-endif ()
+set(src
+  groupsig.c
+  grp_key.c
+  mgr_key.c
+  mem_key.c
+  bld_key.c
+  signature.c
+  blindsig.c
+  proof.c
+  identity.c
+  trapdoor.c
+  gml.c
+  crl.c)
 
 # this is the "object library" target: compiles the sources only once
 add_library(objlib OBJECT ${src})
@@ -27,50 +22,29 @@ set_property(TARGET objlib PROPERTY POSITION_INDEPENDENT_CODE 1)
 add_library(groupsig SHARED $<TARGET_OBJECTS:objlib>)
 add_library(groupsig-static STATIC $<TARGET_OBJECTS:objlib>)
 
-if (ALL)
-  target_link_libraries (groupsig
-    PUBLIC kty04
-    PUBLIC bbs04
-    PUBLIC cpy06
-    PUBLIC gl19
-    PUBLIC ps16
-    PUBLIC klap20
-    PUBLIC dl21
-    PUBLIC dl21seq
-    PUBLIC sys
-    PUBLIC math
-    PUBLIC base64
-    PUBLIC misc
-    PUBLIC hash
-    PUBLIC gcrypto
-    PUBLIC msg
-    PUBLIC pbcext
-    PUBLIC logger
-    PUBLIC ${OPENSSL_LIBRARIES}
-    PUBLIC ${MCL_LIBRARY}
-    PUBLIC ${MCL384_256_LIBRARY})
-  if (HW)
-    target_link_libraries (groupsig PUBLIC shahw)
-  endif()
-else()
-  target_link_libraries (groupsig
-    PUBLIC kty04
-    PUBLIC sys
-    PUBLIC math
-    PUBLIC base64
-    PUBLIC misc
-    PUBLIC msg
-    PUBLIC logger
-    PUBLIC ${OPENSSL_LIBRARIES})
-  target_link_libraries (groupsig-static
-    PUBLIC kty04
-    PUBLIC sys
-    PUBLIC math
-    PUBLIC base64
-    PUBLIC misc
-    PUBLIC msg
-    PUBLIC logger
-    PUBLIC ${OPENSSL_LIBRARIES})
+target_link_libraries (groupsig
+  PUBLIC kty04
+  PUBLIC bbs04
+  PUBLIC cpy06
+  PUBLIC gl19
+  PUBLIC ps16
+  PUBLIC klap20
+  PUBLIC dl21
+  PUBLIC dl21seq
+  PUBLIC sys
+  PUBLIC math
+  PUBLIC base64
+  PUBLIC misc
+  PUBLIC hash
+  PUBLIC gcrypto
+  PUBLIC msg
+  PUBLIC pbcext
+  PUBLIC logger
+  PUBLIC ${OPENSSL_LIBRARIES}
+  PUBLIC ${MCL_LIBRARY}
+  PUBLIC ${MCL384_256_LIBRARY})
+if (HW)
+  target_link_libraries (groupsig PUBLIC shahw)
 endif()
 
 # Install rules
@@ -79,14 +53,12 @@ install (DIRECTORY "${PROJECT_SOURCE_DIR}/src/include/"
   DESTINATION "include/groupsig"
   FILES_MATCHING PATTERN "*.h")
 
-# Ignore kty04 until I adapt them to the new pbc and join
-if (ALL)
-  add_subdirectory(bbs04)
-  add_subdirectory(cpy06)
-  add_subdirectory(gl19)
-  add_subdirectory(ps16)
-  add_subdirectory(klap20)
-  add_subdirectory(dl21)
-  add_subdirectory(dl21seq)
-endif()
+# Ignore cpy06 until I adapt them to the new pbc and join
+add_subdirectory(bbs04)
+add_subdirectory(cpy06)
+add_subdirectory(gl19)
+add_subdirectory(ps16)
+add_subdirectory(klap20)
+add_subdirectory(dl21)
+add_subdirectory(dl21seq)
 add_subdirectory(kty04)

@@ -31,9 +31,9 @@
 #include "sys/mem.h"
 
 #ifdef SHA3
-#define SHA_DIGEST_LENGTH 64
+#define HASH_DIGEST_LENGTH 64
 #else
-#define SHA_DIGEST_LENGTH 32
+#define HASH_DIGEST_LENGTH 32
 #endif
 
 /* Private functions */
@@ -49,7 +49,7 @@ int kty04_prove_equality(groupsig_proof_t *proof, groupsig_key_t *memkey,
   groupsig_signature_t *sig;
   kty04_signature_t *kty04_sig;
   kty04_proof_t *kty04_proof;
-  byte_t aux_sc[SHA_DIGEST_LENGTH+1];
+  byte_t aux_sc[HASH_DIGEST_LENGTH+1];
   // SHA_CTX aux_sha;
 	EVP_MD_CTX *mdctx;
   char *aux_t7r, *aux_t7, *aux_n;
@@ -156,7 +156,7 @@ int kty04_prove_equality(groupsig_proof_t *proof, groupsig_key_t *memkey,
   free(aux_n); aux_n = NULL;
 
   /* (2) Calculate c = hash(t7r[0] || t7[0] || ... || t7r[n-1] || t7[n-1] || mod ) */
-  memset(aux_sc, 0, SHA_DIGEST_LENGTH+1);
+  memset(aux_sc, 0, HASH_DIGEST_LENGTH+1);
 	if(EVP_DigestFinal_ex(mdctx, aux_sc, NULL) != 1) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "proof_equality", __LINE__, EDQUOT,
 		      "EVP_DigestFinal_ex", LOGERROR);
@@ -164,7 +164,7 @@ int kty04_prove_equality(groupsig_proof_t *proof, groupsig_key_t *memkey,
   }
 
   /* Now, we have to get c as a bigz_t */
-  if(!(kty04_proof->c = bigz_import(aux_sc, SHA_DIGEST_LENGTH)))
+  if(!(kty04_proof->c = bigz_import(aux_sc, HASH_DIGEST_LENGTH)))
     GOTOENDRC(IERROR, kty04_prove_equality);
 
   /* (3) To end, get s = r - c*x */

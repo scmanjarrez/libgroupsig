@@ -1,17 +1,24 @@
 #!/bin/bash
 
 usage() {
-    echo "Usage: $0 [--keep-mcl][--hw]"
-    echo "  --keep-mcl: do not rebuild mcl"
-    echo "  --blake: compile using BLAKE hash function (SW). Default SHA2"
-    echo "  --sha3: compile using SHA3 hash function (SW)"
-    echo "  --hw/hw3: compile using HW SHA2/SHA3 hash functions"
+    echo "Usage: $0 [--keep-ext][--sha2|sha3|hw|hw3]"
+    echo "  --keep-ext: do not rebuild external libraries, i.e. mcl, gtest"
+    echo "  --skip: skip compilation"
+    echo "  --debug: compile with debug symbols"
+    echo "  --gtest: compile GTEST suite"
+    echo "  --test: run GTEST tests after compiliation"
+    echo "  --btest: run basic tests (GTEST not required) after compiliation"
+    echo "  --sha2: compile using SHA2 in PS16 (SW). Default BLAKE"
+    echo "  --sha3: compile using SHA3 in PS16/KTY04 (SW)"
+    echo "  --hw/hw3: compile using SHA2/SHA3 (HW) in PS16/KTY04, requires PYNQ"
 }
 
-keep_mcl() {
+keep_ext() {
     mv build/external build/mclproject-prefix /tmp
+    [ -d build/gtest-project-prefix ] && mv /build/gtest-project-prefix /tmp
     rm -rf build && mkdir build
     mv /tmp/external /tmp/mclproject-prefix build
+    [ -d /tmp/gtest-project-prefix ] && mv /tmp/gtest-project-prefix build
 }
 
 rebuild() {
@@ -19,65 +26,36 @@ rebuild() {
 }
 
 build() {
-    local blake
-    if [ -z $BLAKE ]; then
-        blake=""
-    else
-        blake="-DBLAKE=1"
-    fi
-    local sha3
-    if [ -z $SHA3 ]; then
-        sha3=""
-    else
-        sha3="-DSHA3=1"
-    fi
-    local hw
-    if [ -z $HW ]; then
-        hw=
-    else
-        hw="-DHW=1"
-    fi
-    if [ -z $HW3 ]; then
-        hw3=
-    else
-        hw3="-DHW3=1"
-    fi
-    local arch=$(uname -m)
-    local comp
-    if [[ "$arch" == arm* ]] || [[ "$arch" == aarch* ]]; then
-        comp="-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++"
-    else
-        comp=
-    fi
-    cd build && cmake $comp -DCMAKE_BUILD_TYPE=DEBUG -DALL=1 $blake $sha3 $hw $hw3 .. \
-        && make VERBOSE=1
+    [ -n "$DEBUG" ] && debug="-DCMAKE_BUILD_TYPE=DEBUG" && verbose="VERBOSE=1"
+    [ -n "$GTEST" ] && gtest="-DUSE_GTEST=ON"
+    [ -n "$SHA2" ] && sha2="-DSHA2=1"
+    [ -n "$SHA3" ] && sha3="-DSHA3=1"
+    [ -n "$HW" ] && hw="-DHW=1"
+    [ -n "$HW3" ] && hw3="-DHW3=1"
+    [[ "$(uname -a)" =~ (arm|aarch) ]] && comp="-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++"
+    cmake -B build $gtest $comp $debug $sha2 $sha3 $hw $hw3 \
+        && make -C build $verbose
 }
 
-if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
-    usage
-    exit
+for arg in "$@"; do
+    [[ "$arg" = -h || "$arg" = --help ]] && usage && exit
+    [ "$arg" = --skip ] && SKIP=1
+    [ "$arg" = --debug ] && DEBUG=1
+    [ "$arg" = --gtest ] && GTEST=1
+    [ "$arg" = --test ] && TEST=1
+    [ "$arg" = --btest ] && BTEST=1
+    [ "$arg" = --keep-ext ] && KEEPEXT=1
+    [ "$arg" = --sha2 ] && SHA2=1
+    [ "$arg" = --sha3 ] && SHA3=1
+    [ "$arg" = --hw ] && HW=1
+    [ "$arg" = --hw3 ] && HW=1 && HW3=1
+done
+
+if [ -z "$SKIP" ]; then
+    [ -n "$KEEPEXT" ] && keep_ext
+    [ -z "$KEEPEXT" ] && rebuild
+    build
 fi
 
-if [ "$1" == "--keep-mcl" ] || [ "$2" == "--keep-mcl" ]; then
-    KEEPMCL=1
-fi
-if [ "$1" == "--blake" ] || [ "$2" == "--blake" ]; then
-    BLAKE=1
-fi
-if [ "$1" == "--sha3" ] || [ "$2" == "--sha3" ]; then
-    SHA3=1
-fi
-if [ "$1" == "--hw" ] || [ "$2" == "--hw" ]; then
-    HW=1
-fi
-if [ "$1" == "--hw3" ] || [ "$2" == "--hw3" ]; then
-    HW=1
-    HW3=1
-fi
-
-if [ -n "$KEEPMCL" ]; then
-    keep_mcl
-else
-    rebuild
-fi
-build
+[ -n "$TEST" ] && make -C build test
+[ -n "$BTEST" ] && build/bin/demos ps16 && build/bin/demos kty04
