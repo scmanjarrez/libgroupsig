@@ -47,6 +47,13 @@
 int kty04_join_mem(message_t **mout, groupsig_key_t *memkey,
                    int seq, message_t *min, groupsig_key_t *grpkey) {
 
+  kty04_grp_key_t *gkey;
+  kty04_mem_key_t *mkey;
+  message_t *_mout;
+  int rc;
+  byte_t *bkey;
+  uint32_t size;
+
   if((seq != 0) ||
      (!mout || !memkey || memkey->scheme != GROUPSIG_KTY04_CODE ||
       !grpkey || grpkey->scheme != GROUPSIG_KTY04_CODE)) {
@@ -54,8 +61,9 @@ int kty04_join_mem(message_t **mout, groupsig_key_t *memkey,
     return IERROR;
   }
 
-  kty04_grp_key_t *gkey = (kty04_grp_key_t *) grpkey->key;
-  kty04_mem_key_t *mkey = (kty04_mem_key_t *) memkey->key;
+  gkey = (kty04_grp_key_t *) grpkey->key;
+  mkey = (kty04_mem_key_t *) memkey->key;
+  rc = IOK;
 
   /* Get a random power in the inner sphere of Lambda */
 #ifdef DEBUG
@@ -64,35 +72,30 @@ int kty04_join_mem(message_t **mout, groupsig_key_t *memkey,
 	  " drawing of random powers!\n");
 #endif
 
-  if(sphere_get_random(gkey->inner_lambda, mkey->xx) == IERROR) {
-    return IERROR;
-  }
+  if(sphere_get_random(gkey->inner_lambda, mkey->xx) == IERROR) GOTOENDRC(IERROR, kty04_join_mem);
 
   /* Set C = b^xx */
-  if(bigz_powm(mkey->C, gkey->b, mkey->xx, gkey->n) == IERROR) {
-    return IERROR;
+  if(bigz_powm(mkey->C, gkey->b, mkey->xx, gkey->n) == IERROR) GOTOENDRC(IERROR, kty04_join_mem);
+
+  /* Write the memkey into mout */
+  bkey = NULL;
+  if (kty04_mem_key_export(&bkey, &size, memkey) == IERROR)
+    GOTOENDRC(IERROR, kty04_join_mem);
+
+  if(!*mout) {
+    if(!(_mout = message_from_bytes(bkey, size)))
+      GOTOENDRC(IERROR, kty04_join_mem);
+    *mout = _mout;
+  } else {
+    _mout = *mout;
+    if(message_set_bytes(_mout, bkey, size) == IERROR)
+      GOTOENDRC(IERROR, kty04_join_mem);
   }
 
-  // SergioC: only export C to mout
-  /* byte_t *bytes; */
-  /* size_t *size; */
-  /* if (!(bytes = bigz_export(mkey->C, size))) */
-    /* return IERROR; */
-
-  /* if ((message_set_bytes(*mout, bytes, *size)) == IERROR) */
-    /* return IERROR; */
-
-  byte_t *bytes;
-  uint32_t size;
-  if ((kty04_mem_key_export(&bytes, &size, memkey)) == IERROR)
-    return IERROR;
-
-  if ((message_set_bytes(*mout, bytes, size)) == IERROR)
-    return IERROR;
-
-  free(bytes); // The bytes are copied in message_set bytes to a new buffer, thus we need to remove it.
-  return IOK;
-
+  kty04_join_mem_end:
+  // The bytes are copied in message_set bytes to a new buffer, thus we need to remove it.
+  if (bkey) { free(bkey); bkey = NULL; }
+  return rc;
 }
 
 /* join.c ends here */

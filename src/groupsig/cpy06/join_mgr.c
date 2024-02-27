@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -42,8 +42,8 @@ int cpy06_get_joinstart(uint8_t *start) {
 }
 
 
-/* @TODO This function still follows the old variable structure for join and 
-   I am just changing the interface to remove compiler complaints. But this 
+/* @TODO This function still follows the old variable structure for join and
+   I am just changing the interface to remove compiler complaints. But this
    breaks the functionality! Fix! */
 //gml_t *gml, groupsig_key_t *memkey, groupsig_key_t *mgrkey, groupsig_key_t *grpkey) {
 int cpy06_join_mgr(message_t **mout,
@@ -74,7 +74,7 @@ int cpy06_join_mgr(message_t **mout,
     LOG_EINVAL(&logger, __FILE__, "cpy06_join_mgr", __LINE__, LOGERROR);
     return IERROR;
   }
-  
+
   cpy06_mgrkey = (cpy06_mgr_key_t *) mgrkey->key;
   cpy06_grpkey = (cpy06_grp_key_t *) grpkey->key;
   rc = IOK;
@@ -83,7 +83,7 @@ int cpy06_join_mgr(message_t **mout,
   cpy06_trap = NULL;
 
   if (!(memkey = cpy06_mem_key_init())) GOTOENDRC(IERROR, cpy06_join_mgr);
-  cpy06_memkey = (cpy06_mem_key_t *) memkey->key;  
+  cpy06_memkey = (cpy06_mem_key_t *) memkey->key;
 
   /* x \in_R Z^*_p (@todo Should be non-adaptively chosen by member) */
   if (!(cpy06_memkey->x = pbcext_element_Fr_init()))
@@ -123,6 +123,21 @@ int cpy06_join_mgr(message_t **mout,
 			    gammat) == IERROR)
     GOTOENDRC(IERROR, cpy06_join_mgr);
 
+  /* Write the memkey into mout */
+  bkey = NULL;
+  if (cpy06_mem_key_export(&bkey, &size, memkey) == IERROR)
+    GOTOENDRC(IERROR, cpy06_join_mgr);
+
+  if(!*mout) {
+    if(!(_mout = message_from_bytes(bkey, size)))
+      GOTOENDRC(IERROR, cpy06_join_mgr);
+    *mout = _mout;
+  } else {
+    _mout = *mout;
+    if(message_set_bytes(_mout, bkey, size) == IERROR)
+      GOTOENDRC(IERROR, cpy06_join_mgr);
+  }
+
   /* Update the gml, if any */
   if(gml) {
 
@@ -153,27 +168,9 @@ int cpy06_join_mgr(message_t **mout,
     if (!(cpy06_data->id = identity_init(GROUPSIG_CPY06_CODE)))
       GOTOENDRC(IERROR, cpy06_join_mgr);
     *(cpy06_identity_t *) cpy06_data->id->id = gml->n;
-    
+
     if(gml_insert(gml, gml_entry) == IERROR)
       GOTOENDRC(IERROR, cpy06_join_mgr);
-
-    /* Write the memkey into mout */
-    bkey = NULL;
-    if (cpy06_mem_key_export(&bkey, &size, memkey) == IERROR)
-      GOTOENDRC(IERROR, cpy06_join_mgr);
-
-    if(!*mout) {
-      if(!(_mout = message_from_bytes(bkey, size)))
-	GOTOENDRC(IERROR, cpy06_join_mgr);
-      *mout = _mout;
-      
-    } else {
-      
-      _mout = *mout;
-      if(message_set_bytes(_mout, bkey, size) == IERROR)
-	GOTOENDRC(IERROR, cpy06_join_mgr);
-    }
-    
   }
 
  cpy06_join_mgr_end:
@@ -194,7 +191,7 @@ int cpy06_join_mgr(message_t **mout,
   if (gammat) { pbcext_element_Fr_free(gammat); gammat = NULL; }
   if (memkey) { cpy06_mem_key_free(memkey); memkey = NULL; }
   if (bkey) { mem_free(bkey); bkey = NULL; }
-  
+
   return rc;
 
 }

@@ -95,6 +95,80 @@ groupsig_blindsig_t *bsig,
 groupsig_key_t *grpkey, groupsig_key_t *bldkey,
 message_t *msg);
 
+int groupsig_reveal(trapdoor_t *trap,
+crl_t *crl,
+gml_t *gml,
+uint64_t index);
+
+int groupsig_trace(uint8_t *ok,
+groupsig_signature_t *sig,
+groupsig_key_t *grpkey,
+crl_t *crl,
+groupsig_key_t *mgrkey,
+gml_t *gml);
+
+int groupsig_claim(groupsig_proof_t *proof,
+groupsig_key_t *memkey,
+groupsig_key_t *grpkey,
+groupsig_signature_t *sig);
+
+
+int groupsig_claim_verify(uint8_t *ok,
+groupsig_proof_t *proof,
+groupsig_signature_t *sig,
+groupsig_key_t *grpkey);
+
+int groupsig_prove_equality(groupsig_proof_t *proof,
+groupsig_key_t *memkey,
+groupsig_key_t *grpkey,
+groupsig_signature_t **sigs,
+uint16_t n_sigs);
+
+int groupsig_prove_equality_verify(uint8_t *ok,
+groupsig_proof_t *proof,
+groupsig_key_t *grpkey,
+groupsig_signature_t **sigs,
+uint16_t n_sigs);
+
+int groupsig_identify(uint8_t *ok,
+groupsig_proof_t **proof,
+groupsig_key_t *grpkey,
+groupsig_key_t *memkey,
+groupsig_signature_t *sig,
+message_t *msg);
+
+int groupsig_link(groupsig_proof_t **proof,
+groupsig_key_t *grpkey,
+groupsig_key_t *memkey,
+message_t *msg,
+groupsig_signature_t **sigs,
+message_t **msgs,
+uint32_t n);
+
+int groupsig_verify_link(uint8_t *ok,
+groupsig_key_t *grpkey,
+groupsig_proof_t *proof,
+message_t *msg,
+groupsig_signature_t **sigs,
+message_t **msgs,
+uint32_t n);
+
+int groupsig_seqlink(groupsig_proof_t **proof,
+groupsig_key_t *grpkey,
+groupsig_key_t *memkey,
+message_t *msg,
+groupsig_signature_t **sigs,
+message_t **msgs,
+uint32_t n);
+
+int groupsig_verify_seqlink(uint8_t *ok,
+groupsig_key_t *grpkey,
+groupsig_proof_t *proof,
+message_t *msg,
+groupsig_signature_t **sigs,
+message_t **msgs,
+uint32_t n);
+
 int groupsig_get_code_from_str(uint8_t *code, char *name);
 """
 

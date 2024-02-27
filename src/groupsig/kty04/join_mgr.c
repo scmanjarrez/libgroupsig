@@ -62,6 +62,14 @@ int kty04_join_mgr(message_t **mout, gml_t *gml,
                    groupsig_key_t *mgrkey,
                    int seq, message_t *min,
                    groupsig_key_t *grpkey) {
+  kty04_grp_key_t *gkey;
+  kty04_mgr_key_t *Mkey;
+  message_t *_mout;
+  gml_entry_t *entry;
+  int rc;
+  bigz_t e, einv, x, p1, q1, phin;
+  uint32_t size;
+  byte_t *bkey;
 
   if((seq != 1) ||
      (!mout || !gml || gml->scheme != GROUPSIG_KTY04_CODE ||
@@ -71,28 +79,21 @@ int kty04_join_mgr(message_t **mout, gml_t *gml,
     return IERROR;
   }
 
-  kty04_mgr_key_t *Mkey;
+
   Mkey = (kty04_mgr_key_t *) mgrkey->key;
-  kty04_grp_key_t *gkey;
   gkey = (kty04_grp_key_t *) grpkey->key;
 
-  bigz_t e = NULL, einv = NULL, x = NULL, p1 = NULL, q1 = NULL, phin = NULL;
-  int rc = IOK;
+  e = einv = x = p1 = q1 = phin = NULL;
+  rc = IOK;
 
   /* Select a random prime e in the inner sphere of Gamma */
-  if(!(e = bigz_init())) {
-    return IERROR;
-  }
+  if(!(e = bigz_init())) GOTOENDRC(IERROR, kty04_join_mgr);
 
-  if(sphere_get_random_prime(gkey->inner_gamma, e) == IERROR) {
-    GOTOENDRC(IERROR, kty04_join_mgr);
-  }
+  if(sphere_get_random_prime(gkey->inner_gamma, e) == IERROR) GOTOENDRC(IERROR, kty04_join_mgr);
 
   /* We need the inverse of e mod(phi(n)) = e^(-1) mod((p-1)*(q-1)) */
   if(!(p1 = bigz_init()) || !(q1 = bigz_init()) ||
-     !(phin = bigz_init()) || !(einv = bigz_init())) {
-    GOTOENDRC(IERROR, kty04_join_mgr);
-  }
+     !(phin = bigz_init()) || !(einv = bigz_init())) GOTOENDRC(IERROR, kty04_join_mgr);
 
   if(bigz_sub_ui(p1, Mkey->p, 1) == IERROR) GOTOENDRC(IERROR, kty04_join_mgr);
   if(bigz_sub_ui(q1, Mkey->q, 1) == IERROR) GOTOENDRC(IERROR, kty04_join_mgr);
@@ -105,75 +106,63 @@ int kty04_join_mgr(message_t **mout, gml_t *gml,
 
   /* Select a random x in the inner sphere of Lambda */
   if(!(x = bigz_init())) GOTOENDRC(IERROR, kty04_join_mgr);
-  if(sphere_get_random_prime(gkey->inner_lambda, x) == IERROR) {
-    GOTOENDRC(IERROR,kty04_join_mgr);
-  }
+  if(sphere_get_random_prime(gkey->inner_lambda, x) == IERROR) GOTOENDRC(IERROR,kty04_join_mgr);
 
   groupsig_key_t *memkey = kty04_mem_key_import(min->bytes, min->length);
   kty04_mem_key_t *mkey = memkey->key;
   /* A = (C*a^x*a0)^(e^-1) (mod n) */
-  if(bigz_powm(mkey->A, gkey->a, x, gkey->n) == IERROR)
-    GOTOENDRC(IERROR, kty04_join_mgr);
-  if(bigz_mul(mkey->A, mkey->A, mkey->C) == IERROR)
-    GOTOENDRC(IERROR, kty04_join_mgr);
-  if(bigz_mul(mkey->A, mkey->A, gkey->a0) == IERROR)
-    GOTOENDRC(IERROR, kty04_join_mgr);
-  if(bigz_powm(mkey->A, mkey->A, einv, gkey->n) == IERROR)
+  if(bigz_powm(mkey->A, gkey->a, x, gkey->n) == IERROR) GOTOENDRC(IERROR, kty04_join_mgr);
+  if(bigz_mul(mkey->A, mkey->A, mkey->C) == IERROR) GOTOENDRC(IERROR, kty04_join_mgr);
+  if(bigz_mul(mkey->A, mkey->A, gkey->a0) == IERROR) GOTOENDRC(IERROR, kty04_join_mgr);
+  if(bigz_powm(mkey->A, mkey->A, einv, gkey->n) == IERROR) GOTOENDRC(IERROR, kty04_join_mgr);
+
+  if(bigz_set(mkey->x, x) == IERROR) GOTOENDRC(IERROR, kty04_join_mgr);
+  if(bigz_set(mkey->e, e) == IERROR) GOTOENDRC(IERROR, kty04_join_mgr);
+
+  /* Write the memkey into mout */
+  bkey = NULL;
+  if (kty04_mem_key_export(&bkey, &size, memkey) == IERROR)
     GOTOENDRC(IERROR, kty04_join_mgr);
 
-  if(bigz_set(mkey->x, x) == IERROR)
-    GOTOENDRC(IERROR, kty04_join_mgr);
-  if(bigz_set(mkey->e, e) == IERROR)
-    GOTOENDRC(IERROR, kty04_join_mgr);
+  if(!*mout) {
+    if(!(_mout = message_from_bytes(bkey, size)))
+      GOTOENDRC(IERROR, kty04_join_mgr);
+    *mout = _mout;
+  } else {
+    _mout = *mout;
+    if(message_set_bytes(_mout, bkey, size) == IERROR)
+      GOTOENDRC(IERROR, kty04_join_mgr);
+  }
 
-  /* We are done: */
-  // Send filled memkey in mout
-  byte_t *bytes;
-  uint32_t size;
-  if ((kty04_mem_key_export(&bytes, &size, memkey)) == IERROR)
-    return IERROR;
-
-  if ((message_set_bytes(*mout, bytes, size)) == IERROR)
-    return IERROR;
-  
-  free(bytes); // bytes are never freed otherwise
-  
-  gml_entry_t *entry;
   /* Update the gml, if any */
   if(gml) {
 
     /* Initialize the GML entry */
-    if(!(entry = kty04_gml_entry_init()))
-      GOTOENDRC(IERROR, kty04_join_mgr);
+    if(!(entry = kty04_gml_entry_init())) GOTOENDRC(IERROR, kty04_join_mgr);
 
     kty04_gml_entry_data_t *data = entry->data;
 
-    if(bigz_set(*(kty04_trapdoor_t *) data->trapdoor->trap, mkey->x) == IERROR)
-      GOTOENDRC(IERROR, kty04_join_mgr);
+    if(bigz_set(*(kty04_trapdoor_t *) data->trapdoor->trap, mkey->x) == IERROR) GOTOENDRC(IERROR, kty04_join_mgr);
 
-    if(bigz_set(data->A, mkey->A) == IERROR)
-      GOTOENDRC(IERROR, kty04_join_mgr);
+    if(bigz_set(data->A, mkey->A) == IERROR) GOTOENDRC(IERROR, kty04_join_mgr);
 
     /* Currently, KTY04 identities are just uint64_t's */
     *(kty04_identity_t *) data->id->id = gml->n;
 
-    if(gml_insert(gml, entry) == IERROR)
-      GOTOENDRC(IERROR, kty04_join_mgr);
-
+    if(gml_insert(gml, entry) == IERROR) GOTOENDRC(IERROR, kty04_join_mgr);
   }
 
  kty04_join_mgr_end:
-
-  if(e) bigz_free(e);
-  if(einv) bigz_free(einv);
-  if(x) bigz_free(x);
-  if(p1) bigz_free(p1);
-  if(q1) bigz_free(q1);
-  if(phin) bigz_free(phin);
-  if(memkey) kty04_mem_key_free(memkey); memkey = NULL;
+  if(e) { bigz_free(e); e = NULL; }
+  if(einv) { bigz_free(einv); einv = NULL; }
+  if(x) {bigz_free(x);}
+  if(p1) {bigz_free(p1);}
+  if(q1) {bigz_free(q1);}
+  if(phin) {bigz_free(phin);}
+  if(memkey) { kty04_mem_key_free(memkey); memkey = NULL; }
+  if (bkey) { mem_free(bkey); bkey = NULL; }
 
   return rc;
-
 }
 
 

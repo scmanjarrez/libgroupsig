@@ -33,12 +33,8 @@ extern "C" {
  * @def CRL_HANDLES_N
  * @brief Number of supported CRL implementations.
  */
-#ifdef ALL
 #define CRL_HANDLES_N 2
-#else  
-#define CRL_HANDLES_N 1
-#endif
-  
+
 /**
  * @var CRL_HANDLES
  * @brief List of handles of CRL implementations.

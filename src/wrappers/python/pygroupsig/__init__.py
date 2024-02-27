@@ -8,5 +8,8 @@ __all__ = [
     "blindsig",
     "gml",
     "message",
-    "constants"
+    "constants",
+    "proof",
+    "identity",
+    "crl"
 ]
