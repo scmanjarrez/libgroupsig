@@ -23,7 +23,7 @@
 #include "mem_key.h"
 #include "groupsig/kty04/mem_key.h"
 #include "groupsig/bbs04/mem_key.h"
-/* #include "groupsig/cpy06/mem_key.h" */
+#include "groupsig/cpy06/mem_key.h"
 #include "groupsig/gl19/mem_key.h"
 #include "groupsig/ps16/mem_key.h"
 #include "groupsig/klap20/mem_key.h"
@@ -47,7 +47,7 @@ extern "C" {
 static const mem_key_handle_t *GROUPSIG_MEM_KEY_HANDLES[GROUPSIG_MEM_KEY_HANDLES_N] = {
   &kty04_mem_key_handle,
   &bbs04_mem_key_handle,
-  /* &cpy06_mem_key_handle, */
+  &cpy06_mem_key_handle,
   &gl19_mem_key_handle,
   &ps16_mem_key_handle,
   &klap20_mem_key_handle,

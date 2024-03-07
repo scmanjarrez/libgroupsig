@@ -23,7 +23,7 @@
 #include "signature.h"
 #include "groupsig/kty04/signature.h"
 #include "groupsig/bbs04/signature.h"
-/* #include "groupsig/cpy06/signature.h" */
+#include "groupsig/cpy06/signature.h"
 #include "groupsig/gl19/signature.h"
 #include "groupsig/ps16/signature.h"
 #include "groupsig/klap20/signature.h"
@@ -47,7 +47,7 @@ extern "C" {
 static const groupsig_signature_handle_t *GROUPSIG_SIGNATURE_HANDLES[GROUPSIG_SIGNATURE_HANDLES_N] = {
   &kty04_signature_handle,
   &bbs04_signature_handle,
-  /* &cpy06_signature_handle, */
+  &cpy06_signature_handle,
   &gl19_signature_handle,
   &ps16_signature_handle,
   &klap20_signature_handle,

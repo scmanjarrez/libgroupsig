@@ -23,7 +23,7 @@
 #include "grp_key.h"
 #include "groupsig/kty04/grp_key.h"
 #include "groupsig/bbs04/grp_key.h"
-/* #include "groupsig/cpy06/grp_key.h" */
+#include "groupsig/cpy06/grp_key.h"
 #include "groupsig/gl19/grp_key.h"
 #include "groupsig/ps16/grp_key.h"
 #include "groupsig/klap20/grp_key.h"
@@ -47,7 +47,7 @@ extern "C" {
 static const grp_key_handle_t *GROUPSIG_GRP_KEY_HANDLES[GROUPSIG_GRP_KEY_HANDLES_N] = {
   &kty04_grp_key_handle,
   &bbs04_grp_key_handle,
-  /* &cpy06_grp_key_handle, */
+  &cpy06_grp_key_handle,
   &gl19_grp_key_handle,
   &ps16_grp_key_handle,
   &klap20_grp_key_handle,

@@ -25,7 +25,7 @@ add_library(groupsig-static STATIC $<TARGET_OBJECTS:objlib>)
 target_link_libraries (groupsig
   PUBLIC kty04
   PUBLIC bbs04
-  #PUBLIC cpy06
+  PUBLIC cpy06
   PUBLIC gl19
   PUBLIC ps16
   PUBLIC klap20
@@ -55,7 +55,7 @@ install (DIRECTORY "${PROJECT_SOURCE_DIR}/src/include/"
 
 # Ignore cpy06 until I adapt them to the new pbc and join
 add_subdirectory(bbs04)
-#add_subdirectory(cpy06)
+add_subdirectory(cpy06)
 add_subdirectory(gl19)
 add_subdirectory(ps16)
 add_subdirectory(klap20)

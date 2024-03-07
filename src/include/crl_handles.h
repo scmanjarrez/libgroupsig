@@ -23,7 +23,7 @@
 #include "crl.h"
 #include "groupsig/kty04/crl.h"
 /* #include "groupsig/bbs04/crl.h" */
-/* #include "groupsig/cpy06/crl.h" */
+#include "groupsig/cpy06/crl.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,7 +33,7 @@ extern "C" {
  * @def CRL_HANDLES_N
  * @brief Number of supported CRL implementations.
  */
-#define CRL_HANDLES_N 1//3
+#define CRL_HANDLES_N 2
 
 /**
  * @var CRL_HANDLES
@@ -42,7 +42,7 @@ extern "C" {
 const crl_handle_t *CRL_HANDLES[CRL_HANDLES_N] = {
   &kty04_crl_handle,
   /* &bbs04_crl_handle, */
-  /* &cpy06_crl_handle, */
+  &cpy06_crl_handle,
 };
 
 #ifdef __cplusplus

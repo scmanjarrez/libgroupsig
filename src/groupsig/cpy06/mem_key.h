@@ -21,11 +21,11 @@
 #define _CPY06_MEM_KEY_H
 
 #include <stdint.h>
-#include <pbc/pbc.h>
 #include "types.h"
 #include "sysenv.h"
 #include "cpy06.h"
 #include "include/mem_key.h"
+#include "shim/pbc_ext.h"
 
 /**
  * @def CPY06_MEM_KEY_BEGIN_MSG
@@ -44,9 +44,9 @@
  * @brief CPY06 member keys.
  */
 typedef struct {
-  element_t x; /**< x \in_R Z^*_p (non-adaptively chosen by member) */
-  element_t t; /**< t \in_R Z^*_p (chosen by manager) */
-  element_t A; /**< A = (q*g_1^x)^(1/t+\gamma) */
+  pbcext_element_Fr_t *x; /**< x \in_R Z^*_p (non-adaptively chosen by member) */
+  pbcext_element_Fr_t *t; /**< t \in_R Z^*_p (chosen by manager) */
+  pbcext_element_G1_t *A; /**< A = (q*g_1^x)^(1/t+\gamma) */
 } cpy06_mem_key_t;
 
 /** 
@@ -80,47 +80,44 @@ int cpy06_mem_key_free(groupsig_key_t *key);
 int cpy06_mem_key_copy(groupsig_key_t *dst, groupsig_key_t *src);
 
 /** 
- * @fn int cpy06_mem_key_get_size_in_format(groupsig_key_t *key, groupsig_key_format_t format)
+ * @fn int cpy06_mem_key_get_size(groupsig_key_t *key)
  * @brief Returns the size that the given key would require in order to be 
- *  represented using the specified format.
+ *  represented as an array of bytes.
  *
  * @param[in] key The key.
- * @param[in] format The format. The list of supported key formats in the CPY06
- *  scheme are defined in @ref cpy06.h.
  * 
  * @return The required number of bytes, or -1 if error.
  */
-int cpy06_mem_key_get_size_in_format(groupsig_key_t *key, groupsig_key_format_t format);
-
-/* int cpy06_mem_key_set_prv(groupsig_key_t *dst, groupsig_key_t *src); */
-/* int cpy06_mem_key_set_pub(groupsig_key_t *dst, groupsig_key_t *src); */
+int cpy06_mem_key_get_size(groupsig_key_t *key);
 
 /** 
- * @fn int cpy06_mem_key_export(groupsig_key_t *key, groupsig_key_format_t format,
- *                              void *dst)
- * @brief Exports the given member key, using the specified format, to the
- *  specified destination.
+ * @fn int cpy06_mem_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key)
+ * @brief Writes a bytearray representation of the given key, with format:
  *
- * @param[in] key The key to export.
- * @param[in] format The format to use. The available key formats in CPY06 are
- *  defined in @ref cpy06.h.
- * @param[in] dst The destination's information.
+ *  | CPY06_CODE | KEYTYPE | size_params | params | size_x | x | size_t | t | 
+ *    size_A | A |
+ *
+ * @param[in,out] bytes A pointer to the array that will contain the exported
+ *  member key. If <i>*bytes</i> is NULL, memory will be internally allocated.
+ * @param[in,out] size Will be set to the number of bytes written in <i>*bytes</i>.
+ * @param[in] key The member key to export.
  * 
  * @return IOK or IERROR. 
  */
-int cpy06_mem_key_export(groupsig_key_t *key, groupsig_key_format_t format, void *dst);
+int cpy06_mem_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key);
 
 /** 
- * @fn groupsig_key_t* cpy06_mem_key_import(groupsig_key_format_t format, void *source)
- * @brief Imports a member key from the specified source, of the specified format.
+ * @fn groupsig_key_t* cpy06_mem_key_import(byte_t *source, uint32_t size)
+ * @brief Imports a member key.
  *
- * @param[in] format The source format. The available key formats in CPY06 are
- *  defined in @ref cpy06.h.
- * @param[in] source The source information.
+ * Imports a PS16 member key from the specified array of bytes.
+ *
+ * @param[in] source The array of bytes containing the key to import.
+ * @param[in] source The number of bytes in the passed array.
  * 
  * @return A pointer to the imported member key, or NULL if error.
  */
-groupsig_key_t* cpy06_mem_key_import(groupsig_key_format_t format, void *source);
+groupsig_key_t* cpy06_mem_key_import(byte_t *source, uint32_t size);
 
 /** 
  * @fn char* cpy06_mem_key_to_string(groupsig_key_t *key)
@@ -137,15 +134,16 @@ char* cpy06_mem_key_to_string(groupsig_key_t *key);
  * @brief Set of functions for managing CPY06 member keys.
  */
 static const mem_key_handle_t cpy06_mem_key_handle = {
-  GROUPSIG_CPY06_CODE, /**< The scheme code. */
-  &cpy06_mem_key_init, /**< Initializes member keys. */
-  &cpy06_mem_key_free, /**< Frees member keys. */
-  &cpy06_mem_key_copy, /**< Copies member keys. */
-  &cpy06_mem_key_get_size_in_format, /**< Gets the size of the key in specific
+  .code = GROUPSIG_CPY06_CODE, /**< The scheme code. */
+  .init = &cpy06_mem_key_init, /**< Initializes member keys. */
+  .free = &cpy06_mem_key_free, /**< Frees member keys. */
+  .copy = &cpy06_mem_key_copy, /**< Copies member keys. */
+  .get_size = &cpy06_mem_key_get_size, /**< Gets the size of the key in specific
 					formats. */
-  &cpy06_mem_key_export, /**< Exports member keys. */
-  &cpy06_mem_key_import, /**< Imports member keys. */
-  &cpy06_mem_key_to_string, /**< Converts member keys to printable strings. */
+  .gexport = &cpy06_mem_key_export, /**< Exports member keys. */
+  .gimport = &cpy06_mem_key_import, /**< Imports member keys. */
+  .to_string = &cpy06_mem_key_to_string, /**< Converts member keys to printable
+					    strings. */
 };
 
 #endif /* _CPY06_MEM_KEY_H */

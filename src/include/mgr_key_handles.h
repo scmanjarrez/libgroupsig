@@ -23,7 +23,7 @@
 #include "mgr_key.h"
 #include "groupsig/kty04/mgr_key.h"
 #include "groupsig/bbs04/mgr_key.h"
-/* #include "groupsig/cpy06/mgr_key.h" */
+#include "groupsig/cpy06/mgr_key.h"
 #include "groupsig/gl19/mgr_key.h"
 #include "groupsig/ps16/mgr_key.h"
 #include "groupsig/klap20/mgr_key.h"
@@ -47,7 +47,7 @@ extern "C" {
 static const mgr_key_handle_t *GROUPSIG_MGR_KEY_HANDLES[GROUPSIG_MGR_KEY_HANDLES_N] = {
   &kty04_mgr_key_handle,
   &bbs04_mgr_key_handle,
-  /* &cpy06_mgr_key_handle, */
+  &cpy06_mgr_key_handle,
   &gl19_mgr_key_handle,
   &ps16_mgr_key_handle,
   &klap20_mgr_key_handle,

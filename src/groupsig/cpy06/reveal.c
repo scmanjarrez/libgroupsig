@@ -21,8 +21,6 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#include "sysenv.h"
-#include "bigz.h"
 #include "cpy06.h"
 #include "groupsig/cpy06/mem_key.h"
 #include "groupsig/cpy06/gml.h"
@@ -32,7 +30,8 @@
 int cpy06_reveal(trapdoor_t *trap, crl_t *crl, gml_t *gml, uint64_t index) {
 
   cpy06_crl_entry_t *crl_entry;
-  cpy06_gml_entry_t *gml_entry;
+  gml_entry_t *gml_entry;
+  cpy06_gml_entry_data_t *cpy06_gml_data;
   trapdoor_t* crl_trap;
 
 
@@ -43,17 +42,15 @@ int cpy06_reveal(trapdoor_t *trap, crl_t *crl, gml_t *gml, uint64_t index) {
     return IERROR;
   }
 
-  if(!(crl_trap = trapdoor_init(trap->scheme))){
-    LOG_EINVAL(&logger, __FILE__, "cpy06_reveal", __LINE__, LOGERROR);
+  /* The tracing trapdoor for the i-th member is the C value computed 
+     during join */
+  if(!(gml_entry = gml_get(gml, index))) {
     return IERROR;
   }
 
-  /* The tracing trapdoor for the i-th member is the C value computed during join */
-  if(!(gml_entry = ((cpy06_gml_entry_t *) gml_get(gml, index)))) {
-    return IERROR;
-  }
+  cpy06_gml_data = gml_entry->data;
 
-  if(cpy06_trapdoor_copy(trap, (trapdoor_t *) gml_entry->trapdoor) == IERROR) {
+  if(cpy06_trapdoor_copy(trap, (trapdoor_t *) cpy06_gml_data->trapdoor) == IERROR) {
     return IERROR;
   }
 
@@ -62,17 +59,19 @@ int cpy06_reveal(trapdoor_t *trap, crl_t *crl, gml_t *gml, uint64_t index) {
 
     if(!(crl_entry = cpy06_crl_entry_init())) {
       return IERROR;
-    }
+    }   
 
-    if(cpy06_identity_copy(crl_entry->id, gml_entry->id) == IERROR) {
+    if (cpy06_identity_copy(crl_entry->id, cpy06_gml_data->id) == IERROR) {
       cpy06_crl_entry_free(crl_entry);
       return IERROR;
     }
 
-    cpy06_trapdoor_copy(crl_trap, trap);
-    crl_entry->trapdoor = crl_trap;
+    if (cpy06_trapdoor_copy(crl_entry->trapdoor, trap) == IERROR) {
+      cpy06_crl_entry_free(crl_entry);
+      return IERROR;
+    }
 
-    if(cpy06_crl_insert(crl, crl_entry) == IERROR) {
+    if (cpy06_crl_insert(crl, crl_entry) == IERROR) {
       cpy06_crl_entry_free(crl_entry);
       return IERROR;
     }

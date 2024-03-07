@@ -306,10 +306,22 @@ int kty04_gml_entry_free(gml_entry_t *entry) {
 
 int kty04_gml_entry_get_size(gml_entry_t *entry) {
 
-  byte_t *bytes = (byte_t *) kty04_gml_entry_to_string(entry);
+  byte_t *bytes;
+  uint32_t size;
 
-  uint32_t size = strlen(bytes);
-  return size;
+  if (!entry) {
+    LOG_EINVAL(&logger, __FILE__, "cpy06_gml_entry_get_size",
+	       __LINE__, LOGERROR);
+    return -1;
+  }
+
+  if (!(bytes = (byte_t *) kty04_gml_entry_to_string(entry)))
+    return -1;
+  size = strlen(bytes);
+
+  if (size >= INT_MAX) return -1;
+  
+  return (int) size;
 
 }
 
@@ -317,7 +329,9 @@ int kty04_gml_entry_export(byte_t **bytes,
                            uint32_t *size,
                            gml_entry_t *entry) {
 
-  if (!bytes || !size || !entry) {
+  if (!bytes ||
+      !size ||
+      !entry || entry->scheme != GROUPSIG_KTY04_CODE) {
     LOG_EINVAL(&logger, __FILE__, "kty04_gml_entry_export", __LINE__, LOGERROR);
     return IERROR;
   }
@@ -373,7 +387,8 @@ char* kty04_gml_entry_to_string(gml_entry_t *entry) {
   char *strapdoor, *sA, *sid, *sentry;
   uint64_t sentry_len;
 
-  if(!entry) {
+  if(!entry ||
+     entry->scheme != GROUPSIG_KTY04_CODE) {
     LOG_EINVAL(&logger, __FILE__, "kty04_gml_entry_to_string", __LINE__, LOGERROR);
     return NULL;
   }

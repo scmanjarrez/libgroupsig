@@ -33,7 +33,7 @@
 static const groupsig_t *GROUPSIG_REGISTERED_GROUPSIGS[GROUPSIG_REGISTERED_GROUPSIGS_N] = {
   &kty04_groupsig_bundle,
   &bbs04_groupsig_bundle,
-  /* &cpy06_groupsig_bundle, */
+  &cpy06_groupsig_bundle,
   &gl19_groupsig_bundle,
   &ps16_groupsig_bundle,
   &klap20_groupsig_bundle,

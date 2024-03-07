@@ -76,11 +76,6 @@ int kty04_gml_entry_get_size(gml_entry_t *entry);
  *                                gml_entry_t *entry)
  * @brief Exports a GML entry into an array of bytes.
  *
- * The used format is:
- *
- * | code (uint8_t) | identity (uint64_t) | size_SS0 | SS0 | size_SS1 | SS1 |
- *   size_ff0 | ff0 | size_ff1 | ff1 |
- *
  * @param[in,out] bytes Will be updated with the exported entry. If *entry is
  *  NULL,  memory will be internally allocated. Otherwise, it must be big enough
  *  to hold all the data.
@@ -174,41 +169,39 @@ int kty04_gml_remove(gml_t *gml, uint64_t index);
 gml_entry_t* kty04_gml_get(gml_t *gml, uint64_t index);
 
 /**
- * @fn gml_t* kty04_gml_import(gml_type_t type, void *src)
- * @brief Loads the Group Members List stored in the given source, of the
- *  specified type, and returns a initialized GML structure.
+ * @fn gml_t* kty04_gml_import(byte_t *src, uint32_t size)
+ * @brief Loads the Group Members List stored in the given source, and returns 
+ *  an initialized GML structure.
  *
- * @param[in] type The type of source.
- * @param[in] src The element containing the gml.
+ * @param[in] src The byte array source containing the gml.
+ * @param[in] size The size, in bytes, of src.
  *
  * @return The imported GML or NULL if error.
  */
 gml_t* kty04_gml_import(byte_t *src, uint32_t size);
 
 /**
- * @fn int kty04_gml_export(gml_t *gml, void *dst, gml_format_t format)
- * @brief Exports the given Group Members List structure into the given destination.
+ * @fn int kty04_gml_export(byte_t **bytes, uint32_t *size, gml_t *gml)
+ * @brief Exports the given Group Members List structure into a byte array.
  *
- * @param[in] gml The GML structure to save.
- * @param[in] dst The destination.
- * @param[in] format The type of destination.
+ * @param[in] bytes Will contain the exported GML.
+ * @param[in] size Will be set to the number of bytes written into <i>bytes</i>.
+ * @param[in] gml The GML to export.
  *
  * @return IOK or IERROR
  */
-int kty04_gml_export(byte_t **bytes,
-			    uint32_t *size,
-			    gml_t *gml);
+int kty04_gml_export(byte_t **bytes, uint32_t *size, gml_t *gml);
 
-/**
- * @fn int kty04_gml_export_new_entry(void *entry, void *dst, gml_format_t format)
- * @brief Adds the given new entry to the GML exported in the specified destination.
- *
- * @param[in] entry The entry to add.
- * @param[in] dst The destination
- * @param[in] format The GML format.
- *
- * @return IOK or IERROR.
- */
+/* /\** */
+/*  * @fn int kty04_gml_export_new_entry(void *entry, void *dst, gml_format_t format) */
+/*  * @brief Adds the given new entry to the GML exported in the specified destination. */
+/*  * */
+/*  * @param[in] entry The entry to add. */
+/*  * @param[in] dst The destination */
+/*  * @param[in] format The GML format. */
+/*  * */
+/*  * @return IOK or IERROR. */
+/*  *\/ */
 
 static const gml_handle_t kty04_gml_handle = {
   .scheme = GROUPSIG_KTY04_CODE, /**< Scheme code. */

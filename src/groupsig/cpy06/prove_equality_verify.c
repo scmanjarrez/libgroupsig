@@ -23,67 +23,90 @@
 #include "groupsig/cpy06/proof.h"
 #include "groupsig/cpy06/grp_key.h"
 #include "groupsig/cpy06/signature.h"
-#include "wrappers/hash.h"
-#include "wrappers/pbc_ext.h"
+#include "shim/hash.h"
+#include "shim/pbc_ext.h"
 #include "sys/mem.h"
 
-/* Private functions */
-
-
-/* Public functions */
-
-int cpy06_prove_equality_verify(uint8_t *ok, groupsig_proof_t *proof, 
-				groupsig_key_t *grpkey, groupsig_signature_t **sigs, 
+int cpy06_prove_equality_verify(uint8_t *ok,
+				groupsig_proof_t *proof, 
+				groupsig_key_t *grpkey,
+				groupsig_signature_t **sigs, 
 				uint16_t n_sigs) {
 
   cpy06_grp_key_t *gkey;
   cpy06_signature_t *sig;
   cpy06_proof_t *cpy06_proof;
-  cpy06_sysenv_t *cpy06_sysenv;
   hash_t *hash;
   byte_t *bytes;
-  element_t e, es, t5c, c;
-  int rc, n;
+  pbcext_element_Fr_t *c;
+  pbcext_element_G1_t *g1;
+  pbcext_element_GT_t *e, *es, *t5c;
+  uint64_t n;
+  int rc;
   uint8_t i;
   
   if(!ok || !proof || proof->scheme != GROUPSIG_CPY06_CODE ||
      !grpkey || grpkey->scheme != GROUPSIG_CPY06_CODE ||
      !sigs || !n_sigs) {
-    LOG_EINVAL(&logger, __FILE__, "cpy06_prove_equality_verify", __LINE__, LOGERROR);
+    LOG_EINVAL(&logger, __FILE__, "cpy06_prove_equality_verify",
+	       __LINE__, LOGERROR);
     return IERROR;
   }
 
+  /* @TODO: The code here can probably simplified/optimized via the crypto/spk.h
+     module (as an spk_rep_t proof). Not sure though, so leaving as technical 
+     debt. */
+  
+  e = es = t5c = NULL;
+  g1 = NULL;
+  c = NULL;
+  hash = NULL;
+  bytes = NULL;
   rc = IOK;
   
   gkey = (cpy06_grp_key_t *) grpkey->key;
   cpy06_proof = (cpy06_proof_t *) proof->proof;
-  cpy06_sysenv = sysenv->data;
+  
 
   /* Initialize the hashing environment */
-  if(!(hash = hash_init(HASH_BLAKE2))) GOTOENDRC(IERROR, cpy06_prove_equality_verify);
+  if (!(hash = hash_init(HASH_BLAKE2)))
+    GOTOENDRC(IERROR, cpy06_prove_equality_verify);
 
-  /* We have to recover the e(g1,T4)^r objects. To do so, we divide e(g1,T4)^s/T5^c */  
-  element_init_GT(e, cpy06_sysenv->pairing);
-  element_init_GT(es, cpy06_sysenv->pairing);
-  element_init_GT(t5c, cpy06_sysenv->pairing);
+  /* We have to recover the e(g1,T4)^r objects. To do so, 
+     we divide e(g1,T4)^s/T5^c */  
+  if (!(e = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, cpy06_prove_equality_verify);
+  if (!(es = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, cpy06_prove_equality_verify);  
+  if (!(t5c = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, cpy06_prove_equality_verify);
+  if (!(g1 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_prove_equality_verify);
+  if (pbcext_element_G1_from_string(&g1, BLS12_381_P, 10) == IERROR)
+    GOTOENDRC(IERROR, cpy06_prove_equality_verify);
+  
+  for (i=0; i<n_sigs; i++) {
 
-  for(i=0; i<n_sigs; i++) {
-
-    if(sigs[i]->scheme != GROUPSIG_CPY06_CODE) {
-      LOG_EINVAL(&logger, __FILE__, "cpy06_prove_equality_verify", __LINE__, LOGERROR);
+    if (sigs[i]->scheme != GROUPSIG_CPY06_CODE) {
+      LOG_EINVAL(&logger, __FILE__, "cpy06_prove_equality_verify",
+		 __LINE__, LOGERROR);
       GOTOENDRC(IERROR, cpy06_prove_equality_verify);
     }
 
     sig = (cpy06_signature_t *) sigs[i]->sig;
 
-    element_pairing(e, gkey->g1, sig->T4);
-    element_pow_zn(es, e, cpy06_proof->s);
-    element_pow_zn(t5c, sig->T5, cpy06_proof->c);
-    element_div(es, es, t5c);
+    if (pbcext_pairing(e, g1, sig->T4) == IERROR)
+      GOTOENDRC(IERROR, cpy06_prove_equality_verify);
+    if (pbcext_element_GT_pow(es, e, cpy06_proof->s) == IERROR)
+      GOTOENDRC(IERROR, cpy06_prove_equality_verify);
+    if (pbcext_element_GT_pow(t5c, sig->T5, cpy06_proof->c) == IERROR)
+      GOTOENDRC(IERROR, cpy06_prove_equality_verify);
+    if (pbcext_element_GT_div(es, es, t5c) == IERROR)
+      GOTOENDRC(IERROR, cpy06_prove_equality_verify);    
      
     /* Put the i-th element of the array */
     bytes = NULL;
-    if(pbcext_element_export_bytes(&bytes, &n, es) == IERROR)
+    if(pbcext_element_GT_to_bytes(&bytes, &n, es) == IERROR)
       GOTOENDRC(IERROR, cpy06_prove_equality_verify);
 
     if(hash_update(hash, bytes, n) == IERROR) 
@@ -93,7 +116,7 @@ int cpy06_prove_equality_verify(uint8_t *ok, groupsig_proof_t *proof,
 
     /* Put also the base (the e(g1,T4)'s) into the hash */
     bytes = NULL;
-    if(pbcext_element_export_bytes(&bytes, &n, e) == IERROR)
+    if(pbcext_element_GT_to_bytes(&bytes, &n, e) == IERROR)
       GOTOENDRC(IERROR, cpy06_prove_equality_verify);
 
     if(hash_update(hash, bytes, n) == IERROR) 
@@ -103,7 +126,7 @@ int cpy06_prove_equality_verify(uint8_t *ok, groupsig_proof_t *proof,
 
     /* ... and T5 */
     bytes = NULL;
-    if(pbcext_element_export_bytes(&bytes, &n, sig->T5) == IERROR)
+    if(pbcext_element_GT_to_bytes(&bytes, &n, sig->T5) == IERROR)
       GOTOENDRC(IERROR, cpy06_prove_equality_verify);
 
     if(hash_update(hash, bytes, n) == IERROR) 
@@ -113,28 +136,35 @@ int cpy06_prove_equality_verify(uint8_t *ok, groupsig_proof_t *proof,
     
   }
   
-  /* (2) Calculate c = hash((e(g1,T4)^r)[1] || (e(g1,T4))[1] || ... || (e(g1,T4)^r)[n] || (e(g1,T4))[n] ) */
-  if(hash_finalize(hash) == IERROR) GOTOENDRC(IERROR, cpy06_prove_equality_verify);
+  /* (2) Calculate c = hash((e(g1,T4)^r)[1] || (e(g1,T4))[1] || ... || 
+                            (e(g1,T4)^r)[n] || (e(g1,T4))[n] ) */
+  if(hash_finalize(hash) == IERROR)
+    GOTOENDRC(IERROR, cpy06_prove_equality_verify);
   
-  /* Now, we have to get c as a bigz_t */
-  /* Now, we have to get c as an element_t */
-  element_init_Zr(c, cpy06_sysenv->pairing);
-  element_from_hash(c, hash->hash, hash->length);
+  /* Now, we have to get c as an element */
+  if (!(c = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_prove_equality_verify);
+  if (pbcext_element_Fr_from_hash(c, hash->hash, hash->length) == IERROR)
+    GOTOENDRC(IERROR, cpy06_prove_equality_verify);
 
   /* Compare the obtained c with the c received in the proof, if there is a 
      match, the proof is successful */
   errno = 0;
-  if(!element_cmp(c, cpy06_proof->c))
+  if(!pbcext_element_Fr_cmp(c, cpy06_proof->c))
     *ok = 1;
   else
     *ok = 0;
 
   /* Free resources and exit */
  cpy06_prove_equality_verify_end:
-   
-  element_clear(e);
-  element_clear(es);
-  element_clear(t5c);
+
+  if (g1) { pbcext_element_G1_free(g1); g1 = NULL; }
+  if (e) { pbcext_element_GT_free(e); e = NULL; }
+  if (es) { pbcext_element_GT_free(es); es = NULL; }
+  if (t5c) { pbcext_element_GT_free(t5c); t5c = NULL; }
+  if (c) { pbcext_element_Fr_free(c); c = NULL; }
+  if (hash) { hash_free(hash); hash = NULL; }
+  if (bytes) { mem_free(bytes); bytes = NULL; }
    
   return rc;
    

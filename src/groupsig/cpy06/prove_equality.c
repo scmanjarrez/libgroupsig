@@ -24,28 +24,28 @@
 #include "groupsig/cpy06/mem_key.h"
 #include "groupsig/cpy06/grp_key.h"
 #include "groupsig/cpy06/signature.h"
-#include "wrappers/hash.h"
-#include "wrappers/pbc_ext.h"
+#include "shim/hash.h"
+#include "shim/pbc_ext.h"
 #include "sys/mem.h"
 
-/* Private functions */
-
-
-/* Public functions */
-
-int cpy06_prove_equality(groupsig_proof_t *proof, groupsig_key_t *memkey, 
-			 groupsig_key_t *grpkey, groupsig_signature_t **sigs, uint16_t n_sigs) {
+int cpy06_prove_equality(groupsig_proof_t *proof,
+			 groupsig_key_t *memkey, 
+			 groupsig_key_t *grpkey,
+			 groupsig_signature_t **sigs,
+			 uint16_t n_sigs) {
 
   cpy06_grp_key_t *gkey;
   cpy06_mem_key_t *mkey;
   groupsig_signature_t *sig;
   cpy06_signature_t *cpy06_sig;
   cpy06_proof_t *cpy06_proof;
-  cpy06_sysenv_t *cpy06_sysenv;
   byte_t *bytes;
   hash_t *hash;
-  element_t r, e, er;
-  int rc, n;
+  pbcext_element_Fr_t *r;
+  pbcext_element_G1_t *g1;
+  pbcext_element_GT_t *e, *er;
+  uint64_t n;
+  int rc;
   uint8_t i;
 
   if(!proof || proof->scheme != GROUPSIG_CPY06_CODE ||
@@ -55,20 +55,31 @@ int cpy06_prove_equality(groupsig_proof_t *proof, groupsig_key_t *memkey,
     LOG_EINVAL(&logger, __FILE__, "cpy06_prove_equality", __LINE__, LOGERROR);
     return IERROR;
   }
-   
+
+  /* @TODO: The code here can probably simplified/optimized via the crypto/spk.h
+     module (as an spk_rep_t proof). Not sure though, so leaving as technical 
+     debt. */
+
+  e = er = NULL;
+  g1 = NULL;
+  r = NULL;
+  bytes = NULL;
+  hash = NULL;
   rc = IOK;
    
   gkey = (cpy06_grp_key_t *) grpkey->key;
   mkey = (cpy06_mem_key_t *) memkey->key;
   cpy06_proof = (cpy06_proof_t *) proof->proof;
-  cpy06_sysenv = sysenv->data;
    
   /* Initialize the hashing environment */
-  if(!(hash = hash_init(HASH_BLAKE2))) GOTOENDRC(IERROR, cpy06_prove_equality);
+  if(!(hash = hash_init(HASH_BLAKE2)))
+    GOTOENDRC(IERROR, cpy06_prove_equality);
    
   /* Get random r */
-  element_init_Zr(r, cpy06_sysenv->pairing);
-  element_random(r);
+  if (!(r = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, cpy06_prove_equality);
+  if (pbcext_element_Fr_random(r) == IERROR)
+    GOTOENDRC(IERROR, cpy06_prove_equality);
 
   /* To create the proof, we make use of the T4 and T5 objects of the signatures. 
      The knowledge of the discrete logarithm of T5 to the base e(g1,T4) is used in 
@@ -76,11 +87,16 @@ int cpy06_prove_equality(groupsig_proof_t *proof, groupsig_key_t *memkey,
      issued by the same member, with corresponding objects T4, T5, T4' and T5', we 
      prove here that the discrete logarithm of T5 to the base e(g1,T4) is the same 
      to that of T5' to the base e(g1,T4'). */
-
   
   /* (1) Raise e(g1,T4) of each received signature to r, and put it into the hash. */
-  element_init_GT(e, cpy06_sysenv->pairing);
-  element_init_GT(er, cpy06_sysenv->pairing);
+  if (!(e = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, cpy06_prove_equality);
+  if (!(er = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, cpy06_prove_equality);
+  if (!(g1 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, cpy06_prove_equality);
+  if (pbcext_element_G1_from_string(&g1, BLS12_381_P, 10) == IERROR)
+    GOTOENDRC(IERROR, cpy06_prove_equality);
 
   for(i=0; i<n_sigs; i++) {
 
@@ -94,12 +110,14 @@ int cpy06_prove_equality(groupsig_proof_t *proof, groupsig_key_t *memkey,
 
     cpy06_sig = (cpy06_signature_t *) sig->sig;
 
-    element_pairing(e, gkey->g1, cpy06_sig->T4);
-    element_pow_zn(er, e, r);
+    if (pbcext_pairing(e, g1, cpy06_sig->T4) == IERROR)
+      GOTOENDRC(IERROR, cpy06_prove_equality);
+    if (pbcext_element_GT_pow(er, e, r) == IERROR)
+      GOTOENDRC(IERROR, cpy06_prove_equality);
          
     /* Put the i-th e(g1,T4)^r element of the array */
     bytes = NULL;
-    if(pbcext_element_export_bytes(&bytes, &n, er) == IERROR)
+    if(pbcext_element_GT_to_bytes(&bytes, &n, er) == IERROR)
       GOTOENDRC(IERROR, cpy06_prove_equality);
 
     if(hash_update(hash, bytes, n) == IERROR) 
@@ -109,7 +127,7 @@ int cpy06_prove_equality(groupsig_proof_t *proof, groupsig_key_t *memkey,
 
     /* Put the also the base ( = e(g1,T4) ) into the hash */
     bytes = NULL;
-    if(pbcext_element_export_bytes(&bytes, &n, e) == IERROR)
+    if(pbcext_element_GT_to_bytes(&bytes, &n, e) == IERROR)
       GOTOENDRC(IERROR, cpy06_prove_equality);
 
     if(hash_update(hash, bytes, n) == IERROR) 
@@ -119,7 +137,7 @@ int cpy06_prove_equality(groupsig_proof_t *proof, groupsig_key_t *memkey,
 
     /* ... and T5 */
     bytes = NULL;
-    if(pbcext_element_export_bytes(&bytes, &n, cpy06_sig->T5) == IERROR)
+    if(pbcext_element_GT_to_bytes(&bytes, &n, cpy06_sig->T5) == IERROR)
       GOTOENDRC(IERROR, cpy06_prove_equality);
 
     if(hash_update(hash, bytes, n) == IERROR) 
@@ -129,24 +147,39 @@ int cpy06_prove_equality(groupsig_proof_t *proof, groupsig_key_t *memkey,
     
   }
     
-  /* (2) Calculate c = hash((e(g1,T4)^r)[1] || (e(g1,T4))[1] || ... || (e(g1,T4)^r)[n] || (e(g1,T4))[n] ) */
+  /* (2) Calculate c = hash((e(g1,T4)^r)[1] || (e(g1,T4))[1] || ... || 
+                            (e(g1,T4)^r)[n] || (e(g1,T4))[n] ) */
   if(hash_finalize(hash) == IERROR) GOTOENDRC(IERROR, cpy06_prove_equality);
 
   /* Now, we have to get c as an element_t */
-  element_init_Zr(cpy06_proof->c, cpy06_sysenv->pairing);
-  element_from_hash(cpy06_proof->c, hash->hash, hash->length);
+  if (!cpy06_proof->c) {
+    if (!(cpy06_proof->c = pbcext_element_Fr_init()))      
+      GOTOENDRC(IERROR, cpy06_prove_equality);
+  }
+  if (pbcext_element_Fr_from_hash(cpy06_proof->c,
+				  hash->hash,
+				  hash->length) == IERROR)
+    GOTOENDRC(IERROR, cpy06_prove_equality);
 
   /* (3) To end, get s = r - c*x */
-  element_init_Zr(cpy06_proof->s, cpy06_sysenv->pairing);
-  element_mul(cpy06_proof->s, cpy06_proof->c, mkey->x);
-  element_add(cpy06_proof->s, r, cpy06_proof->s);
+  if (!cpy06_proof->s) {
+    if (!(cpy06_proof->s = pbcext_element_Fr_init()))
+      GOTOENDRC(IERROR, cpy06_prove_equality);
+  }
+  if (pbcext_element_Fr_mul(cpy06_proof->s, cpy06_proof->c, mkey->x) == IERROR)
+    GOTOENDRC(IERROR, cpy06_prove_equality);  
+  if (pbcext_element_Fr_add(cpy06_proof->s, r, cpy06_proof->s) == IERROR)
+    GOTOENDRC(IERROR, cpy06_prove_equality);
 
   /* Free resources and exit */
  cpy06_prove_equality_end:
  
-  element_clear(r);
-  element_clear(e);
-  element_clear(er);
+  if (r) { pbcext_element_Fr_free(r); r = NULL; }
+  if (g1) { pbcext_element_G1_free(g1); g1 = NULL; }
+  if (e) { pbcext_element_GT_free(e); e = NULL; }
+  if (er) { pbcext_element_GT_free(er); er = NULL; }
+  if (hash) { hash_free(hash); hash = NULL; }
+  if (bytes) { mem_free(bytes); bytes = NULL; }
 
   return rc;
    

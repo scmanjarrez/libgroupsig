@@ -23,7 +23,6 @@
 #include <errno.h>
 
 #include "include/crl.h"
-#include "bigz.h"
 #include "cpy06.h"
 #include "groupsig/cpy06/signature.h"
 #include "groupsig/cpy06/grp_key.h"
@@ -33,33 +32,33 @@
 #include "groupsig/cpy06/trapdoor.h"
 #include "groupsig/cpy06/identity.h"
 
-int cpy06_trace(uint8_t *ok, groupsig_signature_t *sig, groupsig_key_t *grpkey, crl_t *crl, groupsig_key_t *mgrkey, gml_t *gml) {
+int cpy06_trace(uint8_t *ok,
+		groupsig_signature_t *sig,
+		groupsig_key_t *grpkey,
+		crl_t *crl,
+		groupsig_key_t *mgrkey,
+		gml_t *gml) {
 
   cpy06_signature_t *cpy06_sig;
   cpy06_grp_key_t *gkey;
-  //cpy06_mgr_key_t *mkey;
-  cpy06_sysenv_t *cpy06_sysenv;
   trapdoor_t *trapi;
-  element_t e;
+  cpy06_trapdoor_t *cpy06_trapi;
+  pbcext_element_GT_t *e;
   uint64_t i;
   uint8_t revoked;
 
   if(!ok || !sig || sig->scheme != GROUPSIG_CPY06_CODE ||
      !grpkey || grpkey->scheme != GROUPSIG_CPY06_CODE ||
-     //!mgrkey || mgrkey->scheme != GROUPSIG_CPY06_CODE ||
-     //!gml ||
      !crl) {
     LOG_EINVAL(&logger, __FILE__, "cpy06_trace", __LINE__, LOGERROR);
     return IERROR;
   }
 
   gkey = (cpy06_grp_key_t *) grpkey->key;
-  //mkey = (cpy06_mgr_key_t *) mgrkey->key;
   cpy06_sig = (cpy06_signature_t *) sig->sig;
-  cpy06_sysenv = sysenv->data;
 
-  element_init_GT(e, cpy06_sysenv->pairing);
-
+  if (!(e = pbcext_element_GT_init())) return IERROR;
+      
   i = 0; revoked = 0;
   while(i < crl->n) {
 
@@ -70,13 +69,20 @@ int cpy06_trace(uint8_t *ok, groupsig_signature_t *sig, groupsig_key_t *grpkey, 
     /* } */
 
     /* Get the next trapdoor to test */
-    trapi = ((cpy06_crl_entry_t *) crl_get(crl, i))->trapdoor;
+    if (!(trapi = ((cpy06_crl_entry_t *) crl_get(crl, i))->trapdoor)) {
+      pbcext_element_GT_free(e); e = NULL;
+      return IERROR;
+    }
+
+    cpy06_trapi = trapi->trap;
   
     /* Compute e(trapi->C, sig->T4) */
-    element_pairing(e, ((cpy06_trapdoor_t *) trapi->trap)->trace, cpy06_sig->T4);
-    if(!element_cmp(e, cpy06_sig->T5)) {
-      revoked = 1;
+    if (pbcext_pairing(e, cpy06_trapi->trace, cpy06_sig->T4) == IERROR) {
+      pbcext_element_GT_free(e); e = NULL;
+      return IERROR;
     }
+    
+    if(!pbcext_element_GT_cmp(e, cpy06_sig->T5)) revoked = 1;    
 
     /* trapdoor_free(trapi); trapi = NULL; */
 
@@ -85,6 +91,7 @@ int cpy06_trace(uint8_t *ok, groupsig_signature_t *sig, groupsig_key_t *grpkey, 
   }
 
   *ok = revoked;
+  pbcext_element_GT_free(e); e = NULL;
 
   return IOK;
 
