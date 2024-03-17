@@ -47,6 +47,10 @@ typedef struct {
   pbcext_element_Fr_t *x; /**< x \in_R Z^*_p (non-adaptively chosen by member) */
   pbcext_element_Fr_t *t; /**< t \in_R Z^*_p (chosen by manager) */
   pbcext_element_G1_t *A; /**< A = (q*g_1^x)^(1/t+\gamma) */
+  pbcext_element_Fr_t *_y; /**< Used only during the interactive join protocol.
+			      Ignored in export/import. */
+  pbcext_element_Fr_t *_r; /**< Used only during the interactive join protocol.
+			      Ignored inn export/import. */
 } cpy06_mem_key_t;
 
 /** 

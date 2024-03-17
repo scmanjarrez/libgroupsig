@@ -93,7 +93,7 @@ static const groupsig_description_t cpy06_description = {
 #define CPY06_JOIN_START 1
 
 /* Number of exchanged messages */
-#define CPY06_JOIN_SEQ 2
+#define CPY06_JOIN_SEQ 4
 
 /**
  * @def CPY06_D_MAX
