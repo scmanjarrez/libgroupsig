@@ -53,7 +53,8 @@ int cpy06_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
   cpy06_grpkey = grpkey->key;
   rc = IOK;
 
-  B1 = B2 = B3 = B4 = aux_G1 = NULL;
+  g1 = B1 = B2 = B3 = B4 = aux_G1 = NULL;
+  g2 = NULL;
   B5 = B6 = aux_GT = aux_e = NULL;
   aux_sd1sd2 = aux_sr1sr2 = aux_sx = c = NULL;
   aux_c = NULL;

@@ -83,13 +83,14 @@ int cpy06_join_mgr(message_t **mout,
   cpy06_mgrkey = (cpy06_mgr_key_t *) mgrkey->key;
   cpy06_grpkey = (cpy06_grp_key_t *) grpkey->key;
   rc = IOK;
-  I = pi = NULL;
+  g1 = I = pi = NULL;
   bkey = bmsg = bu = bv = bI = bpi = NULL;
   gammat = u = v = NULL;
   len = ulen = vlen = Ilen = pilen = 0;
   cpy06_data = NULL;
   cpy06_trap = NULL;
   spk = NULL;
+  memkey = NULL;
 
   /* First step by manager (seq 1/4): Generate challenge (randomness) */
   if (seq == 1) {
@@ -104,8 +105,12 @@ int cpy06_join_mgr(message_t **mout,
     /* Generate random u, v from Z^*_p */
     if (!(u = pbcext_element_Fr_init()))
       GOTOENDRC(IERROR, cpy06_join_mgr);
+    if (pbcext_element_Fr_random(u) == IERROR)
+      GOTOENDRC(IERROR, cpy06_join_mgr);
     if (!(v = pbcext_element_Fr_init()))
       GOTOENDRC(IERROR, cpy06_join_mgr);
+    if (pbcext_element_Fr_random(v) == IERROR)
+      GOTOENDRC(IERROR, cpy06_join_mgr);    
 
     /* Send u, v, I to member */
     if (pbcext_dump_element_Fr_bytes(&bu, &ulen, u) == IERROR)
@@ -152,7 +157,13 @@ int cpy06_join_mgr(message_t **mout,
     if (pbcext_get_element_G1_bytes(pi,  &pilen, min->bytes + Ilen) == IERROR)
       GOTOENDRC(IERROR, cpy06_join_mgr);    
     if (!(spk = spk_rep_import(min->bytes + Ilen + pilen, &len)))
-      GOTOENDRC(IERROR, cpy06_join_mgr); 
+      GOTOENDRC(IERROR, cpy06_join_mgr);
+
+    if (pbcext_dump_element_G1_bytes(&bpi, &pilen, pi) == IERROR)
+      GOTOENDRC(IERROR, cpy06_join_mgr);
+    if (!(g1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, cpy06_join_mgr);
+    if (pbcext_element_G1_from_string(&g1, BLS12_381_P, 10) == IERROR)
+      GOTOENDRC(IERROR, cpy06_join_mgr);   
 
     /* Verify spk */
     Y[0] = pi;
@@ -224,6 +235,8 @@ int cpy06_join_mgr(message_t **mout,
     
     /* Set memkey->x to 0 for export to work */
     if (!(cpy06_memkey->x = pbcext_element_Fr_init()))
+      GOTOENDRC(IERROR, cpy06_join_mgr);
+    if (pbcext_element_Fr_clear(cpy06_memkey->x) == IERROR)
       GOTOENDRC(IERROR, cpy06_join_mgr);
     
     /* Write the memkey into mout */
@@ -304,6 +317,11 @@ int cpy06_join_mgr(message_t **mout,
   if (pi) { pbcext_element_G1_free(pi); pi = NULL; }  
   if (memkey) { cpy06_mem_key_free(memkey); memkey = NULL; }
   if (bkey) { mem_free(bkey); bkey = NULL; }
+  if (bpi) { mem_free(bpi); bpi = NULL; }
+  if (bmsg) { mem_free(bmsg); bmsg = NULL; }
+  if (bu) { mem_free(bu); bu = NULL; }
+  if (bv) { mem_free(bv); bv = NULL; }
+  if (bI) { mem_free(bI); bI = NULL; }
 
   return rc;
 

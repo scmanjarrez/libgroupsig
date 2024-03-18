@@ -81,6 +81,10 @@ int cpy06_join_mem(message_t **mout,
       GOTOENDRC(IERROR, cpy06_join_mem);
     if (pbcext_element_Fr_random(y) == IERROR)
       GOTOENDRC(IERROR, cpy06_join_mem);
+    if (!(r = pbcext_element_Fr_init()))
+      GOTOENDRC(IERROR, cpy06_join_mem);
+    if (pbcext_element_Fr_random(r) == IERROR)
+      GOTOENDRC(IERROR, cpy06_join_mem);    
 
     /* I = yG1 + rQ */
     if (!(g1 = pbcext_element_G1_init()))
@@ -109,7 +113,7 @@ int cpy06_join_mem(message_t **mout,
     
     /* First message is I */
     if (pbcext_dump_element_G1_bytes(&bmsg, &len, I) == IERROR)
-      GOTOENDRC(IERROR, cpy06_join_mem);
+      GOTOENDRC(IERROR, cpy06_join_mem)
 
     if(!*mout) {
       if(!(_mout = message_from_bytes(bmsg, len)))
@@ -126,7 +130,7 @@ int cpy06_join_mem(message_t **mout,
   /* 2nd step by member (seq 2/4): generate non-adaptive random xi with member 
      committed randomness, and manager provided randomness */
   else if (seq == 2) {
-
+    
     /* y and r values from seq = 0 are fetched from the memkey */
 
     /* min = <u,v,I> 
