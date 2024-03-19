@@ -37,7 +37,7 @@ extern "C" {
  * @def GROUPSIG_PROOF_HANDLES_N
  * @brief Number of supported proof bundles.
  */
-#define GROUPSIG_PROOF_HANDLES_N 5
+#define GROUPSIG_PROOF_HANDLES_N 6
 
 /**
  * @var GROUPSIG_PROOF_HANDLES

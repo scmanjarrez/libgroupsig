@@ -275,10 +275,12 @@ int cpy06_join_mgr(message_t **mout,
       /* Trace trapdoor */
       if (!(cpy06_trap->trace = pbcext_element_G1_init()))
 	GOTOENDRC(IERROR, cpy06_join_mgr);
-      if (pbcext_element_G1_mul(cpy06_trap->trace,
-				g1,
-				cpy06_memkey->x))
+      if (pbcext_element_G1_set(cpy06_trap->trace, pi))
 	GOTOENDRC(IERROR, cpy06_join_mgr);
+      /* if (pbcext_element_G1_mul(cpy06_trap->trace, */
+      /* 				g1, */
+      /* 				cpy06_memkey->x)) */
+      /* 	GOTOENDRC(IERROR, cpy06_join_mgr); */
       
       /* Currently, CPY06 identities are just uint64_t's */
       if (!(cpy06_data->id = identity_init(GROUPSIG_CPY06_CODE)))

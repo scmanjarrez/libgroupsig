@@ -28,7 +28,7 @@
 #include "sys/mem.h"
 #include "registered_groupsigs.h"
 
-#define GROUPSIG_REGISTERED_GROUPSIGS_N 7
+#define GROUPSIG_REGISTERED_GROUPSIGS_N 8
 
 static const groupsig_t *GROUPSIG_REGISTERED_GROUPSIGS[GROUPSIG_REGISTERED_GROUPSIGS_N] = {
   &kty04_groupsig_bundle,
@@ -251,6 +251,13 @@ int groupsig_sign(groupsig_signature_t *sig,
 		  unsigned int seed) {
 
   const groupsig_t *gs;
+
+  if (!sig) return IERROR;
+  if (!msg) return IERROR;
+  if (!memkey) return IERROR;
+  if (!grpkey) return IERROR;
+  if (sig->scheme != memkey->scheme) return IERROR;
+  if (memkey->scheme != grpkey->scheme) return IERROR;
 
   if(!sig || !msg || !memkey || !grpkey ||
      sig->scheme != memkey->scheme || memkey->scheme != grpkey->scheme) {

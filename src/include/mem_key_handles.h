@@ -38,7 +38,7 @@ extern "C" {
  * @def GROUPSIG_MEM_KEY_HANDLES_N
  * @brief Number of known handles of member key schemes.
  */
-#define GROUPSIG_MEM_KEY_HANDLES_N 7
+#define GROUPSIG_MEM_KEY_HANDLES_N 8
 
 /**
  * @var GROUPSIG_MEM_KEY_HANDLES
