@@ -5,7 +5,7 @@ from pygroupsig.common_build import ffibuilder
 ffibuilder.cdef("#define GROUPSIG_CPY06_CODE 2")
 #ffibuilder.cdef('#define GROUPSIG_CPY06_NAME "CPY06"')
 ffibuilder.cdef("#define CPY06_JOIN_START 1")
-ffibuilder.cdef("#define CPY06_JOIN_SEQ 2")
+ffibuilder.cdef("#define CPY06_JOIN_SEQ 4")
 
 ffibuilder.cdef("""
 int cpy06_init();
