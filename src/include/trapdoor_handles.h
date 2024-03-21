@@ -33,7 +33,7 @@ extern "C" {
  * @def TRAPDOOR_HANDLES_N
  * @brief Number of supported trapdoors.
  */
-#define TRAPDOOR_HANDLES_N 2
+#define TRAPDOOR_HANDLES_N 3
 
 /**
  * @var TRAPDOOR_HANDLES

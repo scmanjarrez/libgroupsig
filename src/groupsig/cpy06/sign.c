@@ -69,6 +69,7 @@ int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   cpy06_memkey = memkey->key;
 
   g1 = B1 = B2 = B3 = B4 = NULL;
+  g2 = NULL;
   B5 = B6 = aux_e = NULL;
   r1 = r2 = r3 = d1 = d2 = NULL;
   aux_r1r2 = aux_r3x = aux_bd1bd2 = aux_br1br2 = aux_bx = NULL;

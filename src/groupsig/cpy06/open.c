@@ -64,6 +64,7 @@ int cpy06_open(uint64_t *id,
   cpy06_sig = sig->sig;
   cpy06_grpkey = grpkey->key;
   cpy06_mgrkey = mgrkey->key;
+  match = 0;
   rc = IOK;
   
 

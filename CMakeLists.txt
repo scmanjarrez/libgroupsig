@@ -83,8 +83,8 @@ ON)
 
 ## Google Test
 if (USE_GTEST)
-  #  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -fprofile-arcs -ftest-coverage")
-  #  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_TEST_COMPILE_FLAGS}" )
+  #SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -fprofile-arcs -ftest-coverage")
+  #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_TEST_COMPILE_FLAGS}" )
   include (gtest)
 endif (USE_GTEST)
 

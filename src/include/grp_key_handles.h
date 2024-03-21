@@ -38,7 +38,7 @@ extern "C" {
  * @def GROUPSIG_GRP_KEY_HANDLES_N
  * @brief Number of supported group key implementations.
  */
-#define GROUPSIG_GRP_KEY_HANDLES_N 7
+#define GROUPSIG_GRP_KEY_HANDLES_N 8
 
 /**
  * @var GROUPSIG_GRP_KEY_HANDLES

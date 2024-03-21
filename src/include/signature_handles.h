@@ -38,7 +38,7 @@ extern "C" {
  * @def GROUPSIG_SIGNATURE_HANDLES_N
  * @brief Number of supported set of handles for managing group signatures.
  */
-#define GROUPSIG_SIGNATURE_HANDLES_N 7
+#define GROUPSIG_SIGNATURE_HANDLES_N 8
 
 /**
  * @var GROUPSIG_SIGNATURE_HANDLES
