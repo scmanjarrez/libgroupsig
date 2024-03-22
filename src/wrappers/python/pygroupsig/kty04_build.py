@@ -5,7 +5,7 @@ from pygroupsig.common_build import ffibuilder
 ffibuilder.cdef("#define GROUPSIG_KTY04_CODE 0")
 #ffibuilder.cdef('#define GROUPSIG_KTY04_NAME "KTY04"')
 ffibuilder.cdef("#define KTY04_JOIN_START 1")
-ffibuilder.cdef("#define KTY04_JOIN_SEQ 2")
+ffibuilder.cdef("#define KTY04_JOIN_SEQ 1")
 
 ffibuilder.cdef("""
 int kty04_init();

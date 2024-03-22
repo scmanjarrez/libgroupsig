@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -49,6 +49,15 @@ extern "C" {
  */
 #define GROUPSIG_KLAP20_NAME "KLAP20"
 
+/* Metadata for the join protocol */
+
+/* 0 means the first message is sent by the manager, 1 means the first message
+   is sent by the member */
+#define KLAP20_JOIN_START 0
+
+/* Number of exchanged messages */
+#define KLAP20_JOIN_SEQ 3
+
 /**
  * @var klap20_description
  * @brief KLAP20's description.
@@ -64,91 +73,82 @@ static const groupsig_description_t klap20_description = {
   2 /**< KLAP20's inspector (opener) key is the second manager key. */
 };
 
-/* Metadata for the join protocol */
-
-/* 0 means the first message is sent by the manager, 1 means the first message
-   is sent by the member */
-#define KLAP20_JOIN_START 0
-
-/* Number of exchanged messages */
-#define KLAP20_JOIN_SEQ 3
-
-/** 
+/**
  * @fn int klap20_init()
  * @brief Initializes the internal variables needed by KLAP20. In this case,
  *  it only sets up the pairing module.
  *
  * @return IOK or IERROR.
- */  
+ */
 int klap20_init();
 
-/** 
+/**
  * @fn int klap20_clear()
  * @brief Frees the memory initialized by klap20_init.
  *
  * @return IOK or IERROR.
- */   
-int klap20_clear();  
+ */
+int klap20_clear();
 
-/** 
- * @fn int klap20_setup(groupsig_key_t *grpkey, 
- *                      groupsig_key_t *mgrkey, 
+/**
+ * @fn int klap20_setup(groupsig_key_t *grpkey,
+ *                      groupsig_key_t *mgrkey,
  *                      gml_t *gml)
  * @brief The setup function for the KLAP20 scheme. Used to generate group public
  *  key and the managers keys.
- * 
- *  In KLAP20, we have two central entities (managers in libgroupsig jargon): the 
+ *
+ *  In KLAP20, we have two central entities (managers in libgroupsig jargon): the
  *  Issuer, and the Opener. Both managers have public-private keypairs, their
- *  public parts being a part of the overall group public key. In order to 
+ *  public parts being a part of the overall group public key. In order to
  *  properly create the group public key and the manager's keys, we need to call
  *  setup twice. The first time it is called, a partial group public key will be
  *  generated, along with the Issuer's private key (i.e., the Issuer is expected
  *  to initiate this process.) The second call must receive as input the partial
  *  group public key obtained in the first call, and a new manager key. As a
  *  result of the second call, the group public key is completely set up, and the
- *  Opener's private key is also generated. Therefore, this second call is 
+ *  Opener's private key is also generated. Therefore, this second call is
  *  expected to be made by the Opener.
  *
  *  To be precise, whenever an empty group public key (i.e., an initialized KLAP20
- *  groupsig_key_t struct, with all fields in the key sub-struct set to NULL), 
+ *  groupsig_key_t struct, with all fields in the key sub-struct set to NULL),
  *  is received, the function assumes that this is a first call.
  *
  * @param[in,out] grpkey An initialized group key. In the first call, a partial
  *  group public key will be returned.
  * @param[in,out] mgrkey An initialized manager key. In the first call, it will
- *  be set to the Issuer's private key. In the second call, it will be set to 
+ *  be set to the Issuer's private key. In the second call, it will be set to
  *  the converter's private key..
  * @param[in] gml Ignored.
- * 
+ *
  * @return IOK or IERROR.
  */
 int klap20_setup(groupsig_key_t *grpkey,
-		 groupsig_key_t *mgrkey,
-		 gml_t *gml);
+                 groupsig_key_t *mgrkey,
+                 gml_t *gml);
 
 /**
  * @fn int klap20_get_joinseq(uint8_t *seq)
  * @brief Returns the number of messages to be exchanged in the join protocol.
- * 
+ *
  * @param seq A pointer to store the number of messages to exchange.
  *
  * @return IOK or IERROR.
- */ 
+ */
 int klap20_get_joinseq(uint8_t *seq);
 
 /**
  * @fn int klap20_get_joinstart(uint8_t *start)
  * @brief Returns who sends the first message in the join protocol.
- * 
+ *
  * @param start A pointer to store the who starts the join protocol. 0 means
  *  the Manager starts the protocol, 1 means the Member starts the protocol.
  *
  * @return IOK or IERROR.
- */ 
+ */
 int klap20_get_joinstart(uint8_t *start);
 
-/** 
-* @fn int klap20_join_mem(message_t **mout, groupsig_key_t *memkey,
+/**
+ * @fn int klap20_join_mem(message_t **mout, groupsig_key_t *memkey,
  *			      int seq, message_t *min, groupsig_key_t *grpkey)
  * @brief Executes the member-side join of the KLAP20 scheme.
  *
@@ -161,21 +161,21 @@ int klap20_get_joinstart(uint8_t *start);
  * @param[in] min Input message received from the manager for the current step
  *  of the join/issue protocol.
  * @param[in] grpkey The group key.
- * 
+ *
  * @return IOK or IERROR.
  */
 int klap20_join_mem(message_t **mout,
-		    groupsig_key_t *memkey,
-		    int seq,
-		    message_t *min,
-		    groupsig_key_t *grpkey);
+                    groupsig_key_t *memkey,
+                    int seq,
+                    message_t *min,
+                    groupsig_key_t *grpkey);
 
-/** 
- * @fn int klap20_join_mgr(message_t **mout, 
+/**
+ * @fn int klap20_join_mgr(message_t **mout,
  *                       gml_t *gml,
  *                       groupsig_key_t *mgrkey,
- *                       int seq, 
- *                       message_t *min, 
+ *                       int seq,
+ *                       message_t *min,
  *			 groupsig_key_t *grpkey)
  * @brief Executes the manager-side join of the join procedure.
  *
@@ -183,28 +183,28 @@ int klap20_join_mem(message_t **mout,
  *  issue protocol.
  * @param[in,out] gml The group membership list that may be updated with
  *  information related to the new member.
-// * @param[in,out] memkey The partial member key to be completed by the group
-* @param[in] seq The step to run of the join/issue protocol.
+ // * @param[in,out] memkey The partial member key to be completed by the group
+ * @param[in] seq The step to run of the join/issue protocol.
  *  manager.
  * @param[in] min Input message received from the member for the current step of
  *  the join/issue protocol.
  * @param[in] mgrkey The group manager key.
  * @param[in] grpkey The group key.
- * 
+ *
  * @return IOK or IERROR.
  */
 int klap20_join_mgr(message_t **mout,
-		  gml_t *gml,
-		  groupsig_key_t *mgrkey,
-		  int seq,
-		  message_t *min,
-		  groupsig_key_t *grpkey);
+                    gml_t *gml,
+                    groupsig_key_t *mgrkey,
+                    int seq,
+                    message_t *min,
+                    groupsig_key_t *grpkey);
 
-/** 
- * @fn int klap20_sign(groupsig_signature_t *sig, 
- *                   message_t *msg, 
- *                   groupsig_key_t *memkey, 
- *	             groupsig_key_t *grpkey, 
+/**
+ * @fn int klap20_sign(groupsig_signature_t *sig,
+ *                   message_t *msg,
+ *                   groupsig_key_t *memkey,
+ *	             groupsig_key_t *grpkey,
  *                   unsigned int seed)
  * @brief Issues KLAP20 group signatures.
  *
@@ -218,20 +218,20 @@ int klap20_join_mgr(message_t **mout,
  * @param[in] grpkey The group key.
  * @param[in] seed The seed. If it is set to UINT_MAX, the current system PRNG
  *  will be used normally. Otherwise, it will be reseeded with the specified
- *  seed before issuing the signature. 
- * 
+ *  seed before issuing the signature.
+ *
  * @return IOK or IERROR.
  */
 int klap20_sign(groupsig_signature_t *sig,
-	      message_t *msg,
-	      groupsig_key_t *memkey, 
-	      groupsig_key_t *grpkey,
-	      unsigned int seed);
+                message_t *msg,
+                groupsig_key_t *memkey,
+                groupsig_key_t *grpkey,
+                unsigned int seed);
 
-/** 
- * @fn int klap20_verify(uint8_t *ok, 
- *                     groupsig_signature_t *sig, 
- *                     message_t *msg, 
+/**
+ * @fn int klap20_verify(uint8_t *ok,
+ *                     groupsig_signature_t *sig,
+ *                     message_t *msg,
  *		       groupsig_key_t *grpkey);
  * @brief Verifies a KLAP20 group signature.
  *
@@ -240,18 +240,18 @@ int klap20_sign(groupsig_signature_t *sig,
  * @param[in] sig The signature to verify.
  * @param[in] msg The corresponding message.
  * @param[in] grpkey The group key.
- * 
+ *
  * @return IOK or IERROR.
  */
 int klap20_verify(uint8_t *ok,
-		groupsig_signature_t *sig,
-		message_t *msg, 
-		groupsig_key_t *grpkey);
+                  groupsig_signature_t *sig,
+                  message_t *msg,
+                  groupsig_key_t *grpkey);
 
-/** 
- * @fn int klap20_verify_batch(uint8_t *ok, 
- *                             groupsig_signature_t **sigs, 
- *                             message_t **msgs, 
+/**
+ * @fn int klap20_verify_batch(uint8_t *ok,
+ *                             groupsig_signature_t **sigs,
+ *                             message_t **msgs,
  *                             uint32_t n,
  *		               groupsig_key_t *grpkey);
  * @brief Verifies a KLAP20 group signature.
@@ -262,21 +262,21 @@ int klap20_verify(uint8_t *ok,
  * @param[in] msgs The corresponding messagse.
  * @param[in] n The size of the sigs and msgs array.
  * @param[in] grpkey The group key.
- * 
+ *
  * @return IOK or IERROR.
  */
 int klap20_verify_batch(uint8_t *ok,
-			groupsig_signature_t **sigs,
-			message_t **msgs,
-			uint32_t n,
-			groupsig_key_t *grpkey);  
+                        groupsig_signature_t **sigs,
+                        message_t **msgs,
+                        uint32_t n,
+                        groupsig_key_t *grpkey);
 
-/** 
- * @fn int klap20_open(uint64_t *index, groupsig_proof_t *proof, crl_t *crl, 
- *                    groupsig_signature_t *sig, groupsig_key_t *grpkey, 
+/**
+ * @fn int klap20_open(uint64_t *index, groupsig_proof_t *proof, crl_t *crl,
+ *                    groupsig_signature_t *sig, groupsig_key_t *grpkey,
  *	              groupsig_key_t *mgrkey, gml_t *gml)
  * @brief Opens a KLAP20 group signature.
- * 
+ *
  * Opens the specified group signature, obtaining the signer's identity.
  *
  * @param[in,out] index Will be updated with the signer's index in the GML.
@@ -286,38 +286,37 @@ int klap20_verify_batch(uint8_t *ok,
  * @param[in] grpkey The group key.
  * @param[in] mgrkey The manager's key.
  * @param[in] gml The GML.
- * 
+ *
  * @return IOK if it was possible to open the signature. IFAIL if the open
  *  trapdoor was not found, IERROR otherwise.
  */
 int klap20_open(uint64_t *index,
-		groupsig_proof_t *proof,
-		crl_t *crl,
-		groupsig_signature_t *sig,
-		groupsig_key_t *grpkey,
-		groupsig_key_t *mgrkey,
-		gml_t *gml);
+                groupsig_proof_t *proof,
+                crl_t *crl,
+                groupsig_signature_t *sig,
+                groupsig_key_t *grpkey,
+                groupsig_key_t *mgrkey,
+                gml_t *gml);
 
-/** 
+/**
  * @fn int klap20_open_verify(uint8_t *ok,
- *                          groupsig_proof_t *proof, 
+ *                          groupsig_proof_t *proof,
  *                          groupsig_signature_t *sig,
  *                          groupsig_key_t *grpkey)
- * 
+ *
  * @param[in,out] ok Will be set to 1 if the proof is correct, to 0 otherwise.
  *  signature.
  * @param[in] id The identity produced by the open algorithm. Unused. Can be NULL.
  * @param[in] proof The proof of opening.
  * @param[in] sig The group signature associated to the proof.
  * @param[in] grpkey The group key.
- * 
+ *
  * @return IOK or IERROR
  */
 int klap20_open_verify(uint8_t *ok,
-		       groupsig_proof_t *proof, 
-		       groupsig_signature_t *sig,
-		       groupsig_key_t *grpkey);  
-  
+                       groupsig_proof_t *proof,
+                       groupsig_signature_t *sig,
+                       groupsig_key_t *grpkey);
 /**
  * @var klap20_groupsig_bundle
  * @brief The set of functions to manage KLAP20 groups.
@@ -325,10 +324,9 @@ int klap20_open_verify(uint8_t *ok,
 static const groupsig_t klap20_groupsig_bundle = {
  desc: &klap20_description, /**< Contains the KLAP20 scheme description. */
  init: &klap20_init, /**< Initializes the variables needed by KLAP20. */
- clear: &klap20_clear, /**< Frees the varaibles needed by KLAP20. */  
+ clear: &klap20_clear, /**< Frees the varaibles needed by KLAP20. */
  setup: &klap20_setup, /**< Sets up KLAP20 groups. */
- get_joinseq: &klap20_get_joinseq, /**< Returns the number of messages in the join 
-			protocol. */
+ get_joinseq: &klap20_get_joinseq, /**< Returns the number of messages in the join protocol. */
  get_joinstart: &klap20_get_joinstart, /**< Returns who begins the join protocol. */
  join_mem: &klap20_join_mem, /**< Executes member-side joins. */
  join_mgr: &klap20_join_mgr, /**< Executes manager-side joins. */
@@ -338,7 +336,7 @@ static const groupsig_t klap20_groupsig_bundle = {
  open: &klap20_open, /**< Opens KLAP20 signatures. */
  open_verify: &klap20_open_verify, /**< KLAP20 does not create proofs of opening. */
  reveal: NULL, // &klap20_reveal, /**< Reveals the tracing trapdoor from KLAP20 signatures. */
- trace: NULL, // &klap20_trace, /**< Traces the issuer of a signature. */ 
+ trace: NULL, // &klap20_trace, /**< Traces the issuer of a signature. */
  claim: NULL, // &klap20_claim, /**< Claims, in ZK, "ownership" of a signature. */
  claim_verify: NULL, // &klap20_claim_verify, /**< Verifies claims. */
  prove_equality: NULL, // &klap20_prove_equality, /**< Issues "same issuer" ZK proofs for several signatures. */
@@ -347,9 +345,9 @@ static const groupsig_t klap20_groupsig_bundle = {
  convert: NULL, /**< Converts blinded group signatures. */
  unblind: NULL, /**< Unblinds converted group signatures. */
  identify: NULL, // &identify, /**< Determines whether a signature has been issued by a member. */
- link: NULL, // &link, 
+ link: NULL, // &link,
  verify_link: NULL, // &link_verify
- seqlink: NULL, // &seqlink, 
+ seqlink: NULL, // &seqlink,
  verify_seqlink: NULL, // &seqlink_verify
 };
 
@@ -360,7 +358,7 @@ static const groupsig_t klap20_groupsig_bundle = {
 #ifdef __cplusplus
 /* Write any cplusplus specific code here */
 #endif
-  
+
 #endif /* _KLAP20_H */
 
 /* klap20.h ends here */

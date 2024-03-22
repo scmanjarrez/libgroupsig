@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -47,8 +47,18 @@ extern "C" {
  */
 #define GROUPSIG_CPY06_NAME "CPY06"
 
+/* Metadata for the join protocol */
+
+/* 0 means the first message is sent by the manager, 1 means the first message
+   is sent by the member */
+#define CPY06_JOIN_START 1
+
+/* Number of exchanged messages */
+#define CPY06_JOIN_SEQ 4
+
+
 /* @todo Why are CPY06_SUPPORTED_KEY_FORMATS in the main header file
-   but CPY06_SUPPORTED_SIG_FORMATS in the signature.h file!? 
+   but CPY06_SUPPORTED_SIG_FORMATS in the signature.h file!?
    (key applies to all key types!)
 */
 
@@ -85,15 +95,6 @@ static const groupsig_description_t cpy06_description = {
   1, /**< CPY06's issuer key is the first manager key. TODO? */
   1 /**< CPY06's inspector (opener) key is the first manager key. TODO? */
 };
-
-/* Metadata for the join protocol */
-
-/* 0 means the first message is sent by the manager, 1 means the first message
-   is sent by the member */
-#define CPY06_JOIN_START 1
-
-/* Number of exchanged messages */
-#define CPY06_JOIN_SEQ 4
 
 /**
  * @def CPY06_D_MAX
@@ -207,8 +208,8 @@ int cpy06_init();
 
 int cpy06_clear();
 
-/** 
- * @fn int cpy06_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, 
+/**
+ * @fn int cpy06_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey,
  *                     gml_t *gml)
  * @brief The setup function for the CPY06 scheme.
  *
@@ -217,35 +218,35 @@ int cpy06_clear();
  * @param[in,out] mgrkey An initialized manager key, will be updated with the
  *   newly created group's manager key.
  * @param[in,out] gml An initialized GML, will be set to an empty GML.
- * 
+ *
  * @return IOK or IERROR.
  */
 int cpy06_setup(groupsig_key_t *grpkey,
-		groupsig_key_t *mgrkey,
-		gml_t *gml);
+                groupsig_key_t *mgrkey,
+                gml_t *gml);
 
 /**
  * @fn int cpy06_get_joinseq(uint8_t *seq)
  * @brief Returns the number of messages to be exchanged in the join protocol.
- * 
+ *
  * @param seq A pointer to store the number of messages to exchange.
  *
  * @return IOK or IERROR.
- */ 
+ */
 int cpy06_get_joinseq(uint8_t *seq);
 
 /**
  * @fn int cpy06_get_joinstart(uint8_t *start)
  * @brief Returns who sends the first message in the join protocol.
- * 
+ *
  * @param start A pointer to store the who starts the join protocol. 0 means
  *  the Manager starts the protocol, 1 means the Member starts the protocol.
  *
  * @return IOK or IERROR.
- */ 
+ */
 int cpy06_get_joinstart(uint8_t *start);
 
-/** 
+/**
  * @fn int cpy06_join_mem(message_t **mout, groupsig_key_t *memkey,
  *			      int seq, void *min, groupsig_key_t *grpkey)
  * @brief Executes the member-side join of the CPY06 scheme.
@@ -259,19 +260,19 @@ int cpy06_get_joinstart(uint8_t *start);
  * @param[in] min Input message received from the manager for the current step
  *  of the join/issue protocol.
  * @param[in] grpkey The group key.
- * 
+ *
  * @return IOK or IERROR.
  */
 int cpy06_join_mem(message_t **mout,
-		   groupsig_key_t *memkey,
-		   int seq,
-		   message_t *min,
-		   groupsig_key_t *grpkey);
+                   groupsig_key_t *memkey,
+                   int seq,
+                   message_t *min,
+                   groupsig_key_t *grpkey);
 
-/** 
+/**
  * @fn int cpy06_join_mgr(message_t **mout, gml_t *gml,
  *                            groupsig_key_t *mgrkey,
- *                            int seq, void *min, 
+ *                            int seq, void *min,
  *			      groupsig_key_t *grpkey)
  * @brief Executes the manager-side join of the join procedure.
  *
@@ -286,18 +287,18 @@ int cpy06_join_mem(message_t **mout,
  *  the join/issue protocol.
  * @param[in] mgrkey The group manager key.
  * @param[in] grpkey The group key.
- * 
+ *
  * @return IOK or IERROR.
  */
 int cpy06_join_mgr(message_t **mout,
-		   gml_t *gml,
-		   groupsig_key_t *mgrkey,
-		   int seq,
-		   message_t *min,
-		   groupsig_key_t *grpkey);
+                   gml_t *gml,
+                   groupsig_key_t *mgrkey,
+                   int seq,
+                   message_t *min,
+                   groupsig_key_t *grpkey);
 
-/** 
- * @fn int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey, 
+/**
+ * @fn int cpy06_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey,
  *	              groupsig_key_t *grpkey, unsigned int seed)
  * @brief Issues CPY06 group signatures.
  *
@@ -311,18 +312,18 @@ int cpy06_join_mgr(message_t **mout,
  * @param[in] grpkey The group key.
  * @param[in] seed The seed. If it is set to UINT_MAX, the current system PRNG
  *  will be used normally. Otherwise, it will be reseeded with the specified
- *  seed before issuing the signature. 
- * 
+ *  seed before issuing the signature.
+ *
  * @return IOK or IERROR.
  */
 int cpy06_sign(groupsig_signature_t *sig,
-	       message_t *msg,
-	       groupsig_key_t *memkey, 
-	       groupsig_key_t *grpkey,
-	       unsigned int seed);
+               message_t *msg,
+               groupsig_key_t *memkey,
+               groupsig_key_t *grpkey,
+               unsigned int seed);
 
-/** 
- * @fn int cpy06_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, 
+/**
+ * @fn int cpy06_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg,
  *		        groupsig_key_t *grpkey);
  * @brief Verifies a CPY06 group signature.
  *
@@ -331,20 +332,20 @@ int cpy06_sign(groupsig_signature_t *sig,
  * @param[in] sig The signature to verify.
  * @param[in] msg The corresponding message.
  * @param[in] grpkey The group key.
- * 
+ *
  * @return IOK or IERROR.
  */
 int cpy06_verify(uint8_t *ok,
-		 groupsig_signature_t *sig,
-		 message_t *msg, 
-		 groupsig_key_t *grpkey);
+                 groupsig_signature_t *sig,
+                 message_t *msg,
+                 groupsig_key_t *grpkey);
 
-/** 
- * @fn int cpy06_open(uint64_t *id, groupsig_proof_t *proof, 
- *                    crl_t *crl, groupsig_signature_t *sig, 
+/**
+ * @fn int cpy06_open(uint64_t *id, groupsig_proof_t *proof,
+ *                    crl_t *crl, groupsig_signature_t *sig,
  *	              groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml)
  * @brief Opens a CPY06 group signature.
- * 
+ *
  * Opens the specified group signature, obtaining the signer's identity.
  *
  * @param[in,out] id An initialized identity. Will be updated with the signer's
@@ -361,20 +362,20 @@ int cpy06_verify(uint8_t *ok,
  *  trapdoor was not found, IERROR otherwise.
  */
 int cpy06_open(uint64_t *id,
-	       groupsig_proof_t *proof,
-	       crl_t *crl, 
-	       groupsig_signature_t *sig,
-	       groupsig_key_t *grpkey, 
-	       groupsig_key_t *mgrkey,
-	       gml_t *gml);
+               groupsig_proof_t *proof,
+               crl_t *crl,
+               groupsig_signature_t *sig,
+               groupsig_key_t *grpkey,
+               groupsig_key_t *mgrkey,
+               gml_t *gml);
 
-/** 
+/**
  * @fn int cpy06_reveal(trapdoor_t *trap, crl_t *crl, gml_t *gml, uint64_t index)
  * @brief Reveals the tracing trapdoor of the GML entry with the specified index.
  *
  * Reveals the tracing trapdoor of the GML entry with the specified index. If
  * a CRL is also specified, a new entry corresponding to the retrieved trapdoor
- * will be added. 
+ * will be added.
  *
  * @param[in,out] trap An initialized trapdoor. Will be updated with the trapdoor
  *  associated to the group member with the given index within the GML.
@@ -383,63 +384,63 @@ int cpy06_open(uint64_t *id,
  * @param[in] gml The GML.
  * @param[in] index The index of the GML from which the trapdoor is to be obtained.
  *  In CPY06, this matches the real identity of the group members.
- * 
+ *
  * @return IOK or IERROR.
  */
 int cpy06_reveal(trapdoor_t *trap,
-		 crl_t *crl,
-		 gml_t *gml,
-		 uint64_t index);
+                 crl_t *crl,
+                 gml_t *gml,
+                 uint64_t index);
 
-/** 
- * @fn int cpy06_trace(uint8_t *ok, groupsig_signature_t *sig, 
+/**
+ * @fn int cpy06_trace(uint8_t *ok, groupsig_signature_t *sig,
  *                     groupsig_key_t *grpkey, crl_t *crl,
  *                     groupsig_key_t *mgrkey, gml_t *gml)
- * @brief Determines whether or not the given signature has been issued by a 
+ * @brief Determines whether or not the given signature has been issued by a
  *  (unlinkability) revoked member.
  *
  * If the specified signature has been issued by a group member whose tracing
  * trapdoor is included in the CRL, ok will be set to 1. Otherwise, it will
  * be set to 0.
  *
- * @param[in,out] ok Will be set to 1 if the signature has been issued by a 
+ * @param[in,out] ok Will be set to 1 if the signature has been issued by a
  *  group member with revoked unlinkability. To 0 otherwise.
  * @param[in] sig The signature to use for tracing.
  * @param[in] grpkey The group key.
  * @param[in] crl The CRL.
  * @param[in] mgrkey The manager key.
  * @param[in] gml The GML.
- * 
+ *
  * @return IOK or IERROR.
  */
 int cpy06_trace(uint8_t *ok,
-		groupsig_signature_t *sig,
-		groupsig_key_t *grpkey, 
-		crl_t *crl,
-		groupsig_key_t *mgrkey,
-		gml_t *gml);
+                groupsig_signature_t *sig,
+                groupsig_key_t *grpkey,
+                crl_t *crl,
+                groupsig_key_t *mgrkey,
+                gml_t *gml);
 
-/** 
- * @fn int cpy06_claim(groupsig_proof_t *proof, groupsig_key_t *memkey, 
+/**
+ * @fn int cpy06_claim(groupsig_proof_t *proof, groupsig_key_t *memkey,
  *		       groupsig_key_t *grpkey, groupsig_signature_t *sig)
  * @brief Issues a proof demonstrating that the member with the specified key is
  *  the issuer of the specified signature.
- * 
+ *
  * @param[in,out] proof An initialized CPY06 proof. Will be updated with the
  *  contents of the proof.
  * @param[in] memkey The member key of the issuer of the <i>sig</i> parameter.
  * @param[in] grpkey The group key.
  * @param[in] sig The signature.
- * 
+ *
  * @return IOK or IERROR.
  */
 int cpy06_claim(groupsig_proof_t *proof,
-		groupsig_key_t *memkey, 
-		groupsig_key_t *grpkey,
-		groupsig_signature_t *sig);
+                groupsig_key_t *memkey,
+                groupsig_key_t *grpkey,
+                groupsig_signature_t *sig);
 
-/** 
- * @fn int cpy06_claim_verify(uint8_t *ok, groupsig_proof_t *proof, 
+/**
+ * @fn int cpy06_claim_verify(uint8_t *ok, groupsig_proof_t *proof,
  *		              groupsig_signature_t *sig, groupsig_key_t *grpkey)
  * @brief Verifies a claim produced by the function <i>cpy06_claim</i>.
  *
@@ -447,17 +448,17 @@ int cpy06_claim(groupsig_proof_t *proof,
  * @param[in] proof The proof to verify.
  * @param[in] sig The signature associated to the proof.
  * @param[in] grpkey The group key.
- * 
+ *
  * @return IOK or IERROR.
  */
 int cpy06_claim_verify(uint8_t *ok,
-		       groupsig_proof_t *proof, 
-		       groupsig_signature_t *sig,
-		       groupsig_key_t *grpkey);
+                       groupsig_proof_t *proof,
+                       groupsig_signature_t *sig,
+                       groupsig_key_t *grpkey);
 
-/** 
- * @fn int cpy06_prove_equality(groupsig_proof_t *proof, groupsig_key_t *memkey, 
- *			        groupsig_key_t *grpkey, groupsig_signature_t **sigs, 
+/**
+ * @fn int cpy06_prove_equality(groupsig_proof_t *proof, groupsig_key_t *memkey,
+ *			        groupsig_key_t *grpkey, groupsig_signature_t **sigs,
  *                              uint16_t n_sigs)
  * @brief Creates a proof demonstrating that the given set of group signatures
  *  have all been issued by the same member.
@@ -468,21 +469,21 @@ int cpy06_claim_verify(uint8_t *ok,
  * @param[in] grpkey The group key.
  * @param[in] sigs The set of signatures, issued by the member with key <i>memkey</i>
  *  to be used for proof generation.
- * @param[in] n_sigs The number of signatures in <i>sigs</i> 
- * 
+ * @param[in] n_sigs The number of signatures in <i>sigs</i>
+ *
  * @return IOK or IERROR.
  */
 int cpy06_prove_equality(groupsig_proof_t *proof,
-			 groupsig_key_t *memkey, 
-			 groupsig_key_t *grpkey,
-			 groupsig_signature_t **sigs,
-			 uint16_t n_sigs);
+                         groupsig_key_t *memkey,
+                         groupsig_key_t *grpkey,
+                         groupsig_signature_t **sigs,
+                         uint16_t n_sigs);
 
-/** 
- * @fn int cpy06_prove_equality_verify(uint8_t *ok, groupsig_proof_t *proof, 
+/**
+ * @fn int cpy06_prove_equality_verify(uint8_t *ok, groupsig_proof_t *proof,
  *                                     groupsig_key_t *grpkey,
  * 				       groupsig_signature_t **sigs, uint16_t n_sigs)
- * @brief Verifies the received proof, demonstrating that the given set of 
+ * @brief Verifies the received proof, demonstrating that the given set of
  *  signatures have been issued by the same group member.
  *
  * @param[in,out] ok Will be set to 1 if the proof is correct, to 0 otherwise.
@@ -490,14 +491,14 @@ int cpy06_prove_equality(groupsig_proof_t *proof,
  * @param[in] grpkey The group key.
  * @param[in] sigs The signatures that have allegedly been issued by the same member.
  * @param[in] n_sigs The number of signatures in <i>sigs</i>.
- * 
+ *
  * @return IOK or IERROR.
  */
 int cpy06_prove_equality_verify(uint8_t *ok,
-				groupsig_proof_t *proof,
-				groupsig_key_t *grpkey,
-				groupsig_signature_t **sigs,
-				uint16_t n_sigs);
+                                groupsig_proof_t *proof,
+                                groupsig_key_t *grpkey,
+                                groupsig_signature_t **sigs,
+                                uint16_t n_sigs);
 
 /**
  * @var cpy06_groupsig_bundle
@@ -508,7 +509,7 @@ static const groupsig_t cpy06_groupsig_bundle = {
  init: &cpy06_init, /**< Initializes a CPY06 config structure. */
  clear: &cpy06_clear, /**< Frees a CPY06 config structure. */
  setup: &cpy06_setup, /**< Sets up CPY06 groups. */
- get_joinseq: &cpy06_get_joinseq, /**< Returns the number of messages in the join 
+ get_joinseq: &cpy06_get_joinseq, /**< Returns the number of messages in the join
 				     protocol. */
  get_joinstart: &cpy06_get_joinstart, /**< Returns who begins the join protocol. */
  join_mem: &cpy06_join_mem, /**< Executes member-side joins. */
@@ -518,10 +519,10 @@ static const groupsig_t cpy06_groupsig_bundle = {
  open: &cpy06_open, /**< Opens CPY06 signatures. */
  open_verify: NULL, /**< CPY06 does not create proofs of opening. */
  reveal: &cpy06_reveal, /**< Reveals the tracing trapdoor from CPY06 signatures. */
- trace: &cpy06_trace, /**< Traces the issuer of a signature. */ 
+ trace: &cpy06_trace, /**< Traces the issuer of a signature. */
  claim: &cpy06_claim, /**< Claims, in ZK, "ownership" of a signature. */
  claim_verify: &cpy06_claim_verify, /**< Verifies claims. */
- prove_equality: &cpy06_prove_equality, /**< Issues "same issuer" ZK proofs for 
+ prove_equality: &cpy06_prove_equality, /**< Issues "same issuer" ZK proofs for
 					   several signatures. */
  prove_equality_verify: &cpy06_prove_equality_verify, /**< Verifies "same
 							 issuer" ZK proofs. */
@@ -542,7 +543,7 @@ static const groupsig_t cpy06_groupsig_bundle = {
 #ifdef __cplusplus
 /* Write any cplusplus specific code here */
 #endif
-  
+
 #endif /* _CPY06_H */
 
 /* cpy06.h ends here */

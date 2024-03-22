@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -46,6 +46,15 @@ extern "C" {
  */
 #define GROUPSIG_BBS04_NAME "BBS04"
 
+/* Metadata for the join protocol */
+
+/* 0 means the first message is sent by the manager, 1 means the first message
+   is sent by the member */
+#define BBS04_JOIN_START 0
+
+/* Number of exchanged messages */
+#define BBS04_JOIN_SEQ 1
+
 /**
  * @var bbs04_description
  * @brief BBS04's description.
@@ -58,38 +67,29 @@ static const groupsig_description_t bbs04_description = {
   1, /**< BBS04 uses PBC. */
   0, /**< BBS04 does not have verifiable openings. */
   1, /**< BBS04's issuer key is the first manager key. */
-  1 /**< BBS04's inspector (opener) key is the first manager key. */  
+  1 /**< BBS04's inspector (opener) key is the first manager key. */
 };
 
-/* Metadata for the join protocol */
-
-/* 0 means the first message is sent by the manager, 1 means the first message
-   is sent by the member */
-#define BBS04_JOIN_START 0
-
-/* Number of exchanged messages */
-#define BBS04_JOIN_SEQ 1
-
-/** 
+/**
  * @fn int bbs04_init()
  * @brief Initializes the internal variables needed by BBS04. In this case,
  *  it only sets up the pairing module.
  *
  * @return IOK or IERROR.
- */  
+ */
 int bbs04_init();
 
-/** 
+/**
  * @fn int bbs04_clear()
  * @brief Frees the memory initialized by bbs04_init.
  *
  * @return IOK or IERROR.
- */   
+ */
 int bbs04_clear();
-  
-/** 
+
+/**
  * @fn int bbs04_setup(groupsig_key_t *grpkey,
- *                     groupsig_key_t *mgrkey, 
+ *                     groupsig_key_t *mgrkey,
  *                     gml_t *gml)
  * @brief The setup function for the BBS04 scheme.
  *
@@ -98,35 +98,35 @@ int bbs04_clear();
  * @param[in,out] mgrkey An initialized manager key, will be updated with the
  *   newly created group's manager key.
  * @param[in,out] gml An initialized GML, will be set to an empty GML.
- * 
+ *
  * @return IOK or IERROR.
  */
 int bbs04_setup(groupsig_key_t *grpkey,
-		groupsig_key_t *mgrkey,
-		gml_t *gml);
+                groupsig_key_t *mgrkey,
+                gml_t *gml);
 
 /**
  * @fn int bbs04_get_joinseq(uint8_t *seq)
  * @brief Returns the number of messages to be exchanged in the join protocol.
- * 
+ *
  * @param seq A pointer to store the number of messages to exchange.
  *
  * @return IOK or IERROR.
- */ 
+ */
 int bbs04_get_joinseq(uint8_t *seq);
 
 /**
  * @fn int bbs04_get_joinstart(uint8_t *start)
  * @brief Returns who sends the first message in the join protocol.
- * 
+ *
  * @param start A pointer to store the who starts the join protocol. 0 means
  *  the Manager starts the protocol, 1 means the Member starts the protocol.
  *
  * @return IOK or IERROR.
- */ 
+ */
 int bbs04_get_joinstart(uint8_t *start);
 
-/** 
+/**
  * @fn int bbs04_join_mem(message_t **mout,
  *                        groupsig_key_t *memkey,
  *			  int seq, message_t *min,
@@ -142,21 +142,21 @@ int bbs04_get_joinstart(uint8_t *start);
  * @param[in] min Input message received from the manager for the current step
  *  of the join/issue protocol.
  * @param[in] grpkey The group key.
- * 
+ *
  * @return IOK or IERROR.
  */
 int bbs04_join_mem(message_t **mout,
-		   groupsig_key_t *memkey,
-		   int seq,
-		   message_t *min,
-		   groupsig_key_t *grpkey);
+                   groupsig_key_t *memkey,
+                   int seq,
+                   message_t *min,
+                   groupsig_key_t *grpkey);
 
-/** 
- * @fn int bbs04_join_mgr(message_t **mout, 
+/**
+ * @fn int bbs04_join_mgr(message_t **mout,
  *                        gml_t *gml,
  *                        groupsig_key_t *mgrkey,
- *                        int seq, 
- *                        message_t *min, 
+ *                        int seq,
+ *                        message_t *min,
  *			  groupsig_key_t *grpkey)
  * @brief Executes the manager-side join of the join procedure.
  *
@@ -171,21 +171,21 @@ int bbs04_join_mem(message_t **mout,
  *  the join/issue protocol.
  * @param[in] mgrkey The group manager key.
  * @param[in] grpkey The group key.
- * 
+ *
  * @return IOK or IERROR.
  */
 int bbs04_join_mgr(message_t **mout,
-		   gml_t *gml,
-		   groupsig_key_t *mgrkey,
-		   int seq,
-		   message_t *min,
-		   groupsig_key_t *grpkey);
+                   gml_t *gml,
+                   groupsig_key_t *mgrkey,
+                   int seq,
+                   message_t *min,
+                   groupsig_key_t *grpkey);
 
-/** 
- * @fn int bbs04_sign(groupsig_signature_t *sig, 
- *                    message_t *msg, 
- *                    groupsig_key_t *memkey, 
- *	              groupsig_key_t *grpkey, 
+/**
+ * @fn int bbs04_sign(groupsig_signature_t *sig,
+ *                    message_t *msg,
+ *                    groupsig_key_t *memkey,
+ *	              groupsig_key_t *grpkey,
  *                    unsigned int seed)
  * @brief Issues BBS04 group signatures.
  *
@@ -199,20 +199,20 @@ int bbs04_join_mgr(message_t **mout,
  * @param[in] grpkey The group key.
  * @param[in] seed The seed. If it is set to UINT_MAX, the current system PRNG
  *  will be used normally. Otherwise, it will be reseeded with the specified
- *  seed before issuing the signature. 
- * 
+ *  seed before issuing the signature.
+ *
  * @return IOK or IERROR.
  */
 int bbs04_sign(groupsig_signature_t *sig,
-	       message_t *msg,
-	       groupsig_key_t *memkey, 
-	       groupsig_key_t *grpkey,
-	       unsigned int seed);
+               message_t *msg,
+               groupsig_key_t *memkey,
+               groupsig_key_t *grpkey,
+               unsigned int seed);
 
-/** 
- * @fn int bbs04_verify(uint8_t *ok, 
- *                      groupsig_signature_t *sig, 
- *                      message_t *msg, 
+/**
+ * @fn int bbs04_verify(uint8_t *ok,
+ *                      groupsig_signature_t *sig,
+ *                      message_t *msg,
  *		        groupsig_key_t *grpkey);
  * @brief Verifies a BBS04 group signature.
  *
@@ -221,24 +221,24 @@ int bbs04_sign(groupsig_signature_t *sig,
  * @param[in] sig The signature to verify.
  * @param[in] msg The corresponding message.
  * @param[in] grpkey The group key.
- * 
+ *
  * @return IOK or IERROR.
  */
 int bbs04_verify(uint8_t *ok,
-		 groupsig_signature_t *sig,
-		 message_t *msg, 
-		 groupsig_key_t *grpkey);
+                 groupsig_signature_t *sig,
+                 message_t *msg,
+                 groupsig_key_t *grpkey);
 
-/** 
- * @fn int bbs04_open(uint64_t *index, 
- *                    groupsig_proof_t *proof, 
- *                    crl_t *crl, 
- *                    groupsig_signature_t *sig, 
- *                    groupsig_key_t *grpkey, 
- *	              groupsig_key_t *mgrkey, 
+/**
+ * @fn int bbs04_open(uint64_t *index,
+ *                    groupsig_proof_t *proof,
+ *                    crl_t *crl,
+ *                    groupsig_signature_t *sig,
+ *                    groupsig_key_t *grpkey,
+ *	              groupsig_key_t *mgrkey,
  *                    gml_t *gml)
  * @brief Opens a BBS04 group signature.
- * 
+ *
  * Opens the specified group signature, obtaining the signer's identity.
  *
  * @param[in,out] id An initialized identity. Will be updated with the signer's
@@ -249,17 +249,17 @@ int bbs04_verify(uint8_t *ok,
  * @param[in] grpkey The group key.
  * @param[in] mgrkey The manager's key.
  * @param[in] gml The GML.
- * 
+ *
  * @return IOK if it was possible to open the signature. IFAIL if the open
  *  trapdoor was not found, IERROR otherwise.
  */
 int bbs04_open(uint64_t *index,
-	       groupsig_proof_t *proof,
-	       crl_t *crl,
-	       groupsig_signature_t *sig, 
-	       groupsig_key_t *grpkey,
-	       groupsig_key_t *mgrkey,
-	       gml_t *gml);
+               groupsig_proof_t *proof,
+               crl_t *crl,
+               groupsig_signature_t *sig,
+               groupsig_key_t *grpkey,
+               groupsig_key_t *mgrkey,
+               gml_t *gml);
 
 /**
  * @var bbs04_groupsig_bundle
@@ -268,9 +268,9 @@ int bbs04_open(uint64_t *index,
 static const groupsig_t bbs04_groupsig_bundle = {
  desc: &bbs04_description, /**< Contains the BBS04 scheme description. */
  init: &bbs04_init, /**< Initializes the variables needed by BBS04. */
- clear: &bbs04_clear, /**< Frees the varaibles needed by BBS04. */ 
+ clear: &bbs04_clear, /**< Frees the varaibles needed by BBS04. */
  setup: &bbs04_setup, /**< Sets up BBS04 groups. */
- get_joinseq: &bbs04_get_joinseq, /**< Returns the number of messages in the join 
+ get_joinseq: &bbs04_get_joinseq, /**< Returns the number of messages in the join
 				     protocol. */
  get_joinstart: &bbs04_get_joinstart, /**< Returns who begins the join protocol. */
  join_mem: &bbs04_join_mem, /**< Executes member-side joins. */

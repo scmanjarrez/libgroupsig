@@ -106,7 +106,7 @@ const char* groupsig_get_name_from_code(uint8_t code) {
 }
 
 int groupsig_init(uint8_t code,
-		  unsigned int seed) {
+                  unsigned int seed) {
 
   const groupsig_t *gs;
 
@@ -141,7 +141,7 @@ int groupsig_clear(uint8_t code) {
 }
 
 int groupsig_get_joinseq(uint8_t code,
-			 uint8_t *seq) {
+                         uint8_t *seq) {
 
   const groupsig_t *gs;
 
@@ -156,7 +156,7 @@ int groupsig_get_joinseq(uint8_t code,
 }
 
 int groupsig_get_joinstart(uint8_t code,
-			   uint8_t *start) {
+                           uint8_t *start) {
 
   const groupsig_t *gs;
 
@@ -171,9 +171,9 @@ int groupsig_get_joinstart(uint8_t code,
 }
 
 int groupsig_setup(uint8_t code,
-		   groupsig_key_t *grpkey,
-		   groupsig_key_t *mgrkey,
-		   gml_t *gml) {
+                   groupsig_key_t *grpkey,
+                   groupsig_key_t *mgrkey,
+                   gml_t *gml) {
 
   const groupsig_t *gs;
 
@@ -195,10 +195,10 @@ int groupsig_setup(uint8_t code,
 }
 
 int groupsig_join_mem(message_t **mout,
-		      groupsig_key_t *memkey,
-		      int seq,
-		      message_t *min,
-		      groupsig_key_t *grpkey) {
+                      groupsig_key_t *memkey,
+                      int seq,
+                      message_t *min,
+                      groupsig_key_t *grpkey) {
 
   const groupsig_t *gs;
 
@@ -219,10 +219,10 @@ int groupsig_join_mem(message_t **mout,
 }
 
 int groupsig_join_mgr(message_t **mout,
-		      gml_t *gml,
-		      groupsig_key_t *mgrkey,
-		      int seq,
-		      message_t *min, groupsig_key_t *grpkey) {
+                      gml_t *gml,
+                      groupsig_key_t *mgrkey,
+                      int seq,
+                      message_t *min, groupsig_key_t *grpkey) {
 
   const groupsig_t *gs;
 
@@ -245,10 +245,10 @@ int groupsig_join_mgr(message_t **mout,
 }
 
 int groupsig_sign(groupsig_signature_t *sig,
-		  message_t *msg,
-		  groupsig_key_t *memkey,
-		  groupsig_key_t *grpkey,
-		  unsigned int seed) {
+                  message_t *msg,
+                  groupsig_key_t *memkey,
+                  groupsig_key_t *grpkey,
+                  unsigned int seed) {
 
   const groupsig_t *gs;
 
@@ -276,9 +276,9 @@ int groupsig_sign(groupsig_signature_t *sig,
 }
 
 int groupsig_verify(uint8_t *ok,
-		    groupsig_signature_t *sig,
-		    message_t *msg,
-		    groupsig_key_t *grpkey) {
+                    groupsig_signature_t *sig,
+                    message_t *msg,
+                    groupsig_key_t *grpkey) {
 
   const groupsig_t *gs;
 
@@ -299,10 +299,10 @@ int groupsig_verify(uint8_t *ok,
 }
 
 int groupsig_verify_batch(uint8_t *ok,
-			  groupsig_signature_t **sigs,
-			  message_t **msgs,
-			  uint32_t n,
-			  groupsig_key_t *grpkey) {
+                          groupsig_signature_t **sigs,
+                          message_t **msgs,
+                          uint32_t n,
+                          groupsig_key_t *grpkey) {
 
   const groupsig_t *gs;
 
@@ -322,12 +322,12 @@ int groupsig_verify_batch(uint8_t *ok,
 }
 
 int groupsig_open(uint64_t *index,
-		  groupsig_proof_t *proof,
-		  crl_t *crl,
-		  groupsig_signature_t *sig,
-		  groupsig_key_t *grpkey,
-		  groupsig_key_t *mgrkey,
-		  gml_t *gml) {
+                  groupsig_proof_t *proof,
+                  crl_t *crl,
+                  groupsig_signature_t *sig,
+                  groupsig_key_t *grpkey,
+                  groupsig_key_t *mgrkey,
+                  gml_t *gml) {
 
   const groupsig_t *gs;
 
@@ -351,9 +351,9 @@ int groupsig_open(uint64_t *index,
 }
 
 int groupsig_open_verify(uint8_t *ok,
-			 groupsig_proof_t *proof,
-			 groupsig_signature_t *sig,
-			 groupsig_key_t *grpkey) {
+                         groupsig_proof_t *proof,
+                         groupsig_signature_t *sig,
+                         groupsig_key_t *grpkey) {
 
   const groupsig_t *gs;
 
@@ -375,9 +375,9 @@ int groupsig_open_verify(uint8_t *ok,
 }
 
 int groupsig_reveal(trapdoor_t *trap,
-		    crl_t *crl,
-		    gml_t *gml,
-		    uint64_t index) {
+                    crl_t *crl,
+                    gml_t *gml,
+                    uint64_t index) {
 
   const groupsig_t *gs;
 
@@ -400,11 +400,11 @@ int groupsig_reveal(trapdoor_t *trap,
 }
 
 int groupsig_trace(uint8_t *ok,
-		   groupsig_signature_t *sig,
-		   groupsig_key_t *grpkey,
-		   crl_t *crl,
-		   groupsig_key_t *mgrkey,
-		   gml_t *gml) {
+                   groupsig_signature_t *sig,
+                   groupsig_key_t *grpkey,
+                   crl_t *crl,
+                   groupsig_key_t *mgrkey,
+                   gml_t *gml) {
 
   const groupsig_t *gs;
 
@@ -433,9 +433,9 @@ int groupsig_trace(uint8_t *ok,
 }
 
 int groupsig_claim(groupsig_proof_t *proof,
-		   groupsig_key_t *memkey,
-		   groupsig_key_t *grpkey,
-		   groupsig_signature_t *sig) {
+                   groupsig_key_t *memkey,
+                   groupsig_key_t *grpkey,
+                   groupsig_signature_t *sig) {
 
   const groupsig_t *gs;
 
@@ -458,9 +458,9 @@ int groupsig_claim(groupsig_proof_t *proof,
 }
 
 int groupsig_claim_verify(uint8_t *ok,
-			  groupsig_proof_t *proof,
-			  groupsig_signature_t *sig,
-			  groupsig_key_t *grpkey) {
+                          groupsig_proof_t *proof,
+                          groupsig_signature_t *sig,
+                          groupsig_key_t *grpkey) {
 
   const groupsig_t *gs;
 
@@ -482,10 +482,10 @@ int groupsig_claim_verify(uint8_t *ok,
 }
 
 int groupsig_prove_equality(groupsig_proof_t *proof,
-			    groupsig_key_t *memkey,
-			    groupsig_key_t *grpkey,
-			    groupsig_signature_t **sigs,
-			    uint16_t n_sigs) {
+                            groupsig_key_t *memkey,
+                            groupsig_key_t *grpkey,
+                            groupsig_signature_t **sigs,
+                            uint16_t n_sigs) {
 
   const groupsig_t *gs;
 
@@ -507,10 +507,10 @@ int groupsig_prove_equality(groupsig_proof_t *proof,
 }
 
 int groupsig_prove_equality_verify(uint8_t *ok,
-				   groupsig_proof_t *proof,
-				   groupsig_key_t *grpkey,
-				   groupsig_signature_t **sigs,
-				   uint16_t n_sigs) {
+                                   groupsig_proof_t *proof,
+                                   groupsig_key_t *grpkey,
+                                   groupsig_signature_t **sigs,
+                                   uint16_t n_sigs) {
 
   const groupsig_t *gs;
 
@@ -533,10 +533,10 @@ int groupsig_prove_equality_verify(uint8_t *ok,
 }
 
 int groupsig_blind(groupsig_blindsig_t *bsig,
-		   groupsig_key_t **bldkey,
-		   groupsig_key_t *grpkey,
-		   groupsig_signature_t *sig,
-		   message_t *msg) {
+                   groupsig_key_t **bldkey,
+                   groupsig_key_t *grpkey,
+                   groupsig_signature_t *sig,
+                   message_t *msg) {
 
   const groupsig_t *gs;
 
@@ -557,12 +557,12 @@ int groupsig_blind(groupsig_blindsig_t *bsig,
 }
 
 int groupsig_convert(groupsig_blindsig_t **csigs,
-		     groupsig_blindsig_t **bsigs,
-		     uint32_t n_bsigs,
-		     groupsig_key_t *grpkey,
-		     groupsig_key_t *mgrkey,
-		     groupsig_key_t *bldkey,
-		     message_t *msg) {
+                     groupsig_blindsig_t **bsigs,
+                     uint32_t n_bsigs,
+                     groupsig_key_t *grpkey,
+                     groupsig_key_t *mgrkey,
+                     groupsig_key_t *bldkey,
+                     message_t *msg) {
 
   const groupsig_t *gs;
 
@@ -583,11 +583,11 @@ int groupsig_convert(groupsig_blindsig_t **csigs,
 }
 
 int groupsig_unblind(identity_t *nym,
-		     groupsig_signature_t *sig,
-		     groupsig_blindsig_t *bsig,
-		     groupsig_key_t *grpkey,
-		     groupsig_key_t *bldkey,
-		     message_t *msg) {
+                     groupsig_signature_t *sig,
+                     groupsig_blindsig_t *bsig,
+                     groupsig_key_t *grpkey,
+                     groupsig_key_t *bldkey,
+                     message_t *msg) {
 
   const groupsig_t *gs;
 
@@ -608,11 +608,11 @@ int groupsig_unblind(identity_t *nym,
 }
 
 int groupsig_identify(uint8_t *ok,
-		      groupsig_proof_t **proof,
-		      groupsig_key_t *grpkey,
-		      groupsig_key_t *memkey,
-		      groupsig_signature_t *sig,
-		      message_t *msg) {
+                      groupsig_proof_t **proof,
+                      groupsig_key_t *grpkey,
+                      groupsig_key_t *memkey,
+                      groupsig_signature_t *sig,
+                      message_t *msg) {
 
   const groupsig_t *gs;
 
@@ -633,12 +633,12 @@ int groupsig_identify(uint8_t *ok,
 }
 
 int groupsig_link(groupsig_proof_t **proof,
-		  groupsig_key_t *grpkey,
-		  groupsig_key_t *memkey,
-		  message_t *msg,
-		  groupsig_signature_t **sigs,
-		  message_t **msgs,
-		  uint32_t n) {
+                  groupsig_key_t *grpkey,
+                  groupsig_key_t *memkey,
+                  message_t *msg,
+                  groupsig_signature_t **sigs,
+                  message_t **msgs,
+                  uint32_t n) {
 
   const groupsig_t *gs;
 
@@ -659,12 +659,12 @@ int groupsig_link(groupsig_proof_t **proof,
 }
 
 int groupsig_verify_link(uint8_t *ok,
-			 groupsig_key_t *grpkey,
-			 groupsig_proof_t *proof,
-			 message_t *msg,
-			 groupsig_signature_t **sigs,
-			 message_t **msgs,
-			 uint32_t n) {
+                         groupsig_key_t *grpkey,
+                         groupsig_proof_t *proof,
+                         message_t *msg,
+                         groupsig_signature_t **sigs,
+                         message_t **msgs,
+                         uint32_t n) {
 
   const groupsig_t *gs;
 
@@ -685,12 +685,12 @@ int groupsig_verify_link(uint8_t *ok,
 }
 
 int groupsig_seqlink(groupsig_proof_t **proof,
-		     groupsig_key_t *grpkey,
-		     groupsig_key_t *memkey,
-		     message_t *msg,
-		     groupsig_signature_t **sigs,
-		     message_t **msgs,
-		     uint32_t n) {
+                     groupsig_key_t *grpkey,
+                     groupsig_key_t *memkey,
+                     message_t *msg,
+                     groupsig_signature_t **sigs,
+                     message_t **msgs,
+                     uint32_t n) {
 
   const groupsig_t *gs;
 
@@ -711,12 +711,12 @@ int groupsig_seqlink(groupsig_proof_t **proof,
 }
 
 int groupsig_verify_seqlink(uint8_t *ok,
-			    groupsig_key_t *grpkey,
-			    groupsig_proof_t *proof,
-			    message_t *msg,
-			    groupsig_signature_t **sigs,
-			    message_t **msgs,
-			    uint32_t n) {
+                            groupsig_key_t *grpkey,
+                            groupsig_proof_t *proof,
+                            message_t *msg,
+                            groupsig_signature_t **sigs,
+                            message_t **msgs,
+                            uint32_t n) {
 
   const groupsig_t *gs;
 
@@ -737,7 +737,7 @@ int groupsig_verify_seqlink(uint8_t *ok,
 }
 
 int groupsig_get_code_from_str(uint8_t *code,
-			       char *name) {
+                               char *name) {
 
   uint8_t i;
 

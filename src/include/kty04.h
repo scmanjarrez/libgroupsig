@@ -46,6 +46,15 @@ extern "C" {
  */
 #define GROUPSIG_KTY04_NAME "KTY04"
 
+/* Metadata for the join protocol */
+
+/* 0 means the first message is sent by the manager, 1 means the first message
+   is sent by the member */
+#define KTY04_JOIN_START 1
+
+/* Number of exchanged messages */
+#define KTY04_JOIN_SEQ 1
+
 /**
  * @var kty04_description
  * @brief KTY04's description.
@@ -60,15 +69,6 @@ static const groupsig_description_t kty04_description = {
   1, /**< KTY04's issuer key is the first manager key. TODO? */
   1 /**< KTY04's inspector (opener) key is the first manager key. TODO? */
 };
-
-/* Metadata for the join protocol */
-
-/* 0 means the first message is sent by the manager, 1 means the first message
-   is sent by the member */
-#define KTY04_JOIN_START 1
-
-/* Number of exchanged messages */
-#define KTY04_JOIN_SEQ 2
 
 #define KTY04_DEFAULT_SECURITY 10
 #define KTY04_DEFAULT_PRIMESIZE 256 // Actually, we set primesize/4
@@ -104,7 +104,8 @@ int kty04_clear();
  *
  * @return IOK or IERROR.
  */
-int kty04_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml);
+int kty04_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey,
+                gml_t *gml);
 
 /**
  * @fn int kty04_get_joinseq(uint8_t *seq)
@@ -158,8 +159,8 @@ int kty04_join_mem(message_t **mout, groupsig_key_t *memkey,
  *  issue protocol.
  * @param[in,out] gml The group membership list that may be updated with
  *  information related to the new member.
-// * @param[in,out] memkey The partial member key to be completed by the group
-* @param[in] seq The step to run of the join/issue protocol.
+ // * @param[in,out] memkey The partial member key to be completed by the group
+ * @param[in] seq The step to run of the join/issue protocol.
  *  manager.
  * @param[in] min Input message received from the member for the current step of
  *  the join/issue protocol.
@@ -193,8 +194,9 @@ int kty04_join_mgr(message_t **mout, gml_t *gml,
  *
  * @return IOK or IERROR.
  */
-int kty04_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey,
-               groupsig_key_t *grpkey, unsigned int seed);
+int kty04_sign(groupsig_signature_t *sig, message_t *msg,
+               groupsig_key_t *memkey, groupsig_key_t *grpkey,
+               unsigned int seed);
 
 /**
  * @fn int kty04_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg,
@@ -254,7 +256,8 @@ int kty04_open(uint64_t *id, groupsig_proof_t *proof, crl_t *crl,
  *
  * @return IOK or IERROR.
  */
-int kty04_reveal(trapdoor_t *trap, crl_t *crl, gml_t *gml, uint64_t index);
+int kty04_reveal(trapdoor_t *trap, crl_t *crl, gml_t *gml,
+                 uint64_t index);
 
 /**
  * @fn int kty04_trace(uint8_t *ok, groupsig_signature_t *sig,
@@ -277,8 +280,9 @@ int kty04_reveal(trapdoor_t *trap, crl_t *crl, gml_t *gml, uint64_t index);
  *
  * @return IOK or IERROR.
  */
-int kty04_trace(uint8_t *ok, groupsig_signature_t *sig, groupsig_key_t *grpkey,
-                crl_t *crl, groupsig_key_t *mgrkey, gml_t *gml);
+int kty04_trace(uint8_t *ok, groupsig_signature_t *sig,
+                groupsig_key_t *grpkey, crl_t *crl,
+                groupsig_key_t *mgrkey, gml_t *gml);
 
 /**
  * @fn int kty04_claim(groupsig_proof_t *proof, groupsig_key_t *memkey,
@@ -310,7 +314,8 @@ int kty04_claim(groupsig_proof_t *proof, groupsig_key_t *memkey,
  * @return IOK or IERROR.
  */
 int kty04_claim_verify(uint8_t *ok, groupsig_proof_t *proof,
-                       groupsig_signature_t *sig, groupsig_key_t *grpkey);
+                       groupsig_signature_t *sig,
+                       groupsig_key_t *grpkey);
 
 /**
  * @fn int kty04_prove_equality(groupsig_proof_t *proof, groupsig_key_t *memkey,
@@ -329,8 +334,9 @@ int kty04_claim_verify(uint8_t *ok, groupsig_proof_t *proof,
  *
  * @return IOK or IERROR.
  */
-int kty04_prove_equality(groupsig_proof_t *proof, groupsig_key_t *memkey,
-                         groupsig_key_t *grpkey, groupsig_signature_t **sigs, uint16_t n_sigs);
+int kty04_prove_equality(groupsig_proof_t *proof,
+                         groupsig_key_t *memkey, groupsig_key_t *grpkey,
+                         groupsig_signature_t **sigs, uint16_t n_sigs);
 
 /**
  * @fn int kty04_prove_equality_verify(uint8_t *ok, groupsig_proof_t *proof,
@@ -347,8 +353,11 @@ int kty04_prove_equality(groupsig_proof_t *proof, groupsig_key_t *memkey,
  *
  * @return IOK or IERROR.
  */
-int kty04_prove_equality_verify(uint8_t *ok, groupsig_proof_t *proof, groupsig_key_t *grpkey,
-                                groupsig_signature_t **sigs, uint16_t n_sigs);
+int kty04_prove_equality_verify(uint8_t *ok,
+                                groupsig_proof_t *proof,
+                                groupsig_key_t *grpkey,
+                                groupsig_signature_t **sigs,
+                                uint16_t n_sigs);
 
 /**
  * @var kty04_groupsig_bundle
@@ -359,8 +368,7 @@ static const groupsig_t kty04_groupsig_bundle = {
   init: &kty04_init, // &kty04_config_init, /**< Initializes a KTY04 config structure. */
   clear: &kty04_clear, //&kty04_config_free, /**< Frees a KTY04 config structure. */
   setup: &kty04_setup, /**< Sets up KTY04 groups. */
-  get_joinseq: &kty04_get_joinseq, /**< Returns the number of messages in the join
-			    protocol. */
+  get_joinseq: &kty04_get_joinseq, /**< Returns the number of messages in the join protocol. */
   get_joinstart: &kty04_get_joinstart, /**< Returns who begins the join protocol. */
   join_mem: &kty04_join_mem, /**< Executes member-side joins. */
   join_mgr: &kty04_join_mgr, /**< Executes manager-side joins. */

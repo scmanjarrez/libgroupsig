@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -45,6 +45,15 @@ extern "C" {
  */
 #define GROUPSIG_PS16_NAME "PS16"
 
+/* Metadata for the join protocol */
+
+/* 0 means the first message is sent by the manager, 1 means the first message
+   is sent by the member */
+#define PS16_JOIN_START 0
+
+/* Number of exchanged messages */
+#define PS16_JOIN_SEQ 3
+
 /**
  * @var ps16_description
  * @brief PS16's description.
@@ -60,35 +69,26 @@ static const groupsig_description_t ps16_description = {
   0 /**< PS16 relies only on GML for opening. */
 };
 
-/* Metadata for the join protocol */
-
-/* 0 means the first message is sent by the manager, 1 means the first message
-   is sent by the member */
-#define PS16_JOIN_START 0
-
-/* Number of exchanged messages */
-#define PS16_JOIN_SEQ 3
-
-/** 
+/**
  * @fn int ps16_init()
  * @brief Initializes the internal variables needed by PS16. In this case,
  *  it only sets up the pairing module.
  *
  * @return IOK or IERROR.
- */  
+ */
 int ps16_init();
 
-/** 
+/**
  * @fn int ps16_clear()
  * @brief Frees the memory initialized by ps16_init.
  *
  * @return IOK or IERROR.
- */   
+ */
 int ps16_clear();
 
-/** 
- * @fn int ps16_setup(groupsig_key_t *grpkey, 
- *                    groupsig_key_t *mgrkey, 
+/**
+ * @fn int ps16_setup(groupsig_key_t *grpkey,
+ *                    groupsig_key_t *mgrkey,
  *                    gml_t *gml)
  * @brief The setup function for the PS16 scheme.
  *
@@ -97,39 +97,39 @@ int ps16_clear();
  * @param[in,out] mgrkey An initialized manager key, will be updated with the
  *   newly created group's manager key.
  * @param[in,out] gml An initialized GML, will be set to an empty GML.
- * 
+ *
  * @return IOK or IERROR.
  */
 int ps16_setup(groupsig_key_t *grpkey,
-	       groupsig_key_t *mgrkey,
-	       gml_t *gml);
+               groupsig_key_t *mgrkey,
+               gml_t *gml);
 
 /**
  * @fn int ps16_get_joinseq(uint8_t *seq)
  * @brief Returns the number of messages to be exchanged in the join protocol.
- * 
+ *
  * @param seq A pointer to store the number of messages to exchange.
  *
  * @return IOK or IERROR.
- */ 
+ */
 int ps16_get_joinseq(uint8_t *seq);
 
 /**
  * @fn int ps16_get_joinstart(uint8_t *start)
  * @brief Returns who sends the first message in the join protocol.
- * 
+ *
  * @param start A pointer to store the who starts the join protocol. 0 means
  *  the Manager starts the protocol, 1 means the Member starts the protocol.
  *
  * @return IOK or IERROR.
- */ 
+ */
 int ps16_get_joinstart(uint8_t *start);
 
-/** 
- * @fn int ps16_join_mem(message_t **mout, 
+/**
+ * @fn int ps16_join_mem(message_t **mout,
  *                       groupsig_key_t *memkey,
- *			 int seq, 
- *                       message_t *min, 
+ *			 int seq,
+ *                       message_t *min,
  *                       groupsig_key_t *grpkey)
  * @brief Executes the member-side join of the PS16 scheme.
  *
@@ -142,21 +142,21 @@ int ps16_get_joinstart(uint8_t *start);
  * @param[in] min Input message received from the manager for the current step
  *  of the join/issue protocol.
  * @param[in] grpkey The group key.
- * 
+ *
  * @return IOK or IERROR.
  */
 int ps16_join_mem(message_t **mout,
-		  groupsig_key_t *memkey,
-		   int seq,
-		  message_t *min,
-		  groupsig_key_t *grpkey);
+                  groupsig_key_t *memkey,
+                  int seq,
+                  message_t *min,
+                  groupsig_key_t *grpkey);
 
-/** 
- * @fn int ps16_join_mgr(message_t **mout, 
+/**
+ * @fn int ps16_join_mgr(message_t **mout,
  *                       gml_t *gml,
  *                       groupsig_key_t *mgrkey,
- *                       int seq, 
- *                       message_t *min, 
+ *                       int seq,
+ *                       message_t *min,
  *			 groupsig_key_t *grpkey)
  * @brief Executes the manager-side join of the join procedure.
  *
@@ -164,28 +164,28 @@ int ps16_join_mem(message_t **mout,
  *  issue protocol.
  * @param[in,out] gml The group membership list that may be updated with
  *  information related to the new member.
-// * @param[in,out] memkey The partial member key to be completed by the group
-* @param[in] seq The step to run of the join/issue protocol.
+ // * @param[in,out] memkey The partial member key to be completed by the group
+ * @param[in] seq The step to run of the join/issue protocol.
  *  manager.
  * @param[in] min Input message received from the member for the current step of
  *  the join/issue protocol.
  * @param[in] mgrkey The group manager key.
  * @param[in] grpkey The group key.
- * 
+ *
  * @return IOK or IERROR.
  */
 int ps16_join_mgr(message_t **mout,
-		  gml_t *gml,
-		  groupsig_key_t *mgrkey,
-		  int seq,
-		  message_t *min,
-		  groupsig_key_t *grpkey);
+                  gml_t *gml,
+                  groupsig_key_t *mgrkey,
+                  int seq,
+                  message_t *min,
+                  groupsig_key_t *grpkey);
 
-/** 
+/**
  * @fn int ps16_sign(groupsig_signature_t *sig,
- *                   message_t *msg, 
- *                   groupsig_key_t *memkey, 
- *	             groupsig_key_t *grpkey, 
+ *                   message_t *msg,
+ *                   groupsig_key_t *memkey,
+ *	             groupsig_key_t *grpkey,
  *                   unsigned int seed)
  * @brief Issues PS16 group signatures.
  *
@@ -199,20 +199,20 @@ int ps16_join_mgr(message_t **mout,
  * @param[in] grpkey The group key.
  * @param[in] seed The seed. If it is set to UINT_MAX, the current system PRNG
  *  will be used normally. Otherwise, it will be reseeded with the specified
- *  seed before issuing the signature. 
- * 
+ *  seed before issuing the signature.
+ *
  * @return IOK or IERROR.
  */
 int ps16_sign(groupsig_signature_t *sig,
-	      message_t *msg,
-	      groupsig_key_t *memkey, 
-	      groupsig_key_t *grpkey,
-	      unsigned int seed);
+              message_t *msg,
+              groupsig_key_t *memkey,
+              groupsig_key_t *grpkey,
+              unsigned int seed);
 
-/** 
- * @fn int ps16_verify(uint8_t *ok, 
- *                     groupsig_signature_t *sig, 
- *                     message_t *msg, 
+/**
+ * @fn int ps16_verify(uint8_t *ok,
+ *                     groupsig_signature_t *sig,
+ *                     message_t *msg,
  *		       groupsig_key_t *grpkey);
  * @brief Verifies a PS16 group signature.
  *
@@ -221,20 +221,20 @@ int ps16_sign(groupsig_signature_t *sig,
  * @param[in] sig The signature to verify.
  * @param[in] msg The corresponding message.
  * @param[in] grpkey The group key.
- * 
+ *
  * @return IOK or IERROR.
  */
 int ps16_verify(uint8_t *ok,
-		groupsig_signature_t *sig,
-		message_t *msg, 
-		groupsig_key_t *grpkey);
+                groupsig_signature_t *sig,
+                message_t *msg,
+                groupsig_key_t *grpkey);
 
-/** 
- * @fn int ps16_open(uint64_t *index, groupsig_proof_t *proof, crl_t *crl, 
- *                    groupsig_signature_t *sig, groupsig_key_t *grpkey, 
+/**
+ * @fn int ps16_open(uint64_t *index, groupsig_proof_t *proof, crl_t *crl,
+ *                    groupsig_signature_t *sig, groupsig_key_t *grpkey,
  *	              groupsig_key_t *mgrkey, gml_t *gml)
  * @brief Opens a PS16 group signature.
- * 
+ *
  * Opens the specified group signature, obtaining the signer's identity.
  *
  * @param[in,out] index Will be updated with the signer's index in the GML.
@@ -244,38 +244,38 @@ int ps16_verify(uint8_t *ok,
  * @param[in] grpkey The group key.
  * @param[in] mgrkey The manager's key.
  * @param[in] gml The GML.
- * 
+ *
  * @return IOK if it was possible to open the signature. IFAIL if the open
  *  trapdoor was not found, IERROR otherwise.
  */
 int ps16_open(uint64_t *index,
-	      groupsig_proof_t *proof,
-	      crl_t *crl,
-	      groupsig_signature_t *sig,
-	      groupsig_key_t *grpkey,
-	      groupsig_key_t *mgrkey,
-	      gml_t *gml);
+              groupsig_proof_t *proof,
+              crl_t *crl,
+              groupsig_signature_t *sig,
+              groupsig_key_t *grpkey,
+              groupsig_key_t *mgrkey,
+              gml_t *gml);
 
-/** 
+/**
  * @fn int ps16_open_verify(uint8_t *ok,
- *                          groupsig_proof_t *proof, 
+ *                          groupsig_proof_t *proof,
  *                          groupsig_signature_t *sig,
  *                          groupsig_key_t *grpkey)
- * 
+ *
  * @param[in,out] ok Will be set to 1 if the proof is correct, to 0 otherwise.
  *  signature.
  * @param[in] id The identity produced by the open algorithm. Unused. Can be NULL.
  * @param[in] proof The proof of opening.
  * @param[in] sig The group signature associated to the proof.
  * @param[in] grpkey The group key.
- * 
+ *
  * @return IOK or IERROR
  */
 int ps16_open_verify(uint8_t *ok,
-		     groupsig_proof_t *proof, 
-		     groupsig_signature_t *sig,
-		     groupsig_key_t *grpkey);
-  
+                     groupsig_proof_t *proof,
+                     groupsig_signature_t *sig,
+                     groupsig_key_t *grpkey);
+
 /**
  * @var ps16_groupsig_bundle
  * @brief The set of functions to manage PS16 groups.
@@ -285,8 +285,7 @@ static const groupsig_t ps16_groupsig_bundle = {
  init: &ps16_init, /**< Initializes the variables needed by PS16. */
  clear: &ps16_clear, /**< Frees the varaibles needed by PS16. */
  setup: &ps16_setup, /**< Sets up PS16 groups. */
- get_joinseq: &ps16_get_joinseq, /**< Returns the number of messages in the join 
-				     protocol. */
+ get_joinseq: &ps16_get_joinseq, /**< Returns the number of messages in the join protocol. */
  get_joinstart: &ps16_get_joinstart, /**< Returns who begins the join protocol. */
  join_mem: &ps16_join_mem, /**< Executes member-side joins. */
  join_mgr: &ps16_join_mgr, /**< Executes manager-side joins. */
