@@ -13,8 +13,10 @@ from pygroupsig import gml
 from pygroupsig import crl
 from pygroupsig import constants
 
-# Tests for group operations
+
+# Parent class with common functions
 class TestCommon(unittest.TestCase):
+
     # Non-test functions
     def addMember(self):
         msg1 = groupsig.join_mem(0, self.grpkey)
@@ -165,6 +167,7 @@ class TestGroupOps(TestCommon):
         ver2 = groupsig.prove_equality_verify(prove2["proof"], self.grpkey, sigs)
         self.assertFalse(ver2)
 
+
 # Tests for signature operations
 class TestSignatureOps(TestCommon):
 
@@ -187,6 +190,7 @@ class TestSignatureOps(TestCommon):
         self.assertGreater(len(sig_str), 0)
         self.assertTrue(set(sig_str).issubset(set(string.printable)))
 
+
 # Tests for group key operations
 class TestGrpkeyOps(TestCommon):
 
@@ -199,6 +203,7 @@ class TestGrpkeyOps(TestCommon):
         # grp keys would be good for testing this (and also in general?)
         self.assertIsNot(ffi.NULL, gpk)
 
+
 # Tests for manager key operations
 class TestManagerkeyOps(TestCommon):
 
@@ -210,6 +215,7 @@ class TestManagerkeyOps(TestCommon):
         # method returns ffi.NULL. Maybe implementing a cmp function for
         # manager keys would be good for testing this (and also in general?)
         self.assertIsNot(ffi.NULL, ikey)
+
 
 # Tests for member key operations
 class TestMemkeyOps(TestCommon):
@@ -224,6 +230,7 @@ class TestMemkeyOps(TestCommon):
         # mem keys would be good for testing this (and also in general?)
         self.assertIsNot(ffi.NULL, mkey)
 
+
 # Tests for GML operations
 class TestGmlOps(TestCommon):
 
@@ -236,6 +243,7 @@ class TestGmlOps(TestCommon):
         # method returns ffi.NULL. Maybe implementing a cmp function for
         # GMLs would be good for testing this (and also in general?)
         self.assertIsNot(ffi.NULL, _gml)
+
 
 # Tests for CRL operations
 class TestCrlOps(TestCommon):
@@ -263,6 +271,7 @@ class TestCrlOps(TestCommon):
             # GMLs would be good for testing this (and also in general?)
             self.assertIsNot(ffi.NULL, _crl)
 
+
 # Define test suites
 def suiteGroupOps():
     suiteGroupOps = unittest.TestSuite()
@@ -281,36 +290,43 @@ def suiteGroupOps():
     suiteGroupOps.addTest(TestGroupOps('test_proveEqualityWrongSignature'))
     return suiteGroupOps
 
+
 def suiteSigOps():
     suiteSigOps = unittest.TestSuite()
     suiteSigOps.addTest(TestSignatureOps('test_sigExportImport'))
     suiteSigOps.addTest(TestSignatureOps('test_sigToString'))
     return suiteSigOps
 
+
 def suiteGrpkeyOps():
     suiteGrpkeyOps = unittest.TestSuite()
     suiteGrpkeyOps.addTest(TestGrpkeyOps('test_grpkeyExportImport'))
     return suiteGrpkeyOps
+
 
 def suiteManagerkeyOps():
     suiteManagerkeyOps = unittest.TestSuite()
     suiteManagerkeyOps.addTest(TestManagerkeyOps('test_mgrkeyExportImport'))
     return suiteManagerkeyOps
 
+
 def suiteMemkeyOps():
     suiteMemkeyOps = unittest.TestSuite()
     suiteMemkeyOps.addTest(TestMemkeyOps('test_memkeyExportImport'))
     return suiteMemkeyOps
+
 
 def suiteGmlOps():
     suiteGmlOps = unittest.TestSuite()
     suiteGmlOps.addTest(TestGmlOps('test_gmlExportImport'))
     return suiteGmlOps
 
+
 def suiteCrlOps():
     suiteCrlOps = unittest.TestSuite()
     suiteCrlOps.addTest(TestCrlOps('test_crlExportImport'))
     return suiteCrlOps
+
 
 if __name__ == '__main__':
     runner = unittest.TextTestRunner()

@@ -1,6 +1,5 @@
 import unittest
 import string
-import logging
 from _groupsig import ffi
 
 from pygroupsig import groupsig
@@ -13,8 +12,9 @@ from pygroupsig import signature
 from pygroupsig import blindsig
 from pygroupsig import constants
 
-# Tests for group operations
-class TestGroupOps(unittest.TestCase):
+
+# Parent class with common functions
+class TestCommon(unittest.TestCase):
 
     # Non-test functions
     def addMember(self):
@@ -27,12 +27,12 @@ class TestGroupOps(unittest.TestCase):
         self.memkeys.append(usk)
 
     def setUp(self):
-        groupsig.init(constants.GL19_CODE, 0)
-        group1 = groupsig.setup(constants.GL19_CODE)
         self.code = constants.GL19_CODE
+        groupsig.init(self.code, 0)
+        group1 = groupsig.setup(self.code)
         grpkey1 = group1['grpkey']
         self.isskey = group1['mgrkey']
-        group2 = groupsig.setup(constants.GL19_CODE, grpkey1);
+        group2 = groupsig.setup(self.code, grpkey1);
         self.cnvkey = group2['mgrkey']
         self.grpkey = group2['grpkey']
         self.memkeys = []
@@ -40,13 +40,17 @@ class TestGroupOps(unittest.TestCase):
     def tearDown(self):
         groupsig.clear(self.code)
 
+
+# Tests for group operations
+class TestGroupOps(TestCommon):
+
     # Creates a group
     def test_groupCreate(self):
         self.assertNotEqual(self.grpkey, ffi.NULL)
         self.assertNotEqual(self.cnvkey, ffi.NULL)
         self.assertNotEqual(self.isskey, ffi.NULL)
-        self.assertEqual(groupsig.get_joinseq(constants.GL19_CODE), 3)
-        self.assertEqual(groupsig.get_joinstart(constants.GL19_CODE), 0)
+        self.assertEqual(groupsig.get_joinseq(self.code), 3)
+        self.assertEqual(groupsig.get_joinstart(self.code), 0)
 
     # Adds one member
     def test_addMember(self):
@@ -97,7 +101,7 @@ class TestGroupOps(unittest.TestCase):
         bsig1 = out["bsig"]
         out = groupsig.blind(self.grpkey, sig2, "Hello, World2!", bkey)
         bsig2 = out["bsig"]
-        bkey_pub = bldkey.bldkey_import(constants.GL19_CODE,
+        bkey_pub = bldkey.bldkey_import(self.code,
                                         bldkey.bldkey_export_pub(bkey))
         csigs = groupsig.convert([bsig1, bsig2], self.grpkey, bkey_pub, mgrkey=self.cnvkey)
         nym1 = groupsig.unblind(csigs[0], bkey)
@@ -119,7 +123,7 @@ class TestGroupOps(unittest.TestCase):
         bsig1 = out["bsig"]
         out = groupsig.blind(self.grpkey, sig2, "Hello, World2!", bkey)
         bsig2 = out["bsig"]
-        bkey_pub = bldkey.bldkey_import(constants.GL19_CODE,
+        bkey_pub = bldkey.bldkey_import(self.code,
                                         bldkey.bldkey_export_pub(bkey))
         csigs = groupsig.convert([bsig1, bsig2], self.grpkey, bkey_pub, mgrkey=self.cnvkey)
         nym1 = groupsig.unblind(csigs[0], bkey)
@@ -140,7 +144,7 @@ class TestGroupOps(unittest.TestCase):
         bsig1 = out["bsig"]
         out = groupsig.blind(self.grpkey, sig2, "Hello, World2!", bkey)
         bsig2 = out["bsig"]
-        bkey_pub = bldkey.bldkey_import(constants.GL19_CODE,
+        bkey_pub = bldkey.bldkey_import(self.code,
                                         bldkey.bldkey_export_pub(bkey))
         csigs1 = groupsig.convert([bsig1], self.grpkey, bkey_pub, mgrkey=self.cnvkey)
         csigs2 = groupsig.convert([bsig2], self.grpkey, bkey_pub, mgrkey=self.cnvkey)
@@ -148,8 +152,9 @@ class TestGroupOps(unittest.TestCase):
         nym2 = groupsig.unblind(csigs2[0], bkey)
         self.assertNotEqual(nym1['nym'], nym2['nym'])
 
+
 # Tests for message operations
-class TestMessageOps(unittest.TestCase):
+class TestMessageOps(TestCommon):
 
     def setUp(self):
         self.msg = message.message_from_string("Hello, World!")
@@ -170,35 +175,15 @@ class TestMessageOps(unittest.TestCase):
         self.assertGreater(len(msg_str), 0)
         self.assertTrue(set(msg_str).issubset(set(string.printable)))
 
-# Tests for signature operations
-class TestSignatureOps(unittest.TestCase):
 
-    # Non-test functions
-    def addMember(self):
-        msg1 = groupsig.join_mgr(0, self. isskey, self.grpkey)
-        msg2 = groupsig.join_mem(1, self.grpkey, msgin = msg1)
-        usk = msg2['memkey']
-        msg3 = groupsig.join_mgr(2, self.isskey, self.grpkey, msg2['msgout'])
-        msg4 = groupsig.join_mem(3, self.grpkey, msgin = msg3, memkey = usk)
-        usk = msg4['memkey']
-        self.memkeys.append(usk)
+# Tests for signature operations
+class TestSignatureOps(TestCommon):
 
     # Creates a group, adds a member and generates a signature
     def setUp(self):
-        groupsig.init(constants.GL19_CODE, 0)
-        group1 = groupsig.setup(constants.GL19_CODE)
-        self.code = constants.GL19_CODE
-        grpkey1 = group1['grpkey']
-        self.isskey = group1['mgrkey']
-        group2 = groupsig.setup(constants.GL19_CODE, grpkey1);
-        self.cnvkey = group2['mgrkey']
-        self.grpkey = group2['grpkey']
-        self.memkeys = []
+        super().setUp()
         self.addMember()
         self.sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey)
-
-    def tearDown(self):
-        groupsig.clear(self.code)
 
     # Exports and reimports a signature, and it verifies correctly
     def test_sigExportImport(self):
@@ -213,38 +198,18 @@ class TestSignatureOps(unittest.TestCase):
         self.assertGreater(len(sig_str), 0)
         self.assertTrue(set(sig_str).issubset(set(string.printable)))
 
-# Tests for blind signature operations
-class TestBlindSignatureOps(unittest.TestCase):
 
-    # Non-test functions
-    def addMember(self):
-        msg1 = groupsig.join_mgr(0, self. isskey, self.grpkey)
-        msg2 = groupsig.join_mem(1, self.grpkey, msgin = msg1)
-        usk = msg2['memkey']
-        msg3 = groupsig.join_mgr(2, self.isskey, self.grpkey, msg2['msgout'])
-        msg4 = groupsig.join_mem(3, self.grpkey, msgin = msg3, memkey = usk)
-        usk = msg4['memkey']
-        self.memkeys.append(usk)
+# Tests for blind signature operations
+class TestBlindSignatureOps(TestCommon):
 
     # Creates a group, adds a member and generates a signature
     def setUp(self):
-        groupsig.init(constants.GL19_CODE, 0)
-        group1 = groupsig.setup(constants.GL19_CODE)
-        self.code = constants.GL19_CODE
-        grpkey1 = group1['grpkey']
-        self.isskey = group1['mgrkey']
-        group2 = groupsig.setup(constants.GL19_CODE, grpkey1);
-        self.cnvkey = group2['mgrkey']
-        self.grpkey = group2['grpkey']
-        self.memkeys = []
+        super().setUp()
         self.addMember()
         self.sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey)
         bkey = bldkey.bldkey_random(self.code, self.grpkey)
         out = groupsig.blind(self.grpkey, self.sig, "Hello, World!", bkey)
         self.bsig = out["bsig"]
-
-    def tearDown(self):
-        groupsig.clear(self.code)
 
     # Exports and reimports a signature, and it verifies correctly
     def test_blindsigExportImport(self):
@@ -261,22 +226,9 @@ class TestBlindSignatureOps(unittest.TestCase):
         self.assertGreater(len(bsig_str), 0)
         self.assertTrue(set(bsig_str).issubset(set(string.printable)))
 
+
 # Tests for group key operations
-class TestGrpkeyOps(unittest.TestCase):
-
-    # Creates a group, adds a member and generates a signature
-    def setUp(self):
-        groupsig.init(constants.GL19_CODE, 0)
-        group1 = groupsig.setup(constants.GL19_CODE)
-        self.code = constants.GL19_CODE
-        grpkey1 = group1['grpkey']
-        self.isskey = group1['mgrkey']
-        group2 = groupsig.setup(constants.GL19_CODE, grpkey1);
-        self.cnvkey = group2['mgrkey']
-        self.grpkey = group2['grpkey']
-
-    def tearDown(self):
-        groupsig.clear(self.code)
+class TestGrpkeyOps(TestCommon):
 
     # Exports and reimports a group key
     def test_grpkeyExportImport(self):
@@ -287,22 +239,9 @@ class TestGrpkeyOps(unittest.TestCase):
         # grp keys would be good for testing this (and also in general?)
         self.assertIsNot(ffi.NULL, gpk)
 
+
 # Tests for issuer key operations
-class TestIssuerkeyOps(unittest.TestCase):
-
-    # Creates a group, adds a member and generates a signature
-    def setUp(self):
-        groupsig.init(constants.GL19_CODE, 0)
-        group1 = groupsig.setup(constants.GL19_CODE)
-        self.code = constants.GL19_CODE
-        grpkey1 = group1['grpkey']
-        self.isskey = group1['mgrkey']
-        group2 = groupsig.setup(constants.GL19_CODE, grpkey1);
-        self.cnvkey = group2['mgrkey']
-        self.grpkey = group2['grpkey']
-
-    def tearDown(self):
-        groupsig.clear(self.code)
+class TestIssuerkeyOps(TestCommon):
 
     # Exports and reimports an issuer key
     def test_isskeyExportImport(self):
@@ -313,22 +252,9 @@ class TestIssuerkeyOps(unittest.TestCase):
         # manager keys would be good for testing this (and also in general?)
         self.assertIsNot(ffi.NULL, ikey)
 
+
 # Tests for converter key operations
-class TestConverterkeyOps(unittest.TestCase):
-
-    # Creates a group, adds a member and generates a signature
-    def setUp(self):
-        groupsig.init(constants.GL19_CODE, 0)
-        group1 = groupsig.setup(constants.GL19_CODE)
-        self.code = constants.GL19_CODE
-        grpkey1 = group1['grpkey']
-        self.isskey = group1['mgrkey']
-        group2 = groupsig.setup(constants.GL19_CODE, grpkey1);
-        self.cnvkey = group2['mgrkey']
-        self.grpkey = group2['grpkey']
-
-    def tearDown(self):
-        groupsig.clear(self.code)
+class TestConverterkeyOps(TestCommon):
 
     # Exports and reimports a converter key
     def test_cnvkeyExportImport(self):
@@ -339,59 +265,29 @@ class TestConverterkeyOps(unittest.TestCase):
         # manager keys would be good for testing this (and also in general?)
         self.assertIsNot(ffi.NULL, ckey)
 
+
 # Tests for member key operations
-class TestMemkeyOps(unittest.TestCase):
-
-    # Non-test functions
-    def addMember(self):
-        msg1 = groupsig.join_mgr(0, self.isskey, self.grpkey)
-        msg2 = groupsig.join_mem(1, self.grpkey, msgin = msg1)
-        usk = msg2['memkey']
-        msg3 = groupsig.join_mgr(2, self.isskey, self.grpkey, msg2['msgout'])
-        msg4 = groupsig.join_mem(3, self.grpkey, msgin = msg3, memkey = usk)
-        self.memkey = msg4['memkey']
-
-    # Creates a group, adds a member and generates a signature
-    def setUp(self):
-        groupsig.init(constants.GL19_CODE, 0)
-        group1 = groupsig.setup(constants.GL19_CODE)
-        self.code = constants.GL19_CODE
-        grpkey1 = group1['grpkey']
-        self.isskey = group1['mgrkey']
-        group2 = groupsig.setup(constants.GL19_CODE, grpkey1);
-        self.cnvkey = group2['mgrkey']
-        self.grpkey = group2['grpkey']
-        self.addMember()
-
-    def tearDown(self):
-        groupsig.clear(self.code)
+class TestMemkeyOps(TestCommon):
 
     # Exports and reimports a member key
     def test_memkeyExportImport(self):
-        memkey_str = memkey.memkey_export(self.memkey)
+        self.addMember()
+        memkey_str = memkey.memkey_export(self.memkeys[0])
         mkey = memkey.memkey_import(self.code, memkey_str)
         # This is quite useless, as import returns an exception if the FFI
         # method returns ffi.NULL. Maybe implementing a cmp function for
         # mem keys would be good for testing this (and also in general?)
         self.assertIsNot(ffi.NULL, mkey)
 
+
 # Tests for blinding key operations
-class TestBldkeyOps(unittest.TestCase):
+class TestBldkeyOps(TestCommon):
 
     # Creates a group, adds a member and generates a signature
     def setUp(self):
-        groupsig.init(constants.GL19_CODE, 0)
-        group1 = groupsig.setup(constants.GL19_CODE)
-        self.code = constants.GL19_CODE
-        grpkey1 = group1['grpkey']
-        self.isskey = group1['mgrkey']
-        group2 = groupsig.setup(constants.GL19_CODE, grpkey1);
-        self.cnvkey = group2['mgrkey']
-        self.grpkey = group2['grpkey']
+        super().setUp()
         self.bldkey = bldkey.bldkey_random(self.code, self.grpkey)
 
-    def tearDown(self):
-        groupsig.clear(self.code)
 
     # Exports and reimports a blinding key
     def test_bldkeyExportImport(self):
@@ -411,6 +307,7 @@ class TestBldkeyOps(unittest.TestCase):
         # bld keys would be good for testing this (and also in general?)
         self.assertIsNot(ffi.NULL, bkey)
 
+
 # Define test suites
 def suiteGroupOps():
     suiteGroupOps = unittest.TestSuite()
@@ -425,11 +322,13 @@ def suiteGroupOps():
     suiteGroupOps.addTest(TestGroupOps('test_nonTransitiveConvert'))
     return suiteGroupOps
 
+
 def suiteMsgOps():
     suiteMsgOps = unittest.TestSuite()
     suiteMsgOps.addTest(TestMessageOps('test_messageExportImport'))
     suiteMsgOps.addTest(TestMessageOps('test_messageToString'))
     return suiteMsgOps
+
 
 def suiteSigOps():
     suiteSigOps = unittest.TestSuite()
@@ -437,37 +336,44 @@ def suiteSigOps():
     suiteSigOps.addTest(TestSignatureOps('test_sigToString'))
     return suiteSigOps
 
+
 def suiteBlindsigOps():
     suiteBlindsigOps = unittest.TestSuite()
     suiteBlindsigOps.addTest(TestBlindSignatureOps('test_blindsigExportImport'))
     suiteBlindsigOps.addTest(TestBlindSignatureOps('test_blindsigToString'))
     return suiteBlindsigOps
 
+
 def suiteGrpkeyOps():
     suiteGrpkeyOps = unittest.TestSuite()
     suiteGrpkeyOps.addTest(TestGrpkeyOps('test_grpkeyExportImport'))
     return suiteGrpkeyOps
+
 
 def suiteIssuerkeyOps():
     suiteIssuerkeyOps = unittest.TestSuite()
     suiteIssuerkeyOps.addTest(TestIssuerkeyOps('test_isskeyExportImport'))
     return suiteIssuerkeyOps
 
+
 def suiteConverterkeyOps():
     suiteConverterkeyOps = unittest.TestSuite()
     suiteConverterkeyOps.addTest(TestConverterkeyOps('test_cnvkeyExportImport'))
     return suiteConverterkeyOps
+
 
 def suiteMemkeyOps():
     suiteMemkeyOps = unittest.TestSuite()
     suiteMemkeyOps.addTest(TestMemkeyOps('test_memkeyExportImport'))
     return suiteMemkeyOps
 
+
 def suiteBldkeyOps():
     suiteBldkeyOps = unittest.TestSuite()
     suiteBldkeyOps.addTest(TestBldkeyOps('test_bldkeyExportImport'))
     suiteBldkeyOps.addTest(TestBldkeyOps('test_bldkeyExportImportPub'))
     return suiteBldkeyOps
+
 
 if __name__ == '__main__':
     runner = unittest.TextTestRunner()
