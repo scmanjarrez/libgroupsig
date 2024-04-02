@@ -452,9 +452,9 @@ def claim_verify(proof, sig, grpkey):
         return False
 
 def prove_equality(memkey, grpkey, sigs):
-    """ This function was implemented in libgroupsig but not in python, not tested"""
+    """ This function was implemented in libgroupsig but not in python, tested"""
     proof = lib.groupsig_proof_init(grpkey.scheme)
-    _sigs = ffi.new("groupsig_signature_t **")
+    _sigs = ffi.new("groupsig_signature_t *[]", len(sigs))
     for idx, sig in enumerate(sigs):
         _sigs[idx] = sig
     if lib.groupsig_prove_equality(proof, memkey, grpkey, _sigs, len(sigs)) == lib.IERROR:
@@ -463,13 +463,13 @@ def prove_equality(memkey, grpkey, sigs):
         'proof': proof
     }
 
-def prove_equality_verify(proof, memkey, grpkey, sigs):
-    """ This function was implemented in libgroupsig but not in python, not tested"""
+def prove_equality_verify(proof, grpkey, sigs):
+    """ This function was implemented in libgroupsig but not in python, tested"""
     _b = ffi.new("uint8_t *")
-    _sigs = ffi.new("groupsig_signature_t **")
+    _sigs = ffi.new("groupsig_signature_t *[]", len(sigs))
     for idx, sig in enumerate(sigs):
         _sigs[idx] = sig
-    if lib.groupsig_prove_equality(proof, memkey, grpkey, _sigs, len(sigs)) == lib.IERROR:
+    if lib.groupsig_prove_equality_verify(_b, proof, grpkey, _sigs, len(sigs)) == lib.IERROR:
         raise Exception('Error verifying signature equality prove')
     if _b[0] == 1:
         return True
@@ -489,10 +489,10 @@ def groupsig_identify(memkey, grpkey, sig, msg):
 def groupsig_link(memkey, grpkey, msg, sigs, msgs, n):
     """ This function was implemented in libgroupsig but not in python, not tested"""
     proof = lib.groupsig_proof_init(grpkey.scheme)
-    _sigs = ffi.new("groupsig_signature_t **")
+    _sigs = ffi.new("groupsig_signature_t *[]", len(sigs))
     for idx, sig in enumerate(sigs):
         _sigs[idx] = sig
-    _msgs = ffi.new("groupsig_signature_t **")
+    _msgs = ffi.new("groupsig_signature_t *[]", len(msgs))
     for idx, ms in enumerate(msgs):
         _msgs[idx] = ms
     if lib.groupsig_link(proof, grpkey, memkey, msg, _sigs, _msgs, n) == lib.IERROR:
@@ -505,10 +505,10 @@ def groupsig_link(memkey, grpkey, msg, sigs, msgs, n):
 def groupsig_verify_link(proof, grpkey, msg, sigs, msgs, n):
     """ This function was implemented in libgroupsig but not in python, not tested"""
     _b = ffi.new("uint8_t *")
-    _sigs = ffi.new("groupsig_signature_t **")
+    _sigs = ffi.new("groupsig_signature_t *[]", len(sigs))
     for idx, sig in enumerate(sigs):
         _sigs[idx] = sig
-    _msgs = ffi.new("groupsig_signature_t **")
+    _msgs = ffi.new("groupsig_signature_t *[]", len(msgs))
     for idx, ms in enumerate(msgs):
         _msgs[idx] = ms
     if lib.groupsig_verify_link(_b, grpkey, proof, msg, _sigs, _msgs, n) == lib.IERROR:
@@ -521,10 +521,10 @@ def groupsig_verify_link(proof, grpkey, msg, sigs, msgs, n):
 def groupsig_seqlink(memkey, grpkey, msg, sigs, msgs, n):
     """ This function was implemented in libgroupsig but not in python, not tested"""
     proof = lib.groupsig_proof_init(grpkey.scheme)
-    _sigs = ffi.new("groupsig_signature_t **")
+    _sigs = ffi.new("groupsig_signature_t *[]", len(sigs))
     for idx, sig in enumerate(sigs):
         _sigs[idx] = sig
-    _msgs = ffi.new("groupsig_signature_t **")
+    _msgs = ffi.new("groupsig_signature_t *[]", len(msgs))
     for idx, ms in enumerate(msgs):
         _msgs[idx] = ms
     if lib.groupsig_seqlink(proof, grpkey, memkey, msg, _sigs, _msgs, n) == lib.IERROR:
@@ -537,10 +537,10 @@ def groupsig_seqlink(memkey, grpkey, msg, sigs, msgs, n):
 def groupsig_verify_seqlink(proof, grpkey, msg, sigs, msgs, n):
     """ This function was implemented in libgroupsig but not in python, not tested"""
     _b = ffi.new("uint8_t *")
-    _sigs = ffi.new("groupsig_signature_t **")
+    _sigs = ffi.new("groupsig_signature_t *[]", len(sigs))
     for idx, sig in enumerate(sigs):
         _sigs[idx] = sig
-    _msgs = ffi.new("groupsig_signature_t **")
+    _msgs = ffi.new("groupsig_signature_t *[]", len(msgs))
     for idx, ms in enumerate(msgs):
         _msgs[idx] = ms
     if lib.groupsig_verify_seqlink(_b, grpkey, proof, msg, _sigs, _msgs, n) == lib.IERROR:
