@@ -7,7 +7,6 @@ from pygroupsig import grpkey
 from pygroupsig import mgrkey
 from pygroupsig import memkey
 from pygroupsig import signature
-from pygroupsig import gml
 from pygroupsig import constants
 
 
@@ -19,24 +18,20 @@ class TestCommon(unittest.TestCase):
 
     # Non-test functions
     def addMember(self):
-        msg1 = groupsig.join_mgr(0, self.isskey, self.grpkey, gml = self.gml)
+        msg1 = groupsig.join_mgr(0, self.mgrkey, self.grpkey)
         msg2 = groupsig.join_mem(1, self.grpkey, msgin = msg1)
         usk = msg2['memkey']
-        msg3 = groupsig.join_mgr(2, self.isskey, self.grpkey, msg2['msgout'], gml = self.gml)
+        msg3 = groupsig.join_mgr(2, self.mgrkey, self.grpkey, msg2['msgout'])
         msg4 = groupsig.join_mem(3, self.grpkey, msgin = msg3, memkey = usk)
         usk = msg4['memkey']
         self.memkeys.append(usk)
 
     def setUp(self):
-        self.code = constants.KLAP20_CODE
+        self.code = constants.DL21SEQ_CODE
         groupsig.init(self.code, 0)
-        group1 = groupsig.setup(self.code)
-        grpkey1 = group1['grpkey']
-        self.isskey = group1['mgrkey']
-        self.gml = group1['gml']
-        group2 = groupsig.setup(self.code, grpkey1);
-        self.opnkey = group2['mgrkey']
-        self.grpkey = group2['grpkey']
+        group = groupsig.setup(self.code)
+        self.mgrkey = group['mgrkey']
+        self.grpkey = group['grpkey']
         self.memkeys = []
 
     def tearDown(self):
@@ -49,8 +44,7 @@ class TestGroupOps(TestCommon):
     # Creates a group
     def test_groupCreate(self):
         self.assertNotEqual(self.grpkey, ffi.NULL)
-        self.assertNotEqual(self.isskey, ffi.NULL)
-        self.assertNotEqual(self.opnkey, ffi.NULL)
+        self.assertNotEqual(self.mgrkey, ffi.NULL)
         self.assertEqual(groupsig.get_joinseq(self.code), 3)
         self.assertEqual(groupsig.get_joinstart(self.code), 0)
 
@@ -64,68 +58,83 @@ class TestGroupOps(TestCommon):
     # Accepts a valid signature for a message passed as a string
     def test_acceptValidSignatureString(self):
         self.addMember()
-        sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
-        b = groupsig.verify(sig, "Hello, World!", self.grpkey)
+        sig = groupsig.sign("{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }", self.memkeys[0], self.grpkey, UINT_MAX)
+        b = groupsig.verify(sig, "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }", self.grpkey)
         self.assertTrue(b)
 
     # Rejects a valid signature for a different message, also passed as a string
     def test_rejectValidSignatureWrongMessageString(self):
         self.addMember()
-        sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
-        b = groupsig.verify(sig, "Hello, Worlds!", self.grpkey)
+        sig = groupsig.sign("{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }", self.memkeys[0], self.grpkey, UINT_MAX)
+        b = groupsig.verify(sig, "{ \"scope\": \"scp\", \"message\": \"Hello, Worlds!\" }", self.grpkey)
         self.assertFalse(b)
 
     # Accepts a valid signature for a message passed as a byte array
     def test_acceptValidSignatureBytes(self):
         self.addMember()
-        sig = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
-        b = groupsig.verify(sig, b"Hello, World!", self.grpkey)
+        sig = groupsig.sign(b"{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }", self.memkeys[0], self.grpkey, UINT_MAX)
+        b = groupsig.verify(sig, b"{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }", self.grpkey)
         self.assertTrue(b)
 
     # Rejects a valid signature for a different message, also passed as a byte array
     def test_rejectValidSignatureWrongMessageBytes(self):
         self.addMember()
-        sig = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
-        b = groupsig.verify(sig, b"Hello, Worlds!", self.grpkey)
+        sig = groupsig.sign(b"{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }", self.memkeys[0], self.grpkey, UINT_MAX)
+        b = groupsig.verify(sig, b"{ \"scope\": \"scp\", \"message\": \"Hello, Worlds!\" }", self.grpkey)
         self.assertFalse(b)
 
-    # Accepts a batch of valid signatures
-    def test_acceptValidSignatureBatch(self):
+    # Successfully links 2 signatures by the same user
+    def test_linkSignaturesSameUser(self):
         self.addMember()
-        sigs = []
-        msgs = []
-        for i in range(10):
-            msg = "Hello, World "+ str(i) + "!"
-            sig = groupsig.sign(msg, self.memkeys[0], self.grpkey, UINT_MAX)
-            msgs.append(msg)
-            sigs.append(sig)
-        b = groupsig.verify_batch(sigs, msgs, self.grpkey)
+        msg = b"{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }"
+        sig1 = groupsig.sign(msg, self.memkeys[0], self.grpkey, 1)
+        sig2 = groupsig.sign(msg, self.memkeys[0], self.grpkey, 2)
+        sigs = [sig1, sig2]
+        msgs = [msg, msg]
+        gslink = groupsig.link(self.memkeys[0], self.grpkey, msg, sigs, msgs)
+        proof = gslink['proof']
+        b = groupsig.verify_link(proof, self.grpkey, msg, sigs, msgs)
         self.assertTrue(b)
 
-    # Reject a batch of signatures including a wrong signature
-    def test_rejectWrongSignatureBatch(self):
+    # Fails to link 2 signatures by different user
+    def test_linkSignaturesDifferentUser(self):
         self.addMember()
-        sigs = []
-        msgs = []
-        for i in range(10):
-            msg = "Hello, World "+ str(i) + "!"
-            sig = groupsig.sign(msg, self.memkeys[0], self.grpkey, UINT_MAX)
-            msgs.append(msg)
-            sigs.append(sig)
-        msgs[0] = "Hello, World!"
-        b = groupsig.verify_batch(sigs, msgs, self.grpkey)
+        self.addMember()
+        msg = b"{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }"
+        sig1 = groupsig.sign(msg, self.memkeys[0], self.grpkey, 1)
+        sig2 = groupsig.sign(msg, self.memkeys[1], self.grpkey, 2)
+        sigs = [sig1, sig2]
+        msgs = [msg, msg]
+        gslink = groupsig.link(self.memkeys[0], self.grpkey, msg, sigs, msgs)
+        proof = gslink['proof']
+        self.assertIsNone(proof)
+
+    # Rejects seqlink proof by same user but with wrong order (swap)
+    def test_linkSignaturesSameUserWrongOrderSwap(self):
+        self.addMember()
+        msg = b"{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }"
+        sig1 = groupsig.sign(msg, self.memkeys[0], self.grpkey, 1)
+        sig2 = groupsig.sign(msg, self.memkeys[0], self.grpkey, 2)
+        sigs = [sig2, sig1]
+        msgs = [msg, msg]
+        gslink = groupsig.seqlink(self.memkeys[0], self.grpkey, msg, sigs, msgs)
+        proof = gslink['proof']
+        b = groupsig.verify_seqlink(proof, self.grpkey, msg, sigs, msgs)
         self.assertFalse(b)
 
-    # Successfully opens a signature
-    def test_openSignature(self):
+    # Rejects seqlink proof by same user but with wrong order (skip)
+    def test_linkSignaturesSameUserWrongOrderSkip(self):
         self.addMember()
-        self.addMember()
-        sig = groupsig.sign(b"Hello, World!", self.memkeys[1], self.grpkey, UINT_MAX)
-        gsopen = groupsig.open(sig, self.opnkey, self.grpkey, gml = self.gml)
-        self.assertEqual(gsopen["index"], 1)
-        proof = gsopen['proof']
-        b = groupsig.open_verify(proof, sig, self.grpkey)
-        self.assertTrue(b)
+        msg = b"{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }"
+        sig1 = groupsig.sign(msg, self.memkeys[0], self.grpkey, 1)
+        _ = groupsig.sign(msg, self.memkeys[0], self.grpkey, 2)
+        sig3 = groupsig.sign(msg, self.memkeys[0], self.grpkey, 3)
+        sigs = [sig1, sig3]
+        msgs = [msg, msg]
+        gslink = groupsig.seqlink(self.memkeys[0], self.grpkey, msg, sigs, msgs)
+        proof = gslink['proof']
+        b = groupsig.verify_seqlink(proof, self.grpkey, msg, sigs, msgs)
+        self.assertFalse(b)
 
 
 # Tests for signature operations
@@ -135,13 +144,13 @@ class TestSignatureOps(TestCommon):
     def setUp(self):
         super().setUp()
         self.addMember()
-        self.sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
+        self.sig = groupsig.sign("{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }", self.memkeys[0], self.grpkey, UINT_MAX)
 
     # Exports and reimports a signature, and it verifies correctly
     def test_sigExportImport(self):
         sig_str = signature.signature_export(self.sig)
         sig = signature.signature_import(self.code, sig_str)
-        b = groupsig.verify(sig, "Hello, World!", self.grpkey)
+        b = groupsig.verify(sig, "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }", self.grpkey)
         self.assertTrue(b)
 
     # Prints a string (this just checks the produced string is not empty)
@@ -165,29 +174,16 @@ class TestGrpkeyOps(TestCommon):
 
 
 # Tests for manager key operations
-class TestIssuerkeyOps(TestCommon):
+class TestManagerkeyOps(TestCommon):
 
     # Exports and reimports an manager key
-    def test_isskeyExportImport(self):
-        isskey_str = mgrkey.mgrkey_export(self.isskey)
-        ikey = mgrkey.mgrkey_import(self.code, isskey_str)
+    def test_mgrkeyExportImport(self):
+        mgrkey_str = mgrkey.mgrkey_export(self.mgrkey)
+        ikey = mgrkey.mgrkey_import(self.code, mgrkey_str)
         # This is quite useless, as import returns an exception if the FFI
         # method returns ffi.NULL. Maybe implementing a cmp function for
         # manager keys would be good for testing this (and also in general?)
         self.assertIsNot(ffi.NULL, ikey)
-
-
-# Tests for opener key operations
-class TestOpenerkeyOps(TestCommon):
-
-    # Exports and reimports a converter key
-    def test_opnkeyExportImport(self):
-        opnkey_str = mgrkey.mgrkey_export(self.opnkey)
-        okey = mgrkey.mgrkey_import(self.code, opnkey_str)
-        # This is quite useless, as import returns an exception if the FFI
-        # method returns ffi.NULL. Maybe implementing a cmp function for
-        # manager keys would be good for testing this (and also in general?)
-        self.assertIsNot(ffi.NULL, okey)
 
 
 # Tests for member key operations
@@ -204,20 +200,6 @@ class TestMemkeyOps(TestCommon):
         self.assertIsNot(ffi.NULL, mkey)
 
 
-# Tests for GML operations
-class TestGmlOps(TestCommon):
-
-    # Exports and reimports a member key
-    def test_gmlExportImport(self):
-        self.addMember()
-        gml_str = gml.gml_export(self.gml)
-        _gml = gml.gml_import(self.code, gml_str)
-        # This is quite useless, as import returns an exception if the FFI
-        # method returns ffi.NULL. Maybe implementing a cmp function for
-        # GMLs would be good for testing this (and also in general?)
-        self.assertIsNot(ffi.NULL, _gml)
-
-
 # Define test suites
 def suiteGroupOps():
     suiteGroupOps = unittest.TestSuite()
@@ -227,9 +209,10 @@ def suiteGroupOps():
     suiteGroupOps.addTest(TestGroupOps('test_rejectValidSignatureWrongMessageString'))
     suiteGroupOps.addTest(TestGroupOps('test_acceptValidSignatureBytes'))
     suiteGroupOps.addTest(TestGroupOps('test_rejectValidSignatureWrongMessageBytes'))
-    suiteGroupOps.addTest(TestGroupOps('test_acceptValidSignatureBatch'))
-    suiteGroupOps.addTest(TestGroupOps('test_rejectWrongSignatureBatch'))
-    suiteGroupOps.addTest(TestGroupOps('test_openSignature'))
+    suiteGroupOps.addTest(TestGroupOps('test_linkSignaturesSameUser'))
+    suiteGroupOps.addTest(TestGroupOps('test_linkSignaturesDifferentUser'))
+    suiteGroupOps.addTest(TestGroupOps('test_linkSignaturesSameUserWrongOrderSwap'))
+    suiteGroupOps.addTest(TestGroupOps('test_linkSignaturesSameUserWrongOrderSkip'))
     return suiteGroupOps
 
 
@@ -246,16 +229,10 @@ def suiteGrpkeyOps():
     return suiteGrpkeyOps
 
 
-def suiteIssuerkeyOps():
-    suiteIssuerkeyOps = unittest.TestSuite()
-    suiteIssuerkeyOps.addTest(TestIssuerkeyOps('test_isskeyExportImport'))
-    return suiteIssuerkeyOps
-
-
-def suiteOpenerkeyOps():
-    suiteOpenerkeyOps = unittest.TestSuite()
-    suiteOpenerkeyOps.addTest(TestOpenerkeyOps('test_opnkeyExportImport'))
-    return suiteOpenerkeyOps
+def suiteManagerkeyOps():
+    suiteManagerkeyOps = unittest.TestSuite()
+    suiteManagerkeyOps.addTest(TestManagerkeyOps('test_mgrkeyExportImport'))
+    return suiteManagerkeyOps
 
 
 def suiteMemkeyOps():
@@ -264,18 +241,10 @@ def suiteMemkeyOps():
     return suiteMemkeyOps
 
 
-def suiteGmlOps():
-    suiteGmlOps = unittest.TestSuite()
-    suiteGmlOps.addTest(TestGmlOps('test_gmlExportImport'))
-    return suiteGmlOps
-
-
 if __name__ == '__main__':
     runner = unittest.TextTestRunner()
     runner.run(suiteGroupOps())
     runner.run(suiteSigOps())
     runner.run(suiteGrpkeyOps())
-    runner.run(suiteIssuerkeyOps())
-    runner.run(suiteOpenerkeyOps())
+    runner.run(suiteManagerkeyOps())
     runner.run(suiteMemkeyOps())
-    runner.run(suiteGmlOps())

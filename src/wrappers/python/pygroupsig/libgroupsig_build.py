@@ -1,6 +1,6 @@
 # file "libgroupsig_build.py"
 
-import path
+from pathlib import Path
 
 from pygroupsig.common_build import ffibuilder
 
@@ -25,8 +25,8 @@ import pygroupsig.ps16_build
 import pygroupsig.klap20_build
 import pygroupsig.kty04_build
 import pygroupsig.cpy06_build
-#import pygroupsig.dl21_build
-#import pygroupsig.dl21seq_build
+import pygroupsig.dl21_build
+import pygroupsig.dl21seq_build
 
 groupsigcdef = r"""
 int groupsig_hello_world(void);
@@ -178,31 +178,31 @@ void free(void *);
 
 ffibuilder.cdef(groupsigcdef)
 
-c_header_file = path.Path("../../../src/include/groupsig.h").abspath()
-c_include_path = path.Path("../../../src/include").abspath()
-c_lib_path =  path.Path("../../../build/lib/libgroupsig-static.a").abspath()
-c_gl19_path =  path.Path("../../../build/lib/libgl19.a").abspath()
-c_bbs04_path =  path.Path("../../../build/lib/libbbs04.a").abspath()
-c_ps16_path =  path.Path("../../../build/lib/libps16.a").abspath()
-c_klap20_path =  path.Path("../../../build/lib/libklap20.a").abspath()
-c_kty04_path =  path.Path("../../../build/lib/libkty04.a").abspath()
-c_cpy06_path =  path.Path("../../../build/lib/libcpy06.a").abspath()
-c_dl21_path =  path.Path("../../../build/lib/libdl21.a").abspath()
-c_dl21seq_path =  path.Path("../../../build/lib/libdl21seq.a").abspath()
-c_logger_path =  path.Path("../../../build/lib/liblogger.a").abspath()
-c_msg_path =  path.Path("../../../build/lib/libmsg.a").abspath()
-c_base64_path =  path.Path("../../../build/lib/libbase64.a").abspath()
-c_big_path =  path.Path("../../../build/lib/libbig.a").abspath()
-c_hash_path =  path.Path("../../../build/lib/libhash.a").abspath()
-c_pbcext_path =  path.Path("../../../build/lib/libpbcext.a").abspath()
-c_crypto_path =  path.Path("../../../build/lib/libgcrypto.a").abspath()
-c_math_path =  path.Path("../../../build/lib/libmath.a").abspath()
-c_sys_path =  path.Path("../../../build/lib/libsys.a").abspath()
-c_misc_path =  path.Path("../../../build/lib/libmisc.a").abspath()
-c_mcl_path =  path.Path("../../../build/external/lib/libmcl.a").abspath()
-c_mcl384_256_path = path.Path("../../../build/external/lib/libmclbn384_256.so").abspath()
-c_include_mcl_path = path.Path("../../../build/external/include/mcl").abspath()
-c_extlibs_path = path.Path("../../../build/external/lib").abspath()
+c_header_file = str(Path("../../../src/include/groupsig.h").absolute())
+c_include_path = str(Path("../../../src/include").absolute())
+c_lib_path = str(Path("../../../build/lib/libgroupsig-static.a").absolute())
+c_gl19_path = str(Path("../../../build/lib/libgl19.a").absolute())
+c_bbs04_path = str(Path("../../../build/lib/libbbs04.a").absolute())
+c_ps16_path = str(Path("../../../build/lib/libps16.a").absolute())
+c_klap20_path = str(Path("../../../build/lib/libklap20.a").absolute())
+c_kty04_path = str(Path("../../../build/lib/libkty04.a").absolute())
+c_cpy06_path = str(Path("../../../build/lib/libcpy06.a").absolute())
+c_dl21_path = str(Path("../../../build/lib/libdl21.a").absolute())
+c_dl21seq_path = str(Path("../../../build/lib/libdl21seq.a").absolute())
+c_logger_path = str(Path("../../../build/lib/liblogger.a").absolute())
+c_msg_path = str(Path("../../../build/lib/libmsg.a").absolute())
+c_base64_path = str(Path("../../../build/lib/libbase64.a").absolute())
+c_big_path = str(Path("../../../build/lib/libbig.a").absolute())
+c_hash_path = str(Path("../../../build/lib/libhash.a").absolute())
+c_pbcext_path = str(Path("../../../build/lib/libpbcext.a").absolute())
+c_crypto_path = str(Path("../../../build/lib/libgcrypto.a").absolute())
+c_math_path = str(Path("../../../build/lib/libmath.a").absolute())
+c_sys_path = str(Path("../../../build/lib/libsys.a").absolute())
+c_misc_path = str(Path("../../../build/lib/libmisc.a").absolute())
+c_mcl_path = str(Path("../../../build/external/lib/libmcl.a").absolute())
+c_mcl384_256_path = str(Path("../../../build/external/lib/libmclbn384_256.so").absolute())
+c_include_mcl_path = str(Path("../../../build/external/include/mcl").absolute())
+c_extlibs_path = str(Path("../../../build/external/lib").absolute())
 
 # Specify sources and library dependencies
 ffibuilder.set_source("_groupsig",
@@ -214,6 +214,8 @@ ffibuilder.set_source("_groupsig",
                       #include "gl19.h"
                       #include "ps16.h"
                       #include "bbs04.h"
+                      #include "dl21.h"
+                      #include "dl21seq.h"
                       """,
                       libraries=["stdc++","ssl","crypto"],
                       runtime_library_dirs=[

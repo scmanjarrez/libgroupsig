@@ -23,7 +23,7 @@ setup(
     python_requires='>=3',
     setup_requires=["cffi"],
     cffi_modules=["pygroupsig/libgroupsig_build.py:ffibuilder"],
-    install_requires=["cffi", "path.py"],
+    install_requires=["cffi"],
     test_suite="nose.collector",
     tests_require=["nose"],
 )

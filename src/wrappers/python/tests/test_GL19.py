@@ -13,6 +13,9 @@ from pygroupsig import blindsig
 from pygroupsig import constants
 
 
+UINT_MAX = 2**32 - 1
+
+
 # Parent class with common functions
 class TestCommon(unittest.TestCase):
 
@@ -62,36 +65,36 @@ class TestGroupOps(TestCommon):
     # Accepts a valid signature for a message passed as a string
     def test_acceptValidSignatureString(self):
         self.addMember()
-        sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey)
+        sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
         b = groupsig.verify(sig, "Hello, World!", self.grpkey)
         self.assertTrue(b)
 
     # Rejects a valid signature for a different message, also passed as a string
     def test_rejectValidSignatureWrongMessageString(self):
         self.addMember()
-        sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey)
+        sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
         b = groupsig.verify(sig, "Hello, Worlds!", self.grpkey)
         self.assertFalse(b)
 
     # Accepts a valid signature for a message passed as a byte array
     def test_acceptValidSignatureBytes(self):
         self.addMember()
-        sig = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey)
+        sig = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
         b = groupsig.verify(sig, b"Hello, World!", self.grpkey)
         self.assertTrue(b)
 
     # Rejects a valid signature for a different message, also passed as a byte array
     def test_rejectValidSignatureWrongMessageBytes(self):
         self.addMember()
-        sig = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey)
+        sig = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
         b = groupsig.verify(sig, b"Hello, Worlds!", self.grpkey)
         self.assertFalse(b)
 
     # Successfully blind-converts-unblinds two signature by same member
     def test_blindConvertUnblindSameMember(self):
         self.addMember()
-        sig1 = groupsig.sign(b"Hello, World1!", self.memkeys[0], self.grpkey)
-        sig2 = groupsig.sign(b"Hello, World2!", self.memkeys[0], self.grpkey)
+        sig1 = groupsig.sign(b"Hello, World1!", self.memkeys[0], self.grpkey, UINT_MAX)
+        sig2 = groupsig.sign(b"Hello, World2!", self.memkeys[0], self.grpkey, UINT_MAX)
         b = groupsig.verify(sig1, b"Hello, World1!", self.grpkey)
         self.assertTrue(b)
         b = groupsig.verify(sig2, b"Hello, World2!", self.grpkey)
@@ -112,8 +115,8 @@ class TestGroupOps(TestCommon):
     def test_blindConvertUnblindDifferentMembers(self):
         self.addMember()
         self.addMember()
-        sig1 = groupsig.sign(b"Hello, World1!", self.memkeys[0], self.grpkey)
-        sig2 = groupsig.sign(b"Hello, World2!", self.memkeys[1], self.grpkey)
+        sig1 = groupsig.sign(b"Hello, World1!", self.memkeys[0], self.grpkey, UINT_MAX)
+        sig2 = groupsig.sign(b"Hello, World2!", self.memkeys[1], self.grpkey, UINT_MAX)
         b = groupsig.verify(sig1, b"Hello, World1!", self.grpkey)
         self.assertTrue(b)
         b = groupsig.verify(sig2, b"Hello, World2!", self.grpkey)
@@ -133,8 +136,8 @@ class TestGroupOps(TestCommon):
     # Non transitivity of conversion
     def test_nonTransitiveConvert(self):
         self.addMember()
-        sig1 = groupsig.sign(b"Hello, World1!", self.memkeys[0], self.grpkey)
-        sig2 = groupsig.sign(b"Hello, World2!", self.memkeys[0], self.grpkey)
+        sig1 = groupsig.sign(b"Hello, World1!", self.memkeys[0], self.grpkey, UINT_MAX)
+        sig2 = groupsig.sign(b"Hello, World2!", self.memkeys[0], self.grpkey, UINT_MAX)
         b = groupsig.verify(sig1, b"Hello, World1!", self.grpkey)
         self.assertTrue(b)
         b = groupsig.verify(sig2, b"Hello, World2!", self.grpkey)
@@ -183,7 +186,7 @@ class TestSignatureOps(TestCommon):
     def setUp(self):
         super().setUp()
         self.addMember()
-        self.sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey)
+        self.sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
 
     # Exports and reimports a signature, and it verifies correctly
     def test_sigExportImport(self):
@@ -206,7 +209,7 @@ class TestBlindSignatureOps(TestCommon):
     def setUp(self):
         super().setUp()
         self.addMember()
-        self.sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey)
+        self.sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
         bkey = bldkey.bldkey_random(self.code, self.grpkey)
         out = groupsig.blind(self.grpkey, self.sig, "Hello, World!", bkey)
         self.bsig = out["bsig"]

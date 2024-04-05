@@ -14,6 +14,9 @@ from pygroupsig import crl
 from pygroupsig import constants
 
 
+UINT_MAX = 2**32 - 1
+
+
 # Parent class with common functions
 class TestCommon(unittest.TestCase):
 
@@ -62,28 +65,28 @@ class TestGroupOps(TestCommon):
     # Accepts a valid signature for a message passed as a string
     def test_acceptValidSignatureString(self):
         self.addMember()
-        sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey)
+        sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
         b = groupsig.verify(sig, "Hello, World!", self.grpkey)
         self.assertTrue(b)
 
     # Rejects a valid signature for a different message, also passed as a string
     def test_rejectValidSignatureWrongMessageString(self):
         self.addMember()
-        sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey)
+        sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
         b = groupsig.verify(sig, "Hello, Worlds!", self.grpkey)
         self.assertFalse(b)
 
     # Accepts a valid signature for a message passed as a byte array
     def test_acceptValidSignatureBytes(self):
         self.addMember()
-        sig = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey)
+        sig = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
         b = groupsig.verify(sig, b"Hello, World!", self.grpkey)
         self.assertTrue(b)
 
     # Rejects a valid signature for a different message, also passed as a byte array
     def test_rejectValidSignatureWrongMessageBytes(self):
         self.addMember()
-        sig = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey)
+        sig = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
         b = groupsig.verify(sig, b"Hello, Worlds!", self.grpkey)
         self.assertFalse(b)
 
@@ -91,14 +94,14 @@ class TestGroupOps(TestCommon):
     def test_openSignature(self):
         self.addMember()
         self.addMember()
-        sig = groupsig.sign(b"Hello, World!", self.memkeys[1], self.grpkey)
+        sig = groupsig.sign(b"Hello, World!", self.memkeys[1], self.grpkey, UINT_MAX)
         gsopen = groupsig.open(sig, self.mgrkey, self.grpkey, gml = self.gml)
         self.assertEqual(gsopen["index"], 1)
 
     # Generate a claim (proof) of a signature and verifies it
     def test_claimValidSignature(self):
         self.addMember()
-        sig = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey)
+        sig = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
         claim = groupsig.claim(sig, self.memkeys[0], self.grpkey)
         ver = groupsig.claim_verify(claim["proof"], sig, self.grpkey)
         self.assertTrue(ver)
@@ -109,11 +112,11 @@ class TestGroupOps(TestCommon):
         self.addMember()
         msg1 = b"Hello, World!"
         msg2 = b"Hello, Worlds!"
-        sig1 = groupsig.sign(msg1, self.memkeys[0], self.grpkey)
+        sig1 = groupsig.sign(msg1, self.memkeys[0], self.grpkey, UINT_MAX)
         # same user, different message
-        sig2 = groupsig.sign(msg2, self.memkeys[0], self.grpkey)
+        sig2 = groupsig.sign(msg2, self.memkeys[0], self.grpkey, UINT_MAX)
         # different user, same message
-        sig3 = groupsig.sign(msg1, self.memkeys[1], self.grpkey)
+        sig3 = groupsig.sign(msg1, self.memkeys[1], self.grpkey, UINT_MAX)
         claim = groupsig.claim(sig1, self.memkeys[0], self.grpkey)
         # verify claim with other signature (different message)
         ver1 = groupsig.claim_verify(claim["proof"], sig2, self.grpkey)
@@ -125,7 +128,7 @@ class TestGroupOps(TestCommon):
     # Trace a revealed user
     def test_traceValidSignature(self):
         self.addMember()
-        sig = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey)
+        sig = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
         gsopen = groupsig.open(sig, self.mgrkey, self.grpkey, gml = self.gml)
         self.assertEqual(gsopen["index"], 0)
         _ = groupsig.reveal(gsopen["index"], self.grpkey, self.gml, self.crl)
@@ -135,15 +138,15 @@ class TestGroupOps(TestCommon):
     # Trace a not revealed user
     def test_traceWrongSignature(self):
         self.addMember()
-        sig = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey)
+        sig = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
         gstrace = groupsig.trace(sig, self.grpkey, self.gml, self.crl)
         self.assertFalse(gstrace)
 
     # Generate a claim (proof) of two signatures and verify it
     def test_proveEqualityValidSignature(self):
         self.addMember()
-        sig1 = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey)
-        sig2 = groupsig.sign(b"Hello, Worlds!", self.memkeys[0], self.grpkey)
+        sig1 = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
+        sig2 = groupsig.sign(b"Hello, Worlds!", self.memkeys[0], self.grpkey, UINT_MAX)
         sigs = [sig1, sig2]
         prove = groupsig.prove_equality(self.memkeys[0], self.grpkey, sigs)
         ver = groupsig.prove_equality_verify(prove["proof"], self.grpkey, sigs)
@@ -152,8 +155,8 @@ class TestGroupOps(TestCommon):
     def test_proveEqualityWrongSignature(self):
         self.addMember()
         self.addMember()
-        sig1 = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey)
-        sig2 = groupsig.sign(b"Hello, Worlds!", self.memkeys[0], self.grpkey)
+        sig1 = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
+        sig2 = groupsig.sign(b"Hello, Worlds!", self.memkeys[0], self.grpkey, UINT_MAX)
         sigs = [sig1, sig2]
         prove1 = groupsig.prove_equality(self.memkeys[0], self.grpkey, sigs)
         sigs = [sig2, sig1]
@@ -175,7 +178,7 @@ class TestSignatureOps(TestCommon):
     def setUp(self):
         super().setUp()
         self.addMember()
-        self.sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey)
+        self.sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
 
     # Exports and reimports a signature, and it verifies correctly
     def test_sigExportImport(self):
@@ -253,10 +256,10 @@ class TestCrlOps(TestCommon):
         super().setUp()
         self.addMember()
         self.addMember()
-        self.sig1 = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey)
+        self.sig1 = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
         gsopen1 = groupsig.open(self.sig1, self.mgrkey, self.grpkey, gml = self.gml)
         _ = groupsig.reveal(gsopen1["index"], self.grpkey, self.gml, self.crl)
-        self.sig2 = groupsig.sign("Hello, World!", self.memkeys[1], self.grpkey)
+        self.sig2 = groupsig.sign("Hello, World!", self.memkeys[1], self.grpkey, UINT_MAX)
         gsopen2 = groupsig.open(self.sig2, self.mgrkey, self.grpkey, gml = self.gml)
         _ = groupsig.reveal(gsopen2["index"], self.grpkey, self.gml, self.crl)
 

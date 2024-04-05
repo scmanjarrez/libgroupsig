@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -43,12 +43,12 @@ groupsig_signature_t* dl21_signature_init() {
 
   /* Initialize the signature contents */
   if(!(sig = (groupsig_signature_t *) mem_malloc(sizeof(groupsig_signature_t)))) {
-    LOG_ERRORCODE(&logger, __FILE__, "dl21_signature_init", __LINE__, errno, 
+    LOG_ERRORCODE(&logger, __FILE__, "dl21_signature_init", __LINE__, errno,
 		  LOGERROR);
   }
 
   if(!(dl21_sig = (dl21_signature_t *) mem_malloc(sizeof(dl21_signature_t)))) {
-    LOG_ERRORCODE(&logger, __FILE__, "dl21_signature_init", __LINE__, errno, 
+    LOG_ERRORCODE(&logger, __FILE__, "dl21_signature_init", __LINE__, errno,
 		  LOGERROR);
     return NULL;
   }
@@ -66,7 +66,7 @@ int dl21_signature_free(groupsig_signature_t *sig) {
 
   if(!sig || sig->scheme != GROUPSIG_DL21_CODE) {
     LOG_EINVAL_MSG(&logger, __FILE__, "dl21_signature_free", __LINE__,
-		   "Nothing to free.", LOGWARN);    
+		   "Nothing to free.", LOGWARN);
     return IOK;
   }
 
@@ -80,7 +80,7 @@ int dl21_signature_free(groupsig_signature_t *sig) {
     mem_free(dl21_sig);
     dl21_sig = NULL;
   }
-  
+
   mem_free(sig);
 
   return IOK;
@@ -107,12 +107,12 @@ int dl21_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src) {
     GOTOENDRC(IERROR, dl21_signature_copy);
   if(pbcext_element_G1_set(dl21_dst->AA, dl21_src->AA) == IERROR)
     GOTOENDRC(IERROR, dl21_signature_copy);
-  
+
   if(!(dl21_dst->A_ = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, dl21_signature_copy);
   if(pbcext_element_G1_set(dl21_dst->A_, dl21_src->A_) == IERROR)
     GOTOENDRC(IERROR, dl21_signature_copy);
-  
+
   if(!(dl21_dst->d = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, dl21_signature_copy);
   if(pbcext_element_G1_set(dl21_dst->d, dl21_src->d) == IERROR)
@@ -127,7 +127,7 @@ int dl21_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src) {
     GOTOENDRC(IERROR, dl21_signature_copy);
   if(pbcext_element_G1_set(dl21_dst->nym, dl21_src->nym) == IERROR)
     GOTOENDRC(IERROR, dl21_signature_copy);
-  
+
  dl21_signature_copy_end:
 
   if (rc == IERROR) {
@@ -151,9 +151,9 @@ int dl21_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src) {
       pbcext_element_G1_free(dl21_dst->nym);
       dl21_dst->nym = NULL;
     }
-    
+
   }
-  
+
   return rc;
 
 }
@@ -187,21 +187,21 @@ int dl21_signature_get_size(groupsig_signature_t *sig) {
     if (size + (int) ss + sizeof(int) > INT_MAX) return -1;
     size += (int) ss + sizeof(int);
   }
-  
+
   return size;
 
 }
 
 int dl21_signature_export(byte_t **bytes,
 			  uint32_t *size,
-			  groupsig_signature_t *sig) { 
+			  groupsig_signature_t *sig) {
 
   dl21_signature_t *dl21_sig;
   byte_t *_bytes, *__bytes;
   uint64_t len;
   int rc, ctr, _size;
   uint16_t i;
-  
+
   if(!sig || sig->scheme != GROUPSIG_DL21_CODE) {
     LOG_EINVAL(&logger, __FILE__, "dl21_signature_export", __LINE__, LOGERROR);
     return IERROR;
@@ -217,9 +217,9 @@ int dl21_signature_export(byte_t **bytes,
 
   if (!(_bytes = mem_malloc(sizeof(byte_t)*_size))) {
     return IERROR;
-  }  
+  }
 
-  
+
    /* Dump GROUPSIG_DL21_CODE */
   _bytes[ctr++] = GROUPSIG_DL21_CODE;
 
@@ -233,27 +233,27 @@ int dl21_signature_export(byte_t **bytes,
   __bytes = &_bytes[ctr];
   if(pbcext_dump_element_G1_bytes(&__bytes, &len, dl21_sig->A_) == IERROR)
     GOTOENDRC(IERROR, dl21_signature_export);
-  ctr += len;  
+  ctr += len;
 
   /* Dump d */
   __bytes = &_bytes[ctr];
   if(pbcext_dump_element_G1_bytes(&__bytes, &len, dl21_sig->d) == IERROR)
     GOTOENDRC(IERROR, dl21_signature_export);
   ctr += len;
-  
+
   /* Dump spk */
   __bytes = &_bytes[ctr];
   if(pbcext_dump_element_Fr_bytes(&__bytes, &len, dl21_sig->pi->c) == IERROR)
     GOTOENDRC(IERROR, dl21_signature_export);
-  ctr += len;  
+  ctr += len;
 
   for(i=0; i<dl21_sig->pi->ns; i++) {
     __bytes = &_bytes[ctr];
     if(pbcext_dump_element_Fr_bytes(&__bytes, &len, dl21_sig->pi->s[i]) == IERROR)
       GOTOENDRC(IERROR, dl21_signature_export);
-    ctr += len;      
+    ctr += len;
   }
-  
+
   /* Dump nym */
   __bytes = &_bytes[ctr];
   if(pbcext_dump_element_G1_bytes(&__bytes, &len, dl21_sig->nym) == IERROR)
@@ -270,7 +270,7 @@ int dl21_signature_export(byte_t **bytes,
 
   /* Sanity check */
   if (ctr != _size) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "dl21_signature_export", __LINE__, 
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "dl21_signature_export", __LINE__,
 		      EDQUOT, "Unexpected key scheme.", LOGERROR);
     GOTOENDRC(IERROR, dl21_signature_export);
   }
@@ -278,10 +278,10 @@ int dl21_signature_export(byte_t **bytes,
   *size = ctr;
 
  dl21_signature_export_end:
-  
+
   if (rc == IERROR && _bytes) { mem_free(_bytes); _bytes = NULL; }
-  return rc;  
-  
+  return rc;
+
 }
 
 groupsig_signature_t* dl21_signature_import(byte_t *source, uint32_t size) {
@@ -306,20 +306,20 @@ groupsig_signature_t* dl21_signature_import(byte_t *source, uint32_t size) {
   }
 
   dl21_sig = sig->sig;
-  
+
   /* First byte: scheme */
   scheme = source[ctr++];
   if(scheme != sig->scheme) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "dl21_signature_import", __LINE__, 
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "dl21_signature_import", __LINE__,
 		      EDQUOT, "Unexpected signature scheme.", LOGERROR);
     GOTOENDRC(IERROR, dl21_signature_import);
-  }  
+  }
 
   /* Get AA */
   if(!(dl21_sig->AA = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, dl21_signature_import);
   if(pbcext_get_element_G1_bytes(dl21_sig->AA, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, dl21_signature_import);  
+    GOTOENDRC(IERROR, dl21_signature_import);
   if (!len) {
     ctr += sizeof(int);  // @TODO: this is an artifact of pbcext_get_element_XX_bytes
   } else {
@@ -330,18 +330,18 @@ groupsig_signature_t* dl21_signature_import(byte_t *source, uint32_t size) {
   if(!(dl21_sig->A_ = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, dl21_signature_import);
   if(pbcext_get_element_G1_bytes(dl21_sig->A_, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, dl21_signature_import);  
+    GOTOENDRC(IERROR, dl21_signature_import);
   if (!len) {
     ctr += sizeof(int);  // @TODO: this is an artifact of pbcext_get_element_XX_bytes
   } else {
     ctr += len;
-  }  
+  }
 
   /* Get d */
   if(!(dl21_sig->d = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, dl21_signature_import);
   if(pbcext_get_element_G1_bytes(dl21_sig->d, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, dl21_signature_import);  
+    GOTOENDRC(IERROR, dl21_signature_import);
   if (!len) {
     ctr += sizeof(int);  // @TODO: this is an artifact of pbcext_get_element_XX_bytes
   } else {
@@ -355,7 +355,7 @@ groupsig_signature_t* dl21_signature_import(byte_t *source, uint32_t size) {
   if(!(dl21_sig->pi->c = pbcext_element_Fr_init()))
     GOTOENDRC(IERROR, dl21_signature_import);
   if(pbcext_get_element_Fr_bytes(dl21_sig->pi->c, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, dl21_signature_import);  
+    GOTOENDRC(IERROR, dl21_signature_import);
   if (!len) {
     ctr += sizeof(int);  // @TODO: this is an artifact of pbcext_get_element_XX_bytes
   } else {
@@ -366,19 +366,19 @@ groupsig_signature_t* dl21_signature_import(byte_t *source, uint32_t size) {
     if(!(dl21_sig->pi->s[i] = pbcext_element_Fr_init()))
       GOTOENDRC(IERROR, dl21_signature_import);
     if(pbcext_get_element_Fr_bytes(dl21_sig->pi->s[i], &len, &source[ctr]) == IERROR)
-      GOTOENDRC(IERROR, dl21_signature_import);  
+      GOTOENDRC(IERROR, dl21_signature_import);
     if (!len) {
       ctr += sizeof(int);  // @TODO: this is an artifact of pbcext_get_element_XX_bytes
     } else {
       ctr += len;
     }
   }
-  
+
   /* Get nym */
   if(!(dl21_sig->nym = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, dl21_signature_import);
   if(pbcext_get_element_G1_bytes(dl21_sig->nym, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, dl21_signature_import);  
+    GOTOENDRC(IERROR, dl21_signature_import);
   if (!len) {
     ctr += sizeof(int);  // @TODO: this is an artifact of pbcext_get_element_XX_bytes
   } else {
@@ -389,7 +389,7 @@ groupsig_signature_t* dl21_signature_import(byte_t *source, uint32_t size) {
 
   if(rc == IERROR && sig) { dl21_signature_free(sig); sig = NULL; }
   if(rc == IOK) return sig;
-  return NULL;  
+  return NULL;
 
 }
 
@@ -398,7 +398,7 @@ char* dl21_signature_to_string(groupsig_signature_t *sig) {
   uint32_t size;
   byte_t *bytes;
   char *str;
-  
+
   if(!sig || sig->scheme != GROUPSIG_DL21_CODE) {
     LOG_EINVAL(&logger, __FILE__, "signature_to_string", __LINE__, LOGERROR);
     return NULL;

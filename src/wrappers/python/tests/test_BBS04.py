@@ -11,6 +11,9 @@ from pygroupsig import gml
 from pygroupsig import constants
 
 
+UINT_MAX = 2**32 - 1
+
+
 # Tests for group operations
 class TestCommon(unittest.TestCase):
 
@@ -54,28 +57,28 @@ class TestGroupOps(TestCommon):
     # Accepts a valid signature for a message passed as a string
     def test_acceptValidSignatureString(self):
         self.addMember()
-        sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey)
+        sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
         b = groupsig.verify(sig, "Hello, World!", self.grpkey)
         self.assertTrue(b)
 
     # Rejects a valid signature for a different message, also passed as a string
     def test_rejectValidSignatureWrongMessageString(self):
         self.addMember()
-        sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey)
+        sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
         b = groupsig.verify(sig, "Hello, Worlds!", self.grpkey)
         self.assertFalse(b)
 
     # Accepts a valid signature for a message passed as a byte array
     def test_acceptValidSignatureBytes(self):
         self.addMember()
-        sig = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey)
+        sig = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
         b = groupsig.verify(sig, b"Hello, World!", self.grpkey)
         self.assertTrue(b)
 
     # Rejects a valid signature for a different message, also passed as a byte array
     def test_rejectValidSignatureWrongMessageBytes(self):
         self.addMember()
-        sig = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey)
+        sig = groupsig.sign(b"Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
         b = groupsig.verify(sig, b"Hello, Worlds!", self.grpkey)
         self.assertFalse(b)
 
@@ -83,7 +86,7 @@ class TestGroupOps(TestCommon):
     def test_openSignature(self):
         self.addMember()
         self.addMember()
-        sig = groupsig.sign(b"Hello, World!", self.memkeys[1], self.grpkey)
+        sig = groupsig.sign(b"Hello, World!", self.memkeys[1], self.grpkey, UINT_MAX)
         gsopen = groupsig.open(sig, self.mgrkey, self.grpkey, gml = self.gml)
         self.assertEqual(gsopen["index"], 1)
 
@@ -95,7 +98,7 @@ class TestSignatureOps(TestCommon):
     def setUp(self):
         super().setUp()
         self.addMember()
-        self.sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey)
+        self.sig = groupsig.sign("Hello, World!", self.memkeys[0], self.grpkey, UINT_MAX)
 
     # Exports and reimports a signature, and it verifies correctly
     def test_sigExportImport(self):

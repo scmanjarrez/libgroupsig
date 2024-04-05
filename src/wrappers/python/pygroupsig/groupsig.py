@@ -1,7 +1,5 @@
 from _groupsig import lib, ffi
-from . import constants
 
-#from array import array
 
 def hello_world():
     """
@@ -22,6 +20,7 @@ def init(scheme, seed=0):
     Returns:
         void. On error, an Exception is thrown.
     """
+
     if lib.groupsig_init(scheme, seed) == lib.IERROR:
         raise Exception('Error initializing groupsig environment.')
 
@@ -96,6 +95,7 @@ def get_joinseq(scheme):
     Returns:
         The number of messages to be exchanged.
     """
+
     msgs = ffi.new("uint8_t *")
 
     if lib.groupsig_get_joinseq(scheme, msgs) == lib.IERROR:
@@ -184,6 +184,23 @@ def join_mem(step, grpkey, msgin = ffi.NULL, memkey = ffi.NULL):
         'memkey' : _memkey
     }
 
+
+def _ctype_message(msg):
+    """
+    Converts a _bytes_ or UTF-8 string into native object.
+
+    Parameters:
+        msg: The message to convert. May be of type _bytes_ or a UTF-8 string.
+    Returns:
+        A native object containing the message.
+    """
+
+    if isinstance(msg, bytes):
+        return lib.message_from_bytes(msg, len(msg))
+
+    return lib.message_from_string(msg.encode())
+
+
 def sign(msg, memkey, grpkey, seed=0):
     """
     Produces a group signature.
@@ -199,11 +216,7 @@ def sign(msg, memkey, grpkey, seed=0):
     """
 
     sig = lib.groupsig_signature_init(memkey.scheme)
-
-    if isinstance(msg, bytes):
-        _msg = lib.message_from_bytes(msg, len(msg))
-    else:
-        _msg = lib.message_from_string(msg.encode('utf8'))
+    _msg = _ctype_message(msg)
 
     if lib.groupsig_sign(sig, _msg, memkey, grpkey, seed) == lib.IERROR:
         raise Exception('Error signing message.')
@@ -224,19 +237,15 @@ def verify(sig, msg, grpkey):
     """
 
     _b = ffi.new("uint8_t *")
-
-    if isinstance(msg,bytes):
-        _msg = lib.message_from_bytes(msg,len(msg))
-    else:
-        _msg = lib.message_from_string(msg.encode('utf8'))
+    _msg = _ctype_message(msg)
 
     if lib.groupsig_verify(_b, sig, _msg, grpkey) == lib.IERROR:
         raise Exception('Error verifying message.')
-    else:
-        if _b[0] == 1:
-            return True
-        if _b[0] == 0:
-            return False
+
+    if _b[0] == 1:
+        return True
+    elif _b[0] == 0:
+        return False
 
 def verify_batch(sigs, msgs, grpkey):
     """
@@ -252,23 +261,19 @@ def verify_batch(sigs, msgs, grpkey):
         exception is thrown.
     """
 
-    _b = ffi.new("uint8_t *")
+    if len(sigs) != len(msgs):
+        raise Exception('Length of signatures and messages does not match')
 
-    _msgs = []
-    for i in range(len(msgs)):
-        if isinstance(msgs[i], bytes):
-            _msg = lib.message_from_bytes(msgs[i],len(msg[i]))
-        else:
-            _msg = lib.message_from_string(msgs[i].encode('utf8'))
-        _msgs.append(_msg)
+    _b = ffi.new("uint8_t *")
+    _msgs = [_ctype_message(ms) for ms in msgs]
 
     if lib.groupsig_verify_batch(_b, sigs, _msgs, len(sigs), grpkey) == lib.IERROR:
         raise Exception('Error verifying message.')
-    else:
-        if _b[0] == 1:
-            return True
-        if _b[0] == 0:
-            return False
+
+    if _b[0] == 1:
+        return True
+    elif _b[0] == 0:
+        return False
 
 def open(sig, mgrkey, grpkey, gml=ffi.NULL, crl=ffi.NULL):
     """
@@ -301,16 +306,26 @@ def open(sig, mgrkey, grpkey, gml=ffi.NULL, crl=ffi.NULL):
     }
 
 def open_verify(proof, sig, grpkey):
+    """
+    Verifies an opened group signature, in schemes that support it.
+
+    Parameters:
+        proof: Opening proof.
+        sig: The signature to open.
+        grpkey: The group key.
+    Returns:
+        True if the opening is valid, False otherwise. On error, an exception
+        is thrown.
+    """
 
     _b = ffi.new("uint8_t *")
 
     if lib.groupsig_open_verify(_b, proof, sig, grpkey) == lib.IERROR:
         raise Exception('Error verifying open proof')
-    else:
-        if _b[0] == 1:
-            return True
-        if _b[0] == 0:
-            return False
+    if _b[0] == 1:
+        return True
+    elif _b[0] == 0:
+        return False
 
 def blind(grpkey, sig, msg, bldkey=ffi.NULL):
     """
@@ -337,11 +352,7 @@ def blind(grpkey, sig, msg, bldkey=ffi.NULL):
         _bldkey[0] = bldkey
 
     bsig = lib.groupsig_blindsig_init(sig.scheme)
-
-    if isinstance(msg,bytes):
-        _msg = lib.message_from_bytes(msg,len(msg))
-    else:
-        _msg = lib.message_from_string(msg.encode('utf8'))
+    _msg = _ctype_message(msg)
 
     if lib.groupsig_blind(bsig, _bldkey, grpkey, sig, _msg) == lib.IERROR:
         raise Exception('Error blinding signature.')
@@ -414,9 +425,12 @@ def unblind(csig, bldkey, grpkey=ffi.NULL, sig=ffi.NULL):
 
 def reveal(index, grpkey, gml, crl):
     """ This function was implemented in libgroupsig but not in python, tested"""
+
     trapdoor = lib.trapdoor_init(grpkey.scheme)
+
     if lib.groupsig_reveal(trapdoor, crl, gml, index) == lib.IERROR:
         raise Exception('Error revealing identity')
+
     return  {
         'trapdoor': trapdoor
     }
@@ -424,8 +438,10 @@ def reveal(index, grpkey, gml, crl):
 def trace(sig, grpkey, gml, crl):
     """ This function was implemented in libgroupsig but not in python, tested"""
     _b = ffi.new("uint8_t *")
+
     if lib.groupsig_trace(_b, sig, grpkey, crl, ffi.NULL, gml) == lib.IERROR:
         raise Exception('Error tracing signature')
+
     if _b[0] == 1:
         return True
     elif _b[0] == 0:
@@ -433,9 +449,12 @@ def trace(sig, grpkey, gml, crl):
 
 def claim(sig, memkey, grpkey):
     """ This function was implemented in libgroupsig but not in python, tested"""
+
     proof = lib.groupsig_proof_init(grpkey.scheme)
+
     if lib.groupsig_claim(proof, memkey, grpkey, sig) == lib.IERROR:
         raise Exception('Error claiming signature')
+
     return  {
         'proof': proof
     }
@@ -444,8 +463,10 @@ def claim(sig, memkey, grpkey):
 def claim_verify(proof, sig, grpkey):
     """ This function was implemented in libgroupsig but not in python, tested"""
     _b = ffi.new("uint8_t *")
+
     if lib.groupsig_claim_verify(_b, proof, sig, grpkey) == lib.IERROR:
         raise Exception('Error verifying claimed signature')
+
     if _b[0] == 1:
         return True
     elif _b[0] == 0:
@@ -453,98 +474,115 @@ def claim_verify(proof, sig, grpkey):
 
 def prove_equality(memkey, grpkey, sigs):
     """ This function was implemented in libgroupsig but not in python, tested"""
+
     proof = lib.groupsig_proof_init(grpkey.scheme)
-    _sigs = ffi.new("groupsig_signature_t *[]", len(sigs))
-    for idx, sig in enumerate(sigs):
-        _sigs[idx] = sig
-    if lib.groupsig_prove_equality(proof, memkey, grpkey, _sigs, len(sigs)) == lib.IERROR:
+
+    if lib.groupsig_prove_equality(proof, memkey, grpkey, sigs, len(sigs)) == lib.IERROR:
         raise Exception('Error proving signature equality')
+
     return  {
         'proof': proof
     }
 
 def prove_equality_verify(proof, grpkey, sigs):
     """ This function was implemented in libgroupsig but not in python, tested"""
+
     _b = ffi.new("uint8_t *")
-    _sigs = ffi.new("groupsig_signature_t *[]", len(sigs))
-    for idx, sig in enumerate(sigs):
-        _sigs[idx] = sig
-    if lib.groupsig_prove_equality_verify(_b, proof, grpkey, _sigs, len(sigs)) == lib.IERROR:
+
+    if lib.groupsig_prove_equality_verify(_b, proof, grpkey, sigs, len(sigs)) == lib.IERROR:
         raise Exception('Error verifying signature equality prove')
+
     if _b[0] == 1:
         return True
     elif _b[0] == 0:
         return False
 
-def groupsig_identify(memkey, grpkey, sig, msg):
+def identify(memkey, grpkey, sig, msg):
     """ This function was implemented in libgroupsig but not in python, not tested"""
-    proof = lib.groupsig_proof_init(grpkey.scheme)
-    if lib.groupsig_identify(proof, grpkey, memkey, sig, msg) == lib.IERROR:
-        raise Exception('Error identifying signature')
-    else:
-        return  {
-            'proof': proof
-        }
 
-def groupsig_link(memkey, grpkey, msg, sigs, msgs, n):
-    """ This function was implemented in libgroupsig but not in python, not tested"""
     proof = lib.groupsig_proof_init(grpkey.scheme)
-    _sigs = ffi.new("groupsig_signature_t *[]", len(sigs))
-    for idx, sig in enumerate(sigs):
-        _sigs[idx] = sig
-    _msgs = ffi.new("groupsig_signature_t *[]", len(msgs))
-    for idx, ms in enumerate(msgs):
-        _msgs[idx] = ms
-    if lib.groupsig_link(proof, grpkey, memkey, msg, _sigs, _msgs, n) == lib.IERROR:
-        raise Exception('Error identifying signature')
-    else:
-        return  {
-            'proof': proof
-        }
+    _msg = _ctype_message(msg)
 
-def groupsig_verify_link(proof, grpkey, msg, sigs, msgs, n):
-    """ This function was implemented in libgroupsig but not in python, not tested"""
+    if lib.groupsig_identify(proof, grpkey, memkey, sig, _msg) == lib.IERROR:
+        raise Exception('Error identifying signature')
+
+    return  {
+        'proof': proof
+    }
+
+def link(memkey, grpkey, msg, sigs, msgs):
+    """ This function was implemented in libgroupsig but not in python, tested"""
+
+    if len(sigs) != len(msgs):
+        raise Exception('Length of signatures and messages does not match')
+
+    proof = ffi.new("groupsig_proof_t **")
+    proof[0] = lib.groupsig_proof_init(grpkey.scheme)
+    _msg = _ctype_message(msg)
+    _msgs = [_ctype_message(ms) for ms in msgs]
+
+    res = lib.groupsig_link(proof, grpkey, memkey, _msg, sigs, _msgs, len(sigs))
+    if res == lib.IERROR:
+        raise Exception('Error identifying signature')
+
+    out = {'proof': None}
+    if res == lib.IOK:
+        out["proof"] = proof[0]
+
+    return out
+
+def verify_link(proof, grpkey, msg, sigs, msgs):
+    """ This function was implemented in libgroupsig but not in python, tested"""
+
+    if len(sigs) != len(msgs):
+        raise Exception('Length of signatures and messages does not match')
+
     _b = ffi.new("uint8_t *")
-    _sigs = ffi.new("groupsig_signature_t *[]", len(sigs))
-    for idx, sig in enumerate(sigs):
-        _sigs[idx] = sig
-    _msgs = ffi.new("groupsig_signature_t *[]", len(msgs))
-    for idx, ms in enumerate(msgs):
-        _msgs[idx] = ms
-    if lib.groupsig_verify_link(_b, grpkey, proof, msg, _sigs, _msgs, n) == lib.IERROR:
+    _msg = _ctype_message(msg)
+    _msgs = [_ctype_message(ms) for ms in msgs]
+
+    if lib.groupsig_verify_link(_b, grpkey, proof, _msg, sigs, _msgs, len(sigs)) == lib.IERROR:
         raise Exception('Error identifying signature')
+
     if _b[0] == 1:
         return True
     elif _b[0] == 0:
         return False
 
-def groupsig_seqlink(memkey, grpkey, msg, sigs, msgs, n):
-    """ This function was implemented in libgroupsig but not in python, not tested"""
-    proof = lib.groupsig_proof_init(grpkey.scheme)
-    _sigs = ffi.new("groupsig_signature_t *[]", len(sigs))
-    for idx, sig in enumerate(sigs):
-        _sigs[idx] = sig
-    _msgs = ffi.new("groupsig_signature_t *[]", len(msgs))
-    for idx, ms in enumerate(msgs):
-        _msgs[idx] = ms
-    if lib.groupsig_seqlink(proof, grpkey, memkey, msg, _sigs, _msgs, n) == lib.IERROR:
-        raise Exception('Error identifying signature')
-    else:
-        return  {
-            'proof': proof
-        }
+def seqlink(memkey, grpkey, msg, sigs, msgs):
+    """ This function was implemented in libgroupsig but not in python, tested"""
 
-def groupsig_verify_seqlink(proof, grpkey, msg, sigs, msgs, n):
-    """ This function was implemented in libgroupsig but not in python, not tested"""
-    _b = ffi.new("uint8_t *")
-    _sigs = ffi.new("groupsig_signature_t *[]", len(sigs))
-    for idx, sig in enumerate(sigs):
-        _sigs[idx] = sig
-    _msgs = ffi.new("groupsig_signature_t *[]", len(msgs))
-    for idx, ms in enumerate(msgs):
-        _msgs[idx] = ms
-    if lib.groupsig_verify_seqlink(_b, grpkey, proof, msg, _sigs, _msgs, n) == lib.IERROR:
+    if len(sigs) != len(msgs):
+        raise Exception('Length of signatures and messages does not match')
+
+    proof = ffi.new("groupsig_proof_t **")
+    proof[0] = lib.groupsig_proof_init(grpkey.scheme)
+    _msg = _ctype_message(msg)
+    _msgs = [_ctype_message(ms) for ms in msgs]
+
+    res = lib.groupsig_seqlink(proof, grpkey, memkey, _msg, sigs, _msgs, len(sigs))
+    if res == lib.IERROR:
         raise Exception('Error identifying signature')
+
+    out = {'proof': None}
+    if res == lib.IOK:
+        out["proof"] = proof[0]
+
+    return out
+
+def verify_seqlink(proof, grpkey, msg, sigs, msgs):
+    """ This function was implemented in libgroupsig but not in python, tested"""
+
+    if len(sigs) != len(msgs):
+        raise Exception('Length of signatures and messages does not match')
+
+    _b = ffi.new("uint8_t *")
+    _msg = _ctype_message(msg)
+    _msgs = [_ctype_message(ms) for ms in msgs]
+
+    if lib.groupsig_verify_seqlink(_b, grpkey, proof, _msg, sigs, _msgs, len(sigs)) == lib.IERROR:
+        raise Exception('Error identifying signature')
+
     if _b[0] == 1:
         return True
     elif _b[0] == 0:
