@@ -1,6 +1,6 @@
 # CMake requirements
 cmake_minimum_required (VERSION 3.13)
-set (CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}")
+set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 
 # Generic library information
 project (libgroupsig)
@@ -44,12 +44,12 @@ endif ()
 add_link_options("LINKER:--allow-multiple-definition")
 
 # Add the binary tree to the search path for include files
-include_directories("${PROJECT_SOURCE_DIR}/src")
-include_directories("${PROJECT_SOURCE_DIR}/src/include")
+include_directories("${CMAKE_SOURCE_DIR}/src")
+include_directories("${CMAKE_SOURCE_DIR}/src/include")
 # Compiler headers path for mcl
-include_directories("${PROJECT_BINARY_DIR}/external/include")
+include_directories("${CMAKE_BINARY_DIR}/external/include")
 # Compiler library path for mcl
-link_directories("${PROJECT_BINARY_DIR}/external/lib")
+link_directories("${CMAKE_BINARY_DIR}/external/lib")
 
 # Check dependencies
 
@@ -65,7 +65,7 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm" OR CMAKE_SYSTEM_PROCESSOR MATCHES "aarch
 endif ()
 
 # Add modules
-list (APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
+list (APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_modules)
 
 ## Configure options
 option (
@@ -77,9 +77,9 @@ option (
   "Build with GCov for coverage reporting.")
 
 option (
-USE_MCL
-"Build a local version of MCL for pairing based crypto."
-ON)
+  USE_MCL
+  "Build a local version of MCL for pairing based crypto."
+  ON)
 
 ## Google Test
 if (USE_GTEST)
@@ -107,18 +107,18 @@ endif (USE_MCL)
 include (CTest)
 
 # Subdirectories
-add_subdirectory (${PROJECT_SOURCE_DIR}/src/logger)
-add_subdirectory (${PROJECT_SOURCE_DIR}/src/msg)
-add_subdirectory (${PROJECT_SOURCE_DIR}/src/sys)
-add_subdirectory (${PROJECT_SOURCE_DIR}/src/shim)
-add_subdirectory (${PROJECT_SOURCE_DIR}/src/crypto)
-add_subdirectory (${PROJECT_SOURCE_DIR}/src/math)
-add_subdirectory (${PROJECT_SOURCE_DIR}/src/misc)
+add_subdirectory (${CMAKE_SOURCE_DIR}/src/logger)
+add_subdirectory (${CMAKE_SOURCE_DIR}/src/msg)
+add_subdirectory (${CMAKE_SOURCE_DIR}/src/sys)
+add_subdirectory (${CMAKE_SOURCE_DIR}/src/shim)
+add_subdirectory (${CMAKE_SOURCE_DIR}/src/crypto)
+add_subdirectory (${CMAKE_SOURCE_DIR}/src/math)
+add_subdirectory (${CMAKE_SOURCE_DIR}/src/misc)
 # if -DHW present, then load src/hw code
 if (HW)
-  add_subdirectory (${PROJECT_SOURCE_DIR}/src/hw)
+  add_subdirectory (${CMAKE_SOURCE_DIR}/src/hw)
 endif ()
-add_subdirectory (${PROJECT_SOURCE_DIR}/src/groupsig)
+add_subdirectory (${CMAKE_SOURCE_DIR}/src/groupsig)
 add_subdirectory (${PROJECT_SOURCE_DIR}/src/tools)
 
 # create an executable "demos" to run the basic tests (without compiling gtest)
