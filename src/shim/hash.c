@@ -128,7 +128,7 @@ hash_t* hash_init(uint8_t type) {
   }
 
   /* Set OpenSSL's MD object */
-  if(!(hash->md = (EVP_MD *) EVP_MD_fetch(NULL, name, NULL))) {
+  if(!(hash->md = (EVP_MD *) EVP_get_digestbyname(name))) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "hash_init", __LINE__, EDQUOT,
 		      "OpenSSL: Unknown hash algorithm", LOGERROR);
     return NULL;
@@ -151,7 +151,6 @@ int hash_free(hash_t *hash) {
   }
 
   mem_free(hash->hash); hash->hash = NULL;
-  EVP_MD_free(hash->md);
   EVP_MD_CTX_free(hash->mdctx); hash->mdctx = NULL;
   mem_free(hash);
 

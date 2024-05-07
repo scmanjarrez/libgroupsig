@@ -1,4 +1,4 @@
-add_library (misc STATIC
+add_library (misc
   misc.c
   misc.h
   profile.c

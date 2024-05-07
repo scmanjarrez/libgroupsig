@@ -120,14 +120,4 @@ if (HW)
 endif ()
 add_subdirectory (${CMAKE_SOURCE_DIR}/src/groupsig)
 add_subdirectory (${PROJECT_SOURCE_DIR}/src/tools)
-
-# create an executable "demos" to run the basic tests (without compiling gtest)
-add_executable(demos src/test/basic/demos.c src/test/basic/kty04.c src/test/basic/ps16.c src/test/basic/utils.c)
-target_include_directories(demos PUBLIC src/test/basic)
-# if -DHW present, then load PYNQ dependencies as well
-# We need to export LD_LIBRARY_PATH with the path to mcl -> export LD_LIBRARY_PATH=$PWD/external/lib/:$LD_LIBRARY_PATH
-if (HW)
-  target_link_libraries(demos kty04 ps16 crypto pynq groupsig cma pthread)
-else ()
-  target_link_libraries(demos kty04 ps16 groupsig)
-endif ()
+add_subdirectory (${CMAKE_SOURCE_DIR}/src/test/basic)

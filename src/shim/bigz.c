@@ -274,20 +274,14 @@ int bigz_sub_ui(bigz_t rop, bigz_t op1, unsigned long int op2) {
 
 int bigz_mul(bigz_t rop, bigz_t op1, bigz_t op2) {
 
-  BN_CTX *ctx;
-
   if(!rop || !op1 || !op2) {
     errno = EINVAL;
     return IERROR;
   }
 
-  /* Temporal fix, sysenv ctx should be used */
-  ctx = BN_CTX_new();
-
-  if(!BN_mul(rop, op1, op2, ctx)) {
+  if(!BN_mul(rop, op1, op2, sysenv->big_ctx)) {
     return IERROR;
   }
-  BN_CTX_free(ctx);
 
   return IOK;
 
@@ -319,8 +313,6 @@ int bigz_mul_ui(bigz_t rop, bigz_t op1, unsigned long int op2) {
 
 int bigz_tdiv(bigz_t q, bigz_t r, bigz_t D, bigz_t d) {
 
-  BN_CTX *ctx;
-
   if(!D || !d || (!q && !r)) {
     errno = EINVAL;
     return IERROR;
@@ -332,14 +324,9 @@ int bigz_tdiv(bigz_t q, bigz_t r, bigz_t D, bigz_t d) {
     return IERROR;
   }
 
-  /* Temporal fix, sysenv ctx should be used */
-  ctx = BN_CTX_new();
-
-  if(!BN_div(q, r, D, d, ctx)) {
+  if(!BN_div(q, r, D, d, sysenv->big_ctx)) {
     return IERROR;
   }
-
-  BN_CTX_free(ctx);
 
   return IOK;
 
@@ -378,7 +365,6 @@ int bigz_tdiv_ui(bigz_t q, bigz_t r, bigz_t D, unsigned long int d) {
 int bigz_divisible_p(bigz_t n, bigz_t d) {
 
   bigz_t r;
-  BN_CTX *ctx;
 
   if(!n || !d) {
     errno = EINVAL;
@@ -389,15 +375,10 @@ int bigz_divisible_p(bigz_t n, bigz_t d) {
     return IERROR;
   }
 
-  /* Temporal fix, sysenv ctx should be used */
-  ctx = BN_CTX_new();
-
-  if(!BN_mod(r, n, d, ctx)) {
+  if(!BN_mod(r, n, d, sysenv->big_ctx)) {
     bigz_free(r); r = NULL;
     return IERROR;
   }
-
-  BN_CTX_free(ctx);
 
   if(BN_is_zero(r)) {
     bigz_free(r); r = NULL;
@@ -472,21 +453,14 @@ int bigz_divexact_ui(bigz_t rop, bigz_t n, unsigned long int d) {
 
 int bigz_mod(bigz_t rop, bigz_t op, bigz_t mod) {
 
-  BN_CTX *ctx;
-
   if(!rop || !op || !mod) {
     errno = EINVAL;
     return IERROR;
   }
 
-  /* Temporal fix, sysenv ctx should be used */
-  ctx = BN_CTX_new();
-
-  if(!BN_mod(rop, op, mod, ctx)) {
+  if(!BN_mod(rop, op, mod, sysenv->big_ctx)) {
     return IERROR;
   }
-
-  BN_CTX_free(ctx);
 
   return IOK;
 
@@ -494,18 +468,10 @@ int bigz_mod(bigz_t rop, bigz_t op, bigz_t mod) {
 
 int bigz_powm(bigz_t rop, bigz_t base, bigz_t exp, bigz_t mod) {
 
-  BN_CTX *ctx;
   bigz_t aux_inv;
-  char *aux;
 
   if(!rop || !base || !exp || !mod) {
     errno = EINVAL;
-    return IERROR;
-  }
-
-  /* Temporal fix, sysenv ctx should be used */
-  ctx = BN_CTX_new();
-  if(!ctx){
     return IERROR;
   }
 
@@ -513,22 +479,20 @@ int bigz_powm(bigz_t rop, bigz_t base, bigz_t exp, bigz_t mod) {
     if(!(aux_inv = bigz_init())){
       return IERROR;
     }
-    BN_mod_inverse(aux_inv, base, mod, ctx);
+    BN_mod_inverse(aux_inv, base, mod, sysenv->big_ctx);
     BN_set_negative(exp, 0);
     /* It gets the correct result, but for some reason it returns IERROR */
-    if(BN_mod_exp(rop, aux_inv, exp, mod, ctx) == IERROR) {
-      // return IERROR;
-    
+    if(!BN_mod_exp(rop, aux_inv, exp, mod, sysenv->big_ctx) == IERROR) {
+      return IERROR;
     }
     BN_set_negative(exp, 1);
     bigz_free(aux_inv); aux_inv = NULL;
   } else {
     /* It gets the correct result, but for some reason it returns IERROR */
-    if(BN_mod_exp(rop, base, exp, mod, ctx) == IERROR) {
-      // return IERROR;
+    if(!BN_mod_exp(rop, base, exp, mod, sysenv->big_ctx) == IERROR) {
+      return IERROR;
     }
   }
-  BN_CTX_free(ctx);
 
   return IOK;
 
@@ -537,7 +501,6 @@ int bigz_powm(bigz_t rop, bigz_t base, bigz_t exp, bigz_t mod) {
 int bigz_pow_ui(bigz_t rop, bigz_t base, unsigned long int exp) {
 
   bigz_t _exp;
-  BN_CTX *ctx;
 
   if(!rop) {
     errno = EINVAL;
@@ -548,15 +511,10 @@ int bigz_pow_ui(bigz_t rop, bigz_t base, unsigned long int exp) {
     return IERROR;
   }
 
-  /* Temporal fix, sysenv ctx should be used */
-  ctx = BN_CTX_new();
-
-  if(!BN_exp(rop, base, _exp, ctx)) {
+  if(!BN_exp(rop, base, _exp, sysenv->big_ctx)) {
     bigz_free(_exp); _exp = NULL;
     return IERROR;
   }
-
-  BN_CTX_free(ctx);
 
   bigz_free(_exp); _exp = NULL;
 
@@ -590,45 +548,32 @@ int bigz_ui_pow_ui(bigz_t rop, unsigned long int base, unsigned long int exp) {
 
 int bigz_invert(bigz_t rop, bigz_t op, bigz_t mod) {
 
-  BN_CTX *ctx;
-
   if(!rop || !op || !mod) {
     errno = EINVAL;
     return IERROR;
   }
 
-  /* Temporal fix, sysenv ctx should be used */
-  ctx = BN_CTX_new();
-
-  if(!BN_mod_inverse(rop, op, mod, ctx)) {
+  if(!BN_mod_inverse(rop, op, mod, sysenv->big_ctx)) {
     return IERROR;
   }
-
-  BN_CTX_free(ctx);
 
   return IOK;
 
 }
 
-int bigz_probab_prime_p(bigz_t n) {
+int bigz_probab_prime_p(bigz_t n, int reps) {
 
   int rc;
-  BN_CTX *ctx;
 
   if(!n) {
     errno = EINVAL;
     return IERROR;
   }
 
-  /* Temporal fix, sysenv ctx should be used */
-  ctx = BN_CTX_new();
-
-  if((rc = BN_check_prime(n, ctx, NULL)) == -1) {
+  if((rc = BN_is_prime_ex(n, reps, sysenv->big_ctx, NULL)) == -1) {
     errno = EINVAL;
-    return -1;
+    return IERROR;
   }
-
-  BN_CTX_free(ctx);
 
   return rc;
 
@@ -645,9 +590,8 @@ void printf_bn(char *text, bigz_t num) {
 }
 
 int bigz_nextprime(bigz_t rop, bigz_t lower) {
-  /* size_t bits; */
+  size_t bits;
   int cmp, rc;
-  BN_CTX *ctx;
 
   if(!rop || !lower) {
     errno = EINVAL;
@@ -658,68 +602,61 @@ int bigz_nextprime(bigz_t rop, bigz_t lower) {
   if(!BN_is_odd(lower)) {
     bigz_add_ui(lower, lower, 1);
   }
-  // bits = bigz_sizeinbits(lower);
+
   if (errno) {
     return IERROR;
   }
+
+  do {
+
+    if((rc = BN_is_prime_ex(lower, PRIMALITY_TEST_SEC, sysenv->big_ctx, NULL)) == -1) {
+      errno = EINVAL;
+      return IERROR;
+    } else if (rc == 1) {
+      bigz_set(rop, lower);
+      return IOK;
+    }
+
+    bigz_add_ui(lower, lower, 2);
+
+  } while(1);
+
+  // Original algorithm
+  /* bits = bigz_sizeinbits(lower); */
+  /* if (errno) { */
+  /*   return IERROR; */
+  /* } */
 
   /* if (bits > INT_MAX) { */
   /*   return IERROR; */
   /* } */
 
-  do {
+  /* do { */
 
-    // if(!BN_generate_prime_ex(rop, (int) bits, 0, NULL, NULL, NULL)) {
-    //   return IERROR;
-    // }
+  /*   if(!BN_generate_prime_ex(rop, (int) bits, 0, NULL, NULL, NULL)) { */
+  /*     return IERROR; */
+  /*   } */
 
-    ctx = BN_CTX_new();
+  /*   errno = 0; */
+  /*   cmp = bigz_cmp(rop, lower); */
+  /*   if (errno) { */
+  /*     return IERROR; */
+  /*   } */
 
-    if((rc = BN_check_prime(lower, ctx, NULL)) == -1) {
-      errno = EINVAL;
-      BN_CTX_free(ctx);
-      return IERROR;
-    } else if (rc == 1) {
-      bigz_set(rop, lower);
-      BN_CTX_free(ctx);
-      return IOK;
-    }
-    BN_CTX_free(ctx);
-    /* if(BN_check_prime(lower, NULL, NULL)) { */
-    /*   bigz_set(rop, lower); */
-    /*   return IOK; */
-    /* } */
-
-    bigz_add_ui(lower, lower, 2);
-    // errno = 0;
-    // cmp = bigz_cmp(rop, lower);
-    // if (errno) {
-    //   return IERROR;
-    // }
-
-  } while(1);
-
-  return IOK;
+  /* } while(cmp <= 0); */
 
 }
 
 int bigz_gcd(bigz_t rop, bigz_t op1, bigz_t op2) {
-
-  BN_CTX *ctx;
 
   if(!rop || !op1 || !op2) {
     errno = EINVAL;
     return IERROR;
   }
 
-  /* Temporal fix, sysenv ctx should be used */
-  ctx = BN_CTX_new();
-
-  if(!BN_gcd(rop, op1, op2, ctx)) {
+  if(!BN_gcd(rop, op1, op2, sysenv->big_ctx)) {
     return IERROR;
   }
-
-  BN_CTX_free(ctx);
 
   return IOK;
 
@@ -802,12 +739,6 @@ byte_t* bigz_export(bigz_t op, size_t *length) {
   /* BN_bn2bin does not store the sign, and we want it */
   if(bigz_sgn(op) == -1) bytes[0] |= 0x01;
 
-  /* unsigned char *test, *test2; */
-  /* test = mem_malloc(_length); */
-  /* test2 = mem_malloc(_length); */
-  /* int sz = BN_bn2bin(op, test); */
-  /* bigz_t *asd, *asd2; */
-   /* asd = (bigz_t *) BN_bin2bn(test, sz, NULL); */
   if(BN_bn2bin(op, &bytes[1]) != _length) {
     mem_free(bytes); bytes = NULL;
     return NULL;

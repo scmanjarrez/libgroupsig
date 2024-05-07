@@ -1,4 +1,4 @@
-# file "klap20_build"
+# file "cpy06_build"
 
 from pygroupsig.common_build import ffibuilder
 

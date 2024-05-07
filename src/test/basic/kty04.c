@@ -10,6 +10,13 @@ void kty04_test() {
   int rc = 255;
   uint8_t code = GROUPSIG_KTY04_CODE;
 
+  printf("##### Testing groupsig_init\n");
+  start = clock();
+  rc = groupsig_init(code, time(NULL));
+  end = clock();
+  print_exp_rc("", rc);
+  print_time("", start, end);
+
   printf("##### Testing grp_key_init\n");
   groupsig_key_t *grpkey;
   start = clock();
@@ -188,6 +195,7 @@ void kty04_test() {
   rc = groupsig_sign(sig0, text0, memkey0_imp, grpkey_imp, UINT_MAX);
   end = clock();
   print_exp_rc("sign ", rc);
+  print_to_str("sig0", groupsig_signature_to_string(sig0));
   print_time("sign ", start, end);
 
   uint8_t ret0 = 255;

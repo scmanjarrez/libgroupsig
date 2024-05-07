@@ -1753,7 +1753,7 @@ int nt_get_safe_prime(uint64_t k, bigz_t p, bigz_t *a) {
 
     errno = 0;
 
-  } while(bigz_probab_prime_p(candidate) != 1);
+  } while(!bigz_probab_prime_p(candidate, PRIMALITY_TEST_SEC));
 
   bigz_free(low);
   bigz_free(up);

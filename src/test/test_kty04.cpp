@@ -48,8 +48,8 @@ namespace groupsig {
 
       int rc;
 
-      // rc = groupsig_init(GROUPSIG_KTY04_CODE, time(NULL));
-      // EXPECT_EQ(rc, IOK);
+      rc = groupsig_init(GROUPSIG_KTY04_CODE, time(NULL));
+      EXPECT_EQ(rc, IOK);
 
       mgrkey = groupsig_mgr_key_init(GROUPSIG_KTY04_CODE);
       EXPECT_NE(mgrkey, nullptr);

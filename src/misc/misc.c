@@ -714,7 +714,7 @@ char* misc_uint642string(uint64_t u) {
     return NULL;
   }
   
-  if(sprintf(str, "%lu", u) != di) {
+  if(sprintf(str, "%llu", u) != di) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "uint64_to_string", __LINE__, errno,
 		      "Wrong number of written bytes.", LOGERROR);
     mem_free(str); str = NULL;
