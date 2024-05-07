@@ -1,4 +1,4 @@
-# file "ps16_build"
+# file "dl21_build"
 
 from pygroupsig.common_build import ffibuilder
 

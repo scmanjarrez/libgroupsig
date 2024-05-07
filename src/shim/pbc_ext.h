@@ -580,8 +580,8 @@ extern "C" {
 
   /** 
    * @fn int pbcext_element_Fr_div(pbcext_element_Fr_t *dst,
-   *                               pbcext_element_Fr_t *e1,
-   *                               pbcext_element_Fr_t *e2)
+   *                               pbcext_element_Fr_t *dividend,
+   *                               pbcext_element_Fr_t *divisor)
    * @brief Sets dst to dividend/divisor.
    *
    * @param[in,out] dst The element to be set.
@@ -596,8 +596,8 @@ extern "C" {
 
   /** 
    * @fn int pbcext_element_Fp_div(pbcext_element_Fp_t *dst,
-   *                               pbcext_element_Fp_t *e1,
-   *                               pbcext_element_Fp_t *e2)
+   *                               pbcext_element_Fp_t *dividend,
+   *                               pbcext_element_Fp_t *divisor)
    * @brief Sets dst to dividend/divisor.
    *
    * @param[in,out] dst The element to be set.
@@ -612,8 +612,8 @@ extern "C" {
 
   /** 
    * @fn int pbcext_element_GT_div(pbcext_element_GT_t *dst,
-   *                               pbcext_element_GT_t *e1,
-   *                               pbcext_element_GT_t *e2)
+   *                               pbcext_element_GT_t *dividend,
+   *                               pbcext_element_GT_t *divisor)
    * @brief Sets dst to dividend/divisor.
    *
    * @param[in,out] dst The element to be set.
@@ -660,8 +660,8 @@ extern "C" {
 
   /** 
    * @fn int pbcext_element_G1_muln(pbcext_element_G1_t *dst,
-   *                                pbcext_element_G1_t *e,
-   *                                pbcext_element_Fr_t *s,
+   *                                pbcext_element_G1_t **e,
+   *                                pbcext_element_Fr_t **s,
    *                                uint32_t n)
    * @brief Sets dst to s[0]*e[0]+...s[n-1]*e[n-1].
    *
@@ -683,13 +683,13 @@ extern "C" {
 
   /** 
    * @fn int pbcext_element_GT_pow(pbcext_element_GT_t *dst,
-   *                               pbcext_element_GT_t **e,
-   *                               pbcext_element_Fr_t **s)
+   *                               pbcext_element_GT_t *base,
+   *                               pbcext_element_Fr_t *exp)
    * @brief Sets dst to e^s, where s is a scalar and e is a group element.
    *
    * @param[in,out] dst The element to be set.
-   * @param[in] e The group element.
-   * @param[in] s The scalar.
+   * @param[in] base The base.
+   * @param[in] exp The exponent.
    * 
    * @return IOK or IERROR.
    */
@@ -699,8 +699,8 @@ extern "C" {
 
   /** 
    * @fn int pbcext_element_GT_pown(pbcext_element_GT_t *dst,
-   *                                pbcext_element_GT_t *e,
-   *                                pbcext_element_Fr_t *s,
+   *                                pbcext_element_GT_t **e,
+   *                                pbcext_element_Fr_t **s,
    *                                uint32_t n)
    * @brief Sets dst to s[0]*e[0]+...s[n-1]*e[n-1].
    *

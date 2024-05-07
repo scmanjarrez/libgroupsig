@@ -440,10 +440,10 @@ namespace bigz {
 
     /* Test b1 for primality (it is prime) */
     /* Removed nreps 25, deprecated BN_is_prime_ex in 3.0 */
-    rc = bigz_probab_prime_p(b1);
+    rc = bigz_probab_prime_p(b1, 25);
     EXPECT_NE(rc, 0);
 
-    rc = bigz_probab_prime_p(b2);
+    rc = bigz_probab_prime_p(b2, 25);
     EXPECT_EQ(rc, 0);
 
     /* Compute next prime */

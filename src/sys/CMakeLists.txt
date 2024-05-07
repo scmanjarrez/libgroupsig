@@ -1,5 +1,5 @@
 # libsys
-add_library (sys STATIC
+add_library (sys
   mem.c
   sysenv.c
   mem.h)

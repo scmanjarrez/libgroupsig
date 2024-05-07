@@ -252,13 +252,6 @@ int groupsig_sign(groupsig_signature_t *sig,
 
   const groupsig_t *gs;
 
-  if (!sig) return IERROR;
-  if (!msg) return IERROR;
-  if (!memkey) return IERROR;
-  if (!grpkey) return IERROR;
-  if (sig->scheme != memkey->scheme) return IERROR;
-  if (memkey->scheme != grpkey->scheme) return IERROR;
-
   if(!sig || !msg || !memkey || !grpkey ||
      sig->scheme != memkey->scheme || memkey->scheme != grpkey->scheme) {
     LOG_EINVAL(&logger, __FILE__, "groupsig_sign", __LINE__, LOGERROR);
