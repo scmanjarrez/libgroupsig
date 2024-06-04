@@ -10,7 +10,7 @@ def memkey_export(memkey):
         memkey: The native member key data structure.
     Returns:
         A Base64 string. On error, an Exception is thrown.
-    """    
+    """
 
     bkey = ffi.new("byte_t **")
     bkey[0] = ffi.NULL
@@ -18,9 +18,9 @@ def memkey_export(memkey):
     if lib.groupsig_mem_key_export(bkey, size, memkey) == constants.IERROR:
         raise Exception('Error exporting member key.')
     b64key = base64.b64encode(ffi.buffer(bkey[0],size[0]))
-    b64key = b64key.decode('utf-8').replace('\n', '')    
+    b64key = b64key.decode('utf-8').replace('\n', '')
     #    lib.free(bkey)
-    return b64key    
+    return b64key
 
 def memkey_import(code, b64key):
     """
@@ -42,12 +42,12 @@ def memkey_import(code, b64key):
 def memkey_to_string(key):
     """
     Returns a human readable string for the given member key.
-    
+
     Parameters:
         key: The native member key data structure.
     Returns:
         A human readable string. On error, an Exception is thrown.
-    """        
+    """
 
     _str = ffi.new("char *")
     _str = lib.groupsig_mem_key_to_string(key)

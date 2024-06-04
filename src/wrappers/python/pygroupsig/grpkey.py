@@ -11,7 +11,7 @@ def grpkey_export(grpkey):
     Returns:
         A Base64 string. On error, an Exception is thrown.
     """
-    
+
     bkey = ffi.new("byte_t **")
     bkey[0] = ffi.NULL
     size = ffi.new("uint32_t *")
@@ -32,17 +32,17 @@ def grpkey_import(code, b64key):
     Returns:
         A group key. On error, an Exception is thrown.
     """
-    
+
     b = base64.b64decode(b64key)
     grpkey = lib.groupsig_grp_key_import(code, b, len(b))
     if grpkey == ffi.NULL:
         raise Exception('Error importing group key.')
     return grpkey
 
-#def grpkey_to_string(key):
-#
-#    _str = ffi.new("char *")
-#    _str = lib.groupsig_grp_key_to_string(key)
-#    if _str == ffi.NULL:
-#        raise Exception('Error converting grpkey to string.')
-#    return ffi.string(_str).decode('utf8')
+def grpkey_to_string(key):
+
+   _str = ffi.new("char *")
+   _str = lib.groupsig_grp_key_to_string(key)
+   if _str == ffi.NULL:
+       raise Exception('Error converting grpkey to string.')
+   return ffi.string(_str).decode('utf8')
