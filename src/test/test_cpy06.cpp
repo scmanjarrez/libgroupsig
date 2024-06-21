@@ -130,13 +130,13 @@ namespace groupsig {
 	// // @TODO We'll probably need to delete this once the interactive
 	// // join protocol works as it should.
 	// rc = groupsig_mem_key_free(memkey[i]);
-	// ASSERT_EQ(rc, IOK);	
+	// ASSERT_EQ(rc, IOK);
 
 	if(m1) { message_free(m1); m1 = NULL; }
 	if(m2) { message_free(m2); m2 = NULL; }
 	if(m3) { message_free(m3); m3 = NULL; }
 	if(m4) { message_free(m4); m4 = NULL; }
-	if(m5) { message_free(m5); m5 = NULL; }	
+	if(m5) { message_free(m5); m5 = NULL; }
 
       }
 
@@ -145,9 +145,9 @@ namespace groupsig {
       // if(m1) { message_free(m1); m1 = NULL; }
       // if(m2) { message_free(m2); m2 = NULL; }
       // if(m3) { message_free(m3); m3 = NULL; }
-      // if(m4) { message_free(m4); m4 = NULL; }	      
+      // if(m4) { message_free(m4); m4 = NULL; }
       // if(m5) { message_free(m5); m5 = NULL; }
-	
+
     }
 
     // If the constructor and destructor are not enough for setting up
@@ -299,7 +299,7 @@ namespace groupsig {
     message_t *msg, *msg2;
     int rc;
     uint8_t b;
-    
+
     rc = groupsig_setup(GROUPSIG_CPY06_CODE, grpkey, mgrkey, gml);
     EXPECT_EQ(rc, IOK);
 
@@ -756,7 +756,7 @@ namespace groupsig {
 
     // /* Initialize the other group signature object */
     // sig3 = groupsig_signature_init(grpkey->scheme);
-    // EXPECT_NE(sig3, nullptr);    
+    // EXPECT_NE(sig3, nullptr);
 
     /* Initialize the proof object */
     proof = groupsig_proof_init(grpkey->scheme);
@@ -788,7 +788,7 @@ namespace groupsig {
     // /* Create another signature, by other user */
     // rc = groupsig_sign(sig3, msg2, memkey[1], grpkey, UINT_MAX);
     // EXPECT_EQ(rc, IOK);
-    
+
 
     sigs[0] = sig;
     sigs[1] = sig2;
@@ -827,7 +827,7 @@ namespace groupsig {
     proof = groupsig_proof_init(grpkey->scheme);
     EXPECT_NE(proof, nullptr);
 
-    /* Create claim */    
+    /* Create claim */
     rc = groupsig_prove_equality(proof, memkey[1], grpkey, sigs, 2);
     EXPECT_EQ(rc, IOK);
 
@@ -1213,8 +1213,8 @@ namespace groupsig {
     rc = groupsig_setup(GROUPSIG_CPY06_CODE, grpkey, mgrkey, gml);
     EXPECT_EQ(rc, IOK);
 
-    /* Add one member */
-    addMembers(1);
+    /* Add three member */
+    addMembers(3);
 
     /* Export */
     bytes = NULL;

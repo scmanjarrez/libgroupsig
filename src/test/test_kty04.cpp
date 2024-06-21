@@ -1147,8 +1147,8 @@ namespace groupsig {
     rc = groupsig_setup(GROUPSIG_KTY04_CODE, grpkey, mgrkey, gml);
     EXPECT_EQ(rc, IOK);
 
-    /* Add one member */
-    addMembers(1);
+    /* Add three member */
+    addMembers(3);
 
     /* Export */
     bytes = NULL;

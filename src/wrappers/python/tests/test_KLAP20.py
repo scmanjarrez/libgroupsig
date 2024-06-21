@@ -210,6 +210,8 @@ class TestGmlOps(TestCommon):
     # Exports and reimports a member key
     def test_gmlExportImport(self):
         self.addMember()
+        self.addMember()
+        self.addMember()
         gml_str = gml.gml_export(self.gml)
         _gml = gml.gml_import(self.code, gml_str)
         # This is quite useless, as import returns an exception if the FFI
