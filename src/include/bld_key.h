@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 
-/* Pointers to functions. Every type of bld_key must implement all the following 
+/* Pointers to functions. Every type of bld_key must implement all the following
    pointers to functions. */
 
 /* "constructors" && "destructors" */
@@ -78,7 +78,9 @@ typedef groupsig_key_pub_set_f bld_key_pub_set_f;
  */
 typedef groupsig_key_export_f bld_key_export_f;
 typedef groupsig_key_pub_export_f bld_key_pub_export_f;
+typedef groupsig_key_pub_f bld_key_pub_f;
 typedef groupsig_key_prv_export_f bld_key_prv_export_f;
+typedef groupsig_key_prv_f bld_key_prv_f;
 
 /**
  * @typedef groupsig_key_import_f bld_key_import_f;
@@ -92,7 +94,7 @@ typedef groupsig_key_pub_import_f bld_key_pub_import_f;
 
 /**
  * @typedef groupsig_key_to_string_f bld_key_to_string_f;
- * @brief Type of functions for getting printable string representations of 
+ * @brief Type of functions for getting printable string representations of
  *  blinding keys.
  */
 typedef groupsig_key_to_string_f bld_key_to_string_f;
@@ -112,67 +114,69 @@ typedef struct {
   bld_key_export_f gexport; /**< Exports a full blinding key.*/
   bld_key_pub_export_f gexport_pub; /**< Exports the public key of a blinding key. */
   bld_key_prv_export_f gexport_prv; /**< Exports the private key of a blinding key. */
+  bld_key_pub_f pub; /**< Create blinding key with only public part. */
+  bld_key_prv_f prv; /**< Create blinding key with only private part. */
   bld_key_import_f gimport; /**< Imports a blinding key (public, private, or full). */
-  bld_key_to_string_f to_string; /**< Returns a printable string version of 
+  bld_key_to_string_f to_string; /**< Returns a printable string version of
 				    blinding keys. */
   bld_key_get_size_f get_size; /**< Returns the size in bytes of
 				  a specific blinding key. */
 } bld_key_handle_t;
 
-/** 
+/**
  * @fn const bld_key_handle_t* groupsig_bld_key_handle_from_code(uint8_t code)
  * @brief Returns the bundle of function handles for the given code.
  *
  * @param[in] code The code.
- * 
+ *
  * @return A pointer to the appropriate bundle or NULL if error.
  */
 const bld_key_handle_t* groupsig_bld_key_handle_from_code(uint8_t code);
 
-/** 
+/**
  * @fn groupsig_key_t* groupsig_bld_key_init(uint8_t code)
  * @brief Initializes a blinding key of the given scheme.
  *
  * @param[in] code The scheme's code.
- * 
+ *
  * @return A pointer to the initialized blinding key or NULL if error.
  */
 groupsig_key_t* groupsig_bld_key_init(uint8_t code);
 
-/** 
+/**
  * @fn int groupsig_bld_key_free(groupsig_key_t *key)
  * @brief Frees the memory allocated for <i>key</i>.
  *
  * @param[in,out] key The key to free.
- * 
+ *
  * @return IOK or IERROR.
  */
 int groupsig_bld_key_free(groupsig_key_t *key);
 
-/** 
+/**
  * @fn groupsig_key_t* groupsig_bld_key_random(uint8_t code, void *param)
  * @brief Sets <i>key</i> to an appropriate random value.
  *
  * @param[in] The code of the scheme.
  * @param[in] param Additional values needed to setup.
- * 
+ *
  * @return The randomly initialized blinding key, or NULL if error.
  */
 groupsig_key_t* groupsig_bld_key_random(uint8_t code, void *param);
 
-/** 
+/**
  * @fn int groupsig_bld_key_copy(groupsig_key_t *dst, groupsig_key_t *src)
  * @brief Copies the blinding key in <i>src</i> into <i>dst</i>.
  *
  * @param[in,out] dst The destination blinding key. Must have been initialized by
  *  the caller.
  * @param[in] src The source blinding key.
- * 
+ *
  * @return IOK or IERROR.
  */
 int groupsig_bld_key_copy(groupsig_key_t *dst, groupsig_key_t *src);
 
-/** 
+/**
  * @fn int groupsig_bld_key_get_size(groupsig_key_t *key)
  * @brief Returns the number of bytes needed to represent <i>key</i> as an
  *  array of bytes.
@@ -184,55 +188,77 @@ int groupsig_bld_key_copy(groupsig_key_t *dst, groupsig_key_t *src);
 int groupsig_bld_key_get_size(groupsig_key_t *key);
 
 /**
- * @fn int groupsig_bld_key_export(byte_t **dst, 
- *                                 uint32_t *size, 
+ * @fn int groupsig_bld_key_export(byte_t **dst,
+ *                                 uint32_t *size,
  *                                 groupsig_key_t *key)
- * @brief Exports the given blinding key to the specified destination, in the 
+ * @brief Exports the given blinding key to the specified destination, in the
  *  given format.
  *
- * @param[in,out] dst A pointer to the array of bytes that will contain the 
+ * @param[in,out] dst A pointer to the array of bytes that will contain the
  *  exported key.
- * @param[in,out] size A pointer to a uint32_t variable that will be set to the 
+ * @param[in,out] size A pointer to a uint32_t variable that will be set to the
  *  number of bytes written into dst.
- * @param[in] key The key to export. 
- * 
+ * @param[in] key The key to export.
+ *
  * @return IOK or IERROR.
  */
 int groupsig_bld_key_export(byte_t **dst, uint32_t *size, groupsig_key_t *key);
-   
-/** 
- * @fn int groupsig_bld_key_export_pub(byte_t **dst, uint32_t *size, 
+
+/**
+ * @fn int groupsig_bld_key_export_pub(byte_t **dst, uint32_t *size,
  *                                     groupsig_key_t *key);
  * @brief Exports the blinding key in <i>key</i> to <i>dst</i> using the format
  *  <i>format</i>.
  *
- * @param[in,out] dst A pointer to the array of bytes that will contain the 
+ * @param[in,out] dst A pointer to the array of bytes that will contain the
  *  exported key.
- * @param[in,out] size A pointer to a uint32_t variable that will be set to the 
+ * @param[in,out] size A pointer to a uint32_t variable that will be set to the
  *  number of bytes written into dst.
- * @param[in] key The key to export. 
- * 
+ * @param[in] key The key to export.
+ *
  * @return IOK or IERROR.
  */
 int groupsig_bld_key_export_pub(byte_t **dst, uint32_t *size, groupsig_key_t *key);
 
-/** 
- * @fn int groupsig_bld_key_export_pub(byte_t **dst, uint32_t *size, 
+/**
+ * @fn int groupsig_bld_key_pub(groupsig_key_t *key, groupsig_key_t **pub);
+ * @brief Generate a blinding key with only the public part of the given blinding key.
+ *
+ * @param[in] key The blinding key to export.
+ * @param[in,out] pub The blinding public key.
+ *
+ * @return IOK or IERROR.
+ */
+int groupsig_bld_key_pub(groupsig_key_t *key, groupsig_key_t **pub);
+
+/**
+ * @fn int groupsig_bld_key_export_pub(byte_t **dst, uint32_t *size,
  *                                     groupsig_key_t *key);
  * @brief Exports the blinding key in <i>key</i> to <i>dst</i> using the format
  *  <i>format</i>.
  *
- * @param[in,out] dst A pointer to the array of bytes that will contain the 
+ * @param[in,out] dst A pointer to the array of bytes that will contain the
  *  exported key.
- * @param[in,out] size A pointer to a uint32_t variable that will be set to the 
+ * @param[in,out] size A pointer to a uint32_t variable that will be set to the
  *  number of bytes written into dst.
- * @param[in] key The key to export. 
- * 
+ * @param[in] key The key to export.
+ *
  * @return IOK or IERROR.
  */
 int groupsig_bld_key_export_prv(byte_t **dst, uint32_t *size, groupsig_key_t *key);
-  
-/** 
+
+/**
+ * @fn int groupsig_bld_key_pub(groupsig_key_t *key, groupsig_key_t **prv);
+ * @brief Generate a blinding key with only the private public part of the given blinding key.
+ *
+ * @param[in] key The blinding key to export.
+ * @param[in,out] prv The blinding private key.
+ *
+ * @return IOK or IERROR.
+ */
+int groupsig_bld_key_prv(groupsig_key_t *key, groupsig_key_t **prv);
+
+/**
  * @fn groupsig_key_t* groupsig_mem_key_import(uint8_t code
  *                                             byte_t *src,
  *                                             uint32_t size)
@@ -241,17 +267,17 @@ int groupsig_bld_key_export_prv(byte_t **dst, uint32_t *size, groupsig_key_t *ke
  * @param[in] code The scheme code.
  * @param[in] src The array of bytes to parse.
  * @param[in] size The number of bytes in <i>src</i>
- * 
+ *
  * @return A pointer to the processed member key, or NULL if error.
  */
 groupsig_key_t* groupsig_bld_key_import(uint8_t code, byte_t *src, uint32_t size);
 
-/** 
+/**
  * @fn char* groupsig_bld_key_to_string(groupsig_key_t *key);
  * @brief Returns a printable string of the given key.
  *
  * @param[in] key The key to convert.
- * 
+ *
  * @return A pointer to the produced string or NULL if error.
  */
 char* groupsig_bld_key_to_string(groupsig_key_t *key);

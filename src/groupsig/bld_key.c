@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -40,7 +40,7 @@ groupsig_key_t* groupsig_bld_key_init(uint8_t code) {
 
   if(!(gkh = groupsig_bld_key_handle_from_code(code))) {
     return NULL;
-  }  
+  }
 
   return gkh->init();
 
@@ -59,9 +59,9 @@ int groupsig_bld_key_free(groupsig_key_t *key) {
   if(!(gkh = groupsig_bld_key_handle_from_code(key->scheme))) {
     return IERROR;
   }
-    
+
   gkh->free(key);
-  
+
   return IOK;
 
 }
@@ -73,7 +73,7 @@ groupsig_key_t* groupsig_bld_key_random(uint8_t code, void *param) {
   if(!(gkh = groupsig_bld_key_handle_from_code(code))) {
     return NULL;
   }
-    
+
   return gkh->random(param);
 
 }
@@ -145,13 +145,31 @@ int groupsig_bld_key_export_pub(byte_t **dst,
 	       __LINE__, LOGERROR);
     return IERROR;
   }
-  
+
   if(!(gkh = groupsig_bld_key_handle_from_code(key->scheme))) {
     return IERROR;
   }
-  
+
   return gkh->gexport_pub(dst, size, key);
-  
+
+}
+
+int groupsig_bld_key_pub(groupsig_key_t *key, groupsig_key_t **pub) {
+
+  const bld_key_handle_t *gkh;
+
+  if(!key) {
+    LOG_EINVAL(&logger, __FILE__, "groupsig_bld_key_pub",
+	       __LINE__, LOGERROR);
+    return IERROR;
+  }
+
+  if(!(gkh = groupsig_bld_key_handle_from_code(key->scheme))) {
+    return IERROR;
+  }
+
+  return gkh->pub(key, pub);
+
 }
 
 int groupsig_bld_key_export_prv(byte_t **dst,
@@ -164,13 +182,31 @@ int groupsig_bld_key_export_prv(byte_t **dst,
     LOG_EINVAL(&logger, __FILE__, "groupsig_bld_key_export_prv", __LINE__, LOGERROR);
     return IERROR;
   }
-  
+
   if(!(gkh = groupsig_bld_key_handle_from_code(key->scheme))) {
     return IERROR;
   }
-  
+
   return gkh->gexport_prv(dst, size, key);
-  
+
+}
+
+int groupsig_bld_key_prv(groupsig_key_t *key, groupsig_key_t **prv) {
+
+  const bld_key_handle_t *gkh;
+
+  if(!key) {
+    LOG_EINVAL(&logger, __FILE__, "groupsig_bld_key_prv",
+	       __LINE__, LOGERROR);
+    return IERROR;
+  }
+
+  if(!(gkh = groupsig_bld_key_handle_from_code(key->scheme))) {
+    return IERROR;
+  }
+
+  return gkh->prv(key, prv);
+
 }
 
 groupsig_key_t* groupsig_bld_key_import(uint8_t code,

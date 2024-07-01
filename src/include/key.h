@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -32,7 +32,7 @@ extern "C" {
  * @brief Defines all the known key types.
  */
 typedef enum {
-  GROUPSIG_KEY_GRPKEY, 
+  GROUPSIG_KEY_GRPKEY,
   GROUPSIG_KEY_MGRKEY,
   GROUPSIG_KEY_MEMKEY,
   GROUPSIG_KEY_BLDKEY,
@@ -47,7 +47,7 @@ typedef struct {
   void *key; /**< The key itself. */
 } groupsig_key_t;
 
-/* Pointers to functions. Every type of key must implement all the following 
+/* Pointers to functions. Every type of key must implement all the following
    pointers to functions. */
 
 /**
@@ -58,12 +58,12 @@ typedef struct {
  */
 typedef groupsig_key_t* (*groupsig_key_init_f)(void);
 
-/** 
+/**
  * @typedef int (*groupsig_key_free_f)(groupsig_key_t *key)
  * @brief Type of functions for freeing keys.
  *
  * @param[in,out] key A pointer to the key to free.
- * 
+ *
  * @return IOK or IERROR.
  */
 typedef int (*groupsig_key_free_f)(groupsig_key_t *key);
@@ -74,7 +74,7 @@ typedef int (*groupsig_key_free_f)(groupsig_key_t *key);
  *
  * @param[in,out] dst The destiniation key. Must have been initialized by the caller.
  * @param[in] src The source key.
- * 
+ *
  * @return IOK or IERROR.
  */
 typedef int (*groupsig_key_copy_f)(groupsig_key_t *dst, groupsig_key_t *src);
@@ -100,31 +100,33 @@ typedef int (*groupsig_key_prv_set_f)(void *dst, void *src);
 typedef int (*groupsig_key_pub_set_f)(void *dst, void *src);
 
 /**
- * @typedef int (*groupsig_key_export_f)(byte_t **dst, 
+ * @typedef int (*groupsig_key_export_f)(byte_t **dst,
  *                                       uint32_t *size,
  *                                       groupsig_key_t *key)
  * @brief Type of functions for exporting keys.
  *
- * Functions of this type export <i>key</i> as an array of bytes in 
+ * Functions of this type export <i>key</i> as an array of bytes in
  * <i>dst</i>. If <i>*dst</i> is NULL, memory is internally allocated.
  * The number of bytes written is returned in <i>size</i>.
- * 
+ *
  * @param[in,out] dst A pointer to the array of bytes. If <i>*dst</i> is NULL,
  *  memory is internally allocated.
  * @param[in,out] size Will be set to the number of bytes written into <i>dst</i>.
  * @param[in] key The key to export.
- * 
+ *
  * @return IOK or IERROR.
  */
-typedef int (*groupsig_key_export_f)(byte_t **dst, 
+typedef int (*groupsig_key_export_f)(byte_t **dst,
 				     uint32_t *size,
 				     groupsig_key_t *key);
-typedef int (*groupsig_key_pub_export_f)(byte_t **dst, 
+typedef int (*groupsig_key_pub_export_f)(byte_t **dst,
 					 uint32_t *size,
 					 groupsig_key_t *key);
-typedef int (*groupsig_key_prv_export_f)(byte_t **dst, 
+typedef int (*groupsig_key_pub_f)(groupsig_key_t *key, groupsig_key_t **pub);
+typedef int (*groupsig_key_prv_export_f)(byte_t **dst,
 					 uint32_t *size,
 					 groupsig_key_t *key);
+typedef int (*groupsig_key_prv_f)(groupsig_key_t *key, groupsig_key_t **prv);
 
 /**
  * @typedef groupsig_key_t* (*groupsig_key_import_f)(byte_t *src, uint32_t size)

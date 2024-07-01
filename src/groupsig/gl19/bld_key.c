@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -49,7 +49,7 @@ groupsig_key_t* gl19_bld_key_init() {
   }
 
   key->scheme = GROUPSIG_GL19_CODE;
-  
+
   return key;
 
 }
@@ -59,14 +59,14 @@ int gl19_bld_key_free(groupsig_key_t *key) {
   gl19_bld_key_t *gl19_key;
 
   if(!key) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "gl19_bld_key_free", __LINE__, 
+    LOG_EINVAL_MSG(&logger, __FILE__, "gl19_bld_key_free", __LINE__,
 		   "Nothing to free.", LOGWARN);
-    return IOK;  
+    return IOK;
   }
 
   if(key->scheme != GROUPSIG_GL19_CODE) {
     LOG_EINVAL(&logger, __FILE__, "gl19_bld_key_free", __LINE__, LOGERROR);
-    return IERROR;	       
+    return IERROR;
   }
 
   if(key->key) {
@@ -75,18 +75,18 @@ int gl19_bld_key_free(groupsig_key_t *key) {
       pbcext_element_G1_free(gl19_key->pk);
       gl19_key->pk = NULL;
     }
-    
+
     if(gl19_key->sk) {
       pbcext_element_Fr_free(gl19_key->sk);
       gl19_key->sk = NULL;
     }
-    
+
     mem_free(key->key);
     key->key = NULL;
   }
-  
+
   mem_free(key);
-  
+
   return IOK;
 
 }
@@ -99,7 +99,7 @@ groupsig_key_t* gl19_bld_key_random(void *param) {
 
   if(!param) {
     LOG_EINVAL(&logger, __FILE__, "gl19_bld_key_random", __LINE__, LOGERROR);
-    return NULL;  
+    return NULL;
   }
 
   if(((groupsig_key_t *)param)->scheme != GROUPSIG_GL19_CODE) {
@@ -109,10 +109,10 @@ groupsig_key_t* gl19_bld_key_random(void *param) {
 
   if (!(key = gl19_bld_key_init())) {
     return NULL;
-  }  
+  }
 
   gl19_grpkey = ((groupsig_key_t *) param)->key;
-  
+
   if(key->key) {
     gl19_bldkey = key->key;
 
@@ -132,7 +132,7 @@ groupsig_key_t* gl19_bld_key_random(void *param) {
       return NULL;
     }
   }
-    
+
   return key;
 
 }
@@ -140,8 +140,8 @@ groupsig_key_t* gl19_bld_key_random(void *param) {
 int gl19_bld_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
 
   gl19_bld_key_t *gl19_dst, *gl19_src;
-  
-  if(!dst  || dst->scheme != GROUPSIG_GL19_CODE || 
+
+  if(!dst  || dst->scheme != GROUPSIG_GL19_CODE ||
      !src  || src->scheme != GROUPSIG_GL19_CODE) {
     LOG_EINVAL(&logger, __FILE__, "gl19_bld_key_copy", __LINE__, LOGERROR);
     return IERROR;
@@ -156,12 +156,12 @@ int gl19_bld_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
     pbcext_element_G1_free(gl19_dst->pk); gl19_dst->pk = NULL;
     return IERROR;
   }
-  
+
   if(!(gl19_dst->sk = pbcext_element_Fr_init())) {
     pbcext_element_G1_free(gl19_dst->pk); gl19_dst->pk = NULL;
     return IERROR;
   }
-  
+
   if(pbcext_element_Fr_set(gl19_dst->sk, gl19_src->sk) == IERROR) {
     pbcext_element_G1_free(gl19_dst->pk); gl19_dst->pk = NULL;
     pbcext_element_Fr_free(gl19_dst->sk); gl19_dst->sk = NULL;
@@ -177,7 +177,7 @@ int gl19_bld_key_get_size(groupsig_key_t *key) {
   gl19_bld_key_t *gl19_key;
   uint64_t spk, ssk;
   int size;
-  
+
   if(!key || key->scheme != GROUPSIG_GL19_CODE) {
     LOG_EINVAL(&logger, __FILE__, "gl19_bld_key_get_size",
 	       __LINE__, LOGERROR);
@@ -185,21 +185,21 @@ int gl19_bld_key_get_size(groupsig_key_t *key) {
   }
 
   gl19_key =  key->key;
-  
+
   if(!gl19_key->pk && !gl19_key->sk) {
     LOG_EINVAL(&logger, __FILE__, "gl19_bld_key_get_size",
 	       __LINE__, LOGERROR);
     return -1;
   }
   spk = ssk = 0;
-  
+
   if(gl19_key->pk) { if(pbcext_element_G1_byte_size(&spk) == IERROR) return -1; }
   if(gl19_key->sk) { if(pbcext_element_Fr_byte_size(&ssk) == IERROR) return -1; }
 
   if (spk+ssk+sizeof(int)*2+2 > INT_MAX) {
     return -1;
   }
-  
+
   size = (int) spk + ssk + sizeof(int)*2 + 2;
 
   return size;
@@ -225,7 +225,7 @@ int gl19_bld_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   uint64_t len;
   uint32_t _size;
   int rc, ctr;
-  
+
   if(!bytes ||
      !size ||
      !key || key->scheme != GROUPSIG_GL19_CODE) {
@@ -236,14 +236,14 @@ int gl19_bld_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   rc = IOK;
   ctr = 0;
   gl19_key = key->key;
-  
+
   if ((_size = gl19_bld_key_get_size(key)) == -1) {
     return IERROR;
   }
 
   if (!(_bytes = mem_malloc(sizeof(byte_t)*_size))) {
     return IERROR;
-  }  
+  }
 
   if(!gl19_key->pk && !gl19_key->sk) {
     LOG_EINVAL(&logger, __FILE__, "gl19_bld_key_export", __LINE__, LOGERROR);
@@ -253,14 +253,14 @@ int gl19_bld_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
   /* Dump GROUPSIG_GL19_CODE */
   code = GROUPSIG_GL19_CODE;
   _bytes[ctr++] = code;
-  
+
   /* Dump key type */
   type = GROUPSIG_KEY_BLDKEY;
   _bytes[ctr++] = type;
 
   /* Dump pk, if present */
   if(gl19_key->pk) {
-    __bytes = &_bytes[ctr];    
+    __bytes = &_bytes[ctr];
     if(pbcext_dump_element_G1_bytes(&__bytes, &len, gl19_key->pk) == IERROR)
       GOTOENDRC(IERROR, gl19_bld_key_export);
     ctr += len;
@@ -284,7 +284,7 @@ int gl19_bld_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
 
   /* Sanity check */
   if (ctr != _size) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "gl19_bld_key_export", __LINE__, 
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "gl19_bld_key_export", __LINE__,
 		      EDQUOT, "Unexpected key scheme.", LOGERROR);
     GOTOENDRC(IERROR, gl19_bld_key_export);
   }
@@ -294,26 +294,26 @@ int gl19_bld_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
  gl19_bld_key_export_end:
 
   if (rc == IERROR && _bytes) { mem_free(_bytes); _bytes = NULL; }
-  
+
   return rc;
-    
+
 }
 
 int gl19_bld_key_export_pub(byte_t **bytes,
-			    uint32_t *size,
-			    groupsig_key_t *key) {
+                            uint32_t *size,
+                            groupsig_key_t *key) {
 
   groupsig_key_t *pub;
   gl19_bld_key_t *gl19_pub;
   int rc;
-  
+
   if (!bytes ||
       !size ||
       !key || key->scheme != GROUPSIG_GL19_CODE) {
     LOG_EINVAL(&logger, __FILE__, "gl19_bld_key_export_pub", __LINE__, LOGERROR);
     return IERROR;
   }
-  
+
   /* Make an internal copy of the key, containing only the public part. */
   if (!(pub = gl19_bld_key_init())) return IERROR;
   gl19_pub = pub->key;
@@ -329,19 +329,45 @@ int gl19_bld_key_export_pub(byte_t **bytes,
 
   rc =  gl19_bld_key_export(bytes, size, pub);
   gl19_bld_key_free(pub); pub = NULL;
-  
+
   return rc;
-  
+
+}
+
+int gl19_bld_key_pub(groupsig_key_t *key,
+                     groupsig_key_t **pub) {
+  gl19_bld_key_t *gl19_pub;
+
+  if (!key || key->scheme != GROUPSIG_GL19_CODE) {
+    LOG_EINVAL(&logger, __FILE__, "gl19_bld_key_export_pub", __LINE__, LOGERROR);
+    return IERROR;
+  }
+
+  /* Make an internal copy of the key, containing only the public part. */
+  if (!(*pub = gl19_bld_key_init())) return IERROR;
+  gl19_pub = (*pub)->key;
+  if (!(gl19_pub->pk = pbcext_element_G1_init())) {
+    gl19_bld_key_free(*pub); *pub = NULL;
+    return IERROR;
+  }
+  if (pbcext_element_G1_set(gl19_pub->pk,
+			    ((gl19_bld_key_t *) key->key)->pk) == IERROR) {
+    gl19_bld_key_free(*pub); *pub = NULL;
+    return IERROR;
+  }
+
+  return IOK;
+
 }
 
 int gl19_bld_key_export_prv(byte_t **bytes,
-			    uint32_t *size,
-			    groupsig_key_t *key) {
+                            uint32_t *size,
+                            groupsig_key_t *key) {
 
   groupsig_key_t *prv;
   gl19_bld_key_t *gl19_prv;
   int rc;
-  
+
   if (!bytes ||
       !size ||
       !key || key->scheme != GROUPSIG_GL19_CODE) {
@@ -351,7 +377,7 @@ int gl19_bld_key_export_prv(byte_t **bytes,
 
   /* Make an internal copy of the key, containing only the private part. */
   if (!(prv = gl19_bld_key_init())) return IERROR;
-  gl19_prv = prv->key;  
+  gl19_prv = prv->key;
   if (!(gl19_prv->sk = pbcext_element_Fr_init())) {
     gl19_bld_key_free(prv); prv = NULL;
     return IERROR;
@@ -361,11 +387,38 @@ int gl19_bld_key_export_prv(byte_t **bytes,
     gl19_bld_key_free(prv); prv = NULL;
     return IERROR;
   }
-      
+
   rc =  gl19_bld_key_export(bytes, size, prv);
   gl19_bld_key_free(prv); prv = NULL;
-  
+
   return rc;
+
+}
+
+int gl19_bld_key_prv(groupsig_key_t *key,
+                     groupsig_key_t **prv) {
+
+  gl19_bld_key_t *gl19_prv;
+
+  if (!key || key->scheme != GROUPSIG_GL19_CODE) {
+    LOG_EINVAL(&logger, __FILE__, "gl19_bld_key_prv", __LINE__, LOGERROR);
+    return IERROR;
+  }
+
+  /* Make an internal copy of the key, containing only the private part. */
+  if (!(*prv = gl19_bld_key_init())) return IERROR;
+  gl19_prv = (*prv)->key;
+  if (!(gl19_prv->sk = pbcext_element_Fr_init())) {
+    gl19_bld_key_free(*prv); *prv = NULL;
+    return IERROR;
+  }
+  if (pbcext_element_Fr_set(gl19_prv->sk,
+			    ((gl19_bld_key_t *) key->key)->sk) == IERROR) {
+    gl19_bld_key_free(*prv); *prv = NULL;
+    return IERROR;
+  }
+
+  return IOK;
 
 }
 
@@ -376,7 +429,7 @@ groupsig_key_t* gl19_bld_key_import(byte_t *source, uint32_t size) {
   uint64_t len;
   int rc, ctr;
   byte_t type, scheme;
-  
+
   if(!source || !size) {
     LOG_EINVAL(&logger, __FILE__, "gl19_bld_key_import", __LINE__, LOGERROR);
     return NULL;
@@ -384,16 +437,16 @@ groupsig_key_t* gl19_bld_key_import(byte_t *source, uint32_t size) {
 
   ctr = 0;
   rc = IOK;
-  
+
   if(!(key = gl19_bld_key_init())) {
     return NULL;
   }
-  gl19_key = key->key;   
+  gl19_key = key->key;
 
   /* First byte: scheme */
   scheme = source[ctr++];
   if(scheme != key->scheme) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "gl19_bld_key_import", __LINE__, 
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "gl19_bld_key_import", __LINE__,
 		      EDQUOT, "Unexpected key scheme.", LOGERROR);
     GOTOENDRC(IERROR, gl19_bld_key_import);
   }
@@ -403,9 +456,9 @@ groupsig_key_t* gl19_bld_key_import(byte_t *source, uint32_t size) {
   if(type != GROUPSIG_KEY_BLDKEY) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "gl19_bld_key_import", __LINE__,
 		      EDQUOT, "Unexpected key scheme.", LOGERROR);
-    GOTOENDRC(IERROR, gl19_bld_key_import);  
+    GOTOENDRC(IERROR, gl19_bld_key_import);
   }
-  
+
   /* Get pk, if present */
   if(!(gl19_key->pk = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, gl19_bld_key_import);
@@ -434,7 +487,7 @@ groupsig_key_t* gl19_bld_key_import(byte_t *source, uint32_t size) {
 
   if (rc == IERROR) { gl19_bld_key_free(key); key = NULL; }
   if (rc == IOK) return key;
-  return NULL;  
+  return NULL;
 
 }
 

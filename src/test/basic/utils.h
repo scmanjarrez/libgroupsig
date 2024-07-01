@@ -1,108 +1,68 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#define IOK 0
-#define IERROR 1
-
-#include <time.h>
+#include <string.h>
+#include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <time.h>
 
-#ifndef TESTSCHEMES
-#define TESTSCHEMES
-#include "ps16.h"
-#include "kty04.h"
-#endif
+#include "groupsig.h"
 
-#define B_GRP_INIT 0
-#define B_NEW_GRPKEY 1
-#define B_NEW_MGRKEY 2
-#define B_NEW_GML 3
-#define B_NEW_CRL 4
-#define B_GRP_SETUP 5
-#define B_NEW_MEMKEY 6
-#define B_NEW_SIGN 7
-#define B_NEW_SIGN_VERIFY 8
-#define B_PROVE_EQ 9
-#define B_PROVE_EQ_VERIFY 10
-#define B_TRACE 11
-#define B_OPEN 12
-#define B_OPEN_VERIFY 13
-#define B_REVEAL 14
-#define B_CLAIM 15
-#define B_CLAIM_VERIFY 16
-#define B_NUM 17
+#define SETUP1_T 0
+#define SETUP2_T 1
+#define SIGN_T 2
+#define VERIFY_T 3
+#define OPEN_0_T 4
+#define OPEN_N_T 5
+#define OPEN_VERIFY_T 6
+#define REVEAL_0_T 7
+#define REVEAL_N_T 8
+#define TRACE_0_T 9
+#define TRACE_N_T 10
+#define CLAIM_T 11
+#define CLAIM_VERIFY_T 12
+#define PROVE_EQUALITY_T 13
+#define PROVE_EQUALITY_VERIFY_T 14
+#define BLIND_T 15
+#define CONVERT_T 16
+#define UNBLIND_T 17
+#define LINK_T 18
+#define LINK_VERIFY_T 19
+#define SEQLINK_T 20
+#define SEQLINK_VERIFY_T 21
+// Total metrics
+#define N_BENCH 22
 
-#define TEST_REPS 5
+// Start: 1
+#define JOIN_MEM0_T 0
+#define JOIN_MGR1_T 1
+#define JOIN_MEM2_T 2
+#define JOIN_MGR3_T 3
+#define JOIN_MEM4_T 4
+// Start: 0
+#define JOIN_MGR0_T 5
+#define JOIN_MEM1_T 6
+#define JOIN_MGR2_T 7
+#define JOIN_MEM3_T 8
+// Total join metrics
+#define N_JOIN 9
 
-const char *correct_value(int val);
 
-void check_randomness(void);
+void test(char *scheme);
+void benchmark(char *scheme, int iter);
+int multi_mgrkey(char *scheme);
+int group1_implemented(char *scheme);
+int group2_implemented(char *scheme);
+int group3_implemented(char *scheme);
+int group4_implemented(char *scheme);
+int group5_implemented(char *scheme);
+int group6_implemented(char *scheme);
+void random_seed();
 
-void print_time(char *prefix, clock_t start, clock_t end);
-
-void print_exp_rc(char *prefix, int value);
-
-void print_exp_ptr(char *prefix, void *pointer);
-
-void print_exp_ret(char *prefix, uint32_t value, int expected);
-
-void print_to_str(char *prefix, char *str);
-
-void kty04_test(void);
-
-void ps16_test(void);
-
-void kty04_benchmark(void);
-
-void ps16_benchmark(void);
-
-int b_write_csv(int num_members, clock_t* times, uint8_t scheme);
-
-groupsig_key_t* new_member_key(groupsig_key_t *grpkey,
-                               groupsig_key_t *mgrkey,
-                               gml_t *gml, crl_t *crl);
-
-groupsig_signature_t* new_member_signature(char* str,
-                                           groupsig_key_t *memkey,
-                                           groupsig_key_t *grpkey);
-
-uint8_t verify_member_signature(groupsig_signature_t *sig,
-                                char *str, groupsig_key_t *grpkey);
-
-groupsig_proof_t* prove_equality(groupsig_signature_t *sig0,
-                                 groupsig_signature_t *sig1,
-                                 groupsig_key_t *memkey,
-                                 groupsig_key_t *grpkey);
-
-uint8_t verify_proof_equality(groupsig_proof_t *proof,
-                              groupsig_signature_t *sig0,
-                              groupsig_signature_t *sig1,
-                              groupsig_key_t *grpkey);
-
-uint8_t trace_signature(groupsig_signature_t *sig,
-                        groupsig_key_t *grpkey,
-                        groupsig_key_t *mgrkey,
-                        gml_t *gml, crl_t *crl);
-
-uint64_t open_signature(groupsig_proof_t **proof_p,
-                        groupsig_signature_t *sig,
-                        groupsig_key_t *grpkey,
-                        groupsig_key_t *mgrkey,
-                        gml_t *gml, crl_t *crl);
-
-uint8_t open_verify(groupsig_proof_t *proof,
-                    groupsig_signature_t *sig,
-                    groupsig_key_t *grpkey);
-
-char* reveal_signature(groupsig_key_t *memkey,
-                       gml_t *gml, crl_t *crl, int i);
-
-groupsig_proof_t* claim_signatures(groupsig_signature_t *sig,
-                                   groupsig_key_t *memkey,
-                                   groupsig_key_t* grpkey);
-
-uint8_t claim_verify_signatures(groupsig_proof_t *proof,
-                                groupsig_signature_t *sig,
-                                groupsig_key_t* grpkey);
-
+extern clock_t TIMES[];
+extern clock_t **TIMES_JOIN;
+extern int MEMBERS;
+extern int ITER;
+extern char *PATH;
 #endif

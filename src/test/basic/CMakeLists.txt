@@ -1,5 +1,6 @@
 # create an executable "demos" to run the basic tests (without compiling gtest)
-add_executable(demos demos.c kty04.c ps16.c utils.c)
+# add_executable(demos demos.c kty04.c ps16.c utils.c)
+add_executable(test_basic basic.c test.c benchmark.c utils.c)
 # if(${CMAKE_VERSION} VERSION_LESS "3.17")
 #   # This code will be executed for CMake 3.16 and below
 #   add_dependencies(kty04 mclproject)
@@ -8,7 +9,7 @@ add_executable(demos demos.c kty04.c ps16.c utils.c)
 # if -DHW present, then load PYNQ dependencies as well
 # We need to export LD_LIBRARY_PATH with the path to mcl -> export LD_LIBRARY_PATH=$PWD/external/lib/:$LD_LIBRARY_PATH
 if (HW)
-  target_link_libraries(demos kty04 ps16 crypto pynq groupsig cma pthread)
+  target_link_libraries(test_basic crypto pynq groupsig cma pthread)
 else ()
-  target_link_libraries(demos kty04 ps16 groupsig)
+  target_link_libraries(test_basic groupsig)
 endif ()
