@@ -498,7 +498,7 @@ void dump_times(char *scheme, int iter) {
   }
 }
 
-void benchmark(char *scheme, int iter) {
+void benchmark_libgroupsig(char *scheme, int iter) {
   groupsig_t *gsig;
   groupsig_key_t *gkey, *mgkey1, *mgkey2;
   groupsig_key_t **mkeys = malloc(MEMBERS * sizeof(groupsig_key_t *));

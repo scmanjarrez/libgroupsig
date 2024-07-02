@@ -49,8 +49,8 @@
 #define N_JOIN 9
 
 
-void test(char *scheme);
-void benchmark(char *scheme, int iter);
+void test_libgroupsig(char *scheme);
+void benchmark_libgroupsig(char *scheme, int iter);
 int multi_mgrkey(char *scheme);
 int group1_implemented(char *scheme);
 int group2_implemented(char *scheme);

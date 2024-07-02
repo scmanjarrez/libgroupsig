@@ -851,7 +851,7 @@ void test_group6(char *prefix, groupsig_key_t *gkey, groupsig_key_t *mgkey,
   groupsig_proof_free(proof);
 }
 
-void test(char *scheme) {
+void test_libgroupsig(char *scheme) {
   groupsig_t *gsig;
   groupsig_key_t *gkey, *mgkey1, *mgkey2;
   gml_t *gml;

@@ -62,11 +62,11 @@ void usage(char *name, int ret) {
          "SCHEME:\n"
          "\tThe scheme can be any of the following values: bbs04, gl19, klap20, ps16, dl21, dl21seq, cpy06, kty04.\n"
          "OPTS:\n"
-         "\t-b|--benchmark\tRun benchmark instead of tests.\n"
-         "\t-i|--iterations N\tNumber of benchmark iterations.\n"
-         "\t-m|--members N\tNumber of members to register in the group.\n"
-         "\t-p|--path PATH\tOutput directory of *csv. Default: '.'\n"
-         "\t-h|--help\tThis message.\n\n",
+         "\t-b|--benchmark\t\t Run benchmark instead of tests.\n"
+         "\t-i|--iterations N\t Number of benchmark iterations. Default: 5\n"
+         "\t-m|--members N\t\t Number of members to register in the group. Default: 10\n"
+         "\t-p|--path PATH\t\t Output directory of *csv. Default: '.'\n"
+         "\t-h|--help\t\t This message.\n\n",
          name);
   exit(ret);
 }
@@ -148,19 +148,19 @@ int main(int argc, char **argv) {
     if (!strcmp(argv[1], "all"))
       for (int i = 0; i < N_SCHEMES; i++) {
         printf("#### Testing %s\n", SCHEMES[i]);
-        test(SCHEMES[i]);
+        test_libgroupsig(SCHEMES[i]);
       }
     else
-      test(scheme);
+      test_libgroupsig(scheme);
   } else {
     for (int i = 0; i < ITER; i++)
       if (!strcmp(scheme, "all"))
         for (int i = 0; i < N_SCHEMES; i++) {
           printf("#### Benchmarking %s\n", SCHEMES[i]);
-          benchmark(SCHEMES[i], i);
+          benchmark_libgroupsig(SCHEMES[i], i);
         }
       else
-        benchmark(scheme, i);
+        benchmark_libgroupsig(scheme, i);
   }
 
   for (int i = 0; i < N_JOIN; i++)
