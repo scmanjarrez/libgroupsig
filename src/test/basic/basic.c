@@ -86,6 +86,13 @@ void setup_matrices() {
   }
 }
 
+void reset_matrices() {
+  memset(TIMES, 0, N_BENCH * sizeof(clock_t));
+  for (int i = 0; i < N_JOIN; i++) {
+    memset(TIMES_JOIN[i], 0, MEMBERS * sizeof(clock_t));
+  }
+}
+
 int main(int argc, char **argv) {
 #ifdef HW
   load_hw();
@@ -153,14 +160,20 @@ int main(int argc, char **argv) {
     else
       test_libgroupsig(scheme);
   } else {
-    for (int i = 0; i < ITER; i++)
-      if (!strcmp(scheme, "all"))
-        for (int i = 0; i < N_SCHEMES; i++) {
-          printf("#### Benchmarking %s\n", SCHEMES[i]);
-          benchmark_libgroupsig(SCHEMES[i], i);
+    if (!strcmp(scheme, "all")) {
+      for (int i = 0; i < N_SCHEMES; i++) {
+        reset_matrices();
+        printf("#### Benchmarking %s\n", SCHEMES[i]);
+        for (int j = 0; j < ITER; j++) {
+          benchmark_libgroupsig(SCHEMES[i], j);
         }
-      else
-        benchmark_libgroupsig(scheme, i);
+      }
+    } else {
+      printf("#### Benchmarking %s\n", scheme);
+      for (int j = 0; j < ITER; j++) {
+        benchmark_libgroupsig(scheme, j);
+      }
+    }
   }
 
   for (int i = 0; i < N_JOIN; i++)
