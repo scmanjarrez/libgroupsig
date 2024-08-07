@@ -184,7 +184,7 @@ void analyze_group1(char *scheme, groupsig_key_t *gkey, groupsig_key_t *mgkey,
     END_T;
   }
   if (!index)
-    SAVE_T(OPEN_0_T);
+    SAVE_T(OPEN_1_T);
   else
     SAVE_T(OPEN_N_T);
 
@@ -232,12 +232,12 @@ void analyze_group3_reveal(groupsig_key_t *gkey, groupsig_key_t *mgkey,
     START_T;
     groupsig_reveal(trap, crl, gml, idx);
     END_T;
-    SAVE_T(REVEAL_0_T);
+    SAVE_T(REVEAL_1_T);
 
     START_T;
     groupsig_trace(&ret, sig, gkey, crl, mgkey, gml);
     END_T;
-    SAVE_T(TRACE_0_T);
+    SAVE_T(TRACE_1_T);
   } else {
     groupsig_reveal(trap, crl, gml, idx);
   }
@@ -465,7 +465,7 @@ void dump_times(char *scheme, int iter) {
   fp1 = fopen(name1_f, mode);
   fp2 = fopen(name2_f, mode);
   if (!iter) {
-    fprintf(fp1, "setup1,setup2,sign,verify,open0,openN,open_verify,reveal0,revealN,trace0,traceN,claim,claim_verify,prove_equality,prove_equality_verify,blind,convert,unblind,link,link_verify,seqlink,seqlink_verify\n");
+    fprintf(fp1, "setup1,setup2,sign,verify,open1,openN,open_verify,reveal1,revealN,trace1,traceN,claim,claim_verify,prove_equality,prove_equality_verify,blind,convert,unblind,link,link_verify,seqlink,seqlink_verify\n");
     fprintf(fp2, "join_mem0,join_mgr1,join_mem2,join_mgr3,join_mem4,join_mgr0,join_mem1,join_mgr2,join_mem3\n");
   }
   if (!fp1 || !fp2) {

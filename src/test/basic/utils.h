@@ -13,12 +13,12 @@
 #define SETUP2_T 1
 #define SIGN_T 2
 #define VERIFY_T 3
-#define OPEN_0_T 4
+#define OPEN_1_T 4
 #define OPEN_N_T 5
 #define OPEN_VERIFY_T 6
-#define REVEAL_0_T 7
+#define REVEAL_1_T 7
 #define REVEAL_N_T 8
-#define TRACE_0_T 9
+#define TRACE_1_T 9
 #define TRACE_N_T 10
 #define CLAIM_T 11
 #define CLAIM_VERIFY_T 12
