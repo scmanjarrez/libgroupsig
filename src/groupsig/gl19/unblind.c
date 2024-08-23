@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -38,7 +38,7 @@ int gl19_unblind(identity_t *nym, groupsig_signature_t *sig,
 		 groupsig_blindsig_t *bsig,
 		 groupsig_key_t *grpkey, groupsig_key_t *bldkey,
 		 message_t *msg) {
-  
+
   pbcext_element_Fr_t *aux_zn;
   pbcext_element_G1_t *aux_G1;
   char *s_G1;
@@ -58,7 +58,7 @@ int gl19_unblind(identity_t *nym, groupsig_signature_t *sig,
   rc = IOK;
   s_G1 = NULL;
   aux_G1 = NULL; aux_zn = NULL;
-  
+
   gl19_id = nym->id;
   gl19_bsig = bsig->sig;
   gl19_bldkey = bldkey->key;
@@ -90,7 +90,7 @@ int gl19_unblind(identity_t *nym, groupsig_signature_t *sig,
   /* Update the received message with the string representation of aux_G1 */
   if(!(s_G1 = pbcext_element_G1_to_b64(aux_G1)))
     GOTOENDRC(IERROR, gl19_unblind);
-    
+
   if(message_set_bytes_from_string(msg, s_G1) == IERROR)
     GOTOENDRC(IERROR, gl19_unblind);
 

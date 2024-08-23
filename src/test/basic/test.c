@@ -92,8 +92,8 @@ void test_init(char *prefix, char *scheme, groupsig_t **gsig, groupsig_key_t **g
   *mgkey1 = groupsig_mgr_key_import(code, _mgkey1_b, _mgkey1_sz);
   check_ptr(prefix, "mgr_key_import1", *mgkey1);
 
+  byte_t *_mgkey2_b = NULL;
   if (multi) {
-    byte_t *_mgkey2_b = NULL;
     uint32_t _mgkey2_sz;
     int _mgkey2_len = groupsig_mgr_key_get_size(_mgkey2);
     rc = groupsig_mgr_key_export(&_mgkey2_b, &_mgkey2_sz, _mgkey2);
@@ -104,9 +104,13 @@ void test_init(char *prefix, char *scheme, groupsig_t **gsig, groupsig_key_t **g
   }
 
   groupsig_grp_key_free(_gkey);
+  mem_free(_gkey_b);
   groupsig_mgr_key_free(_mgkey1);
-  if (multi)
+  mem_free(_mgkey1_b);
+  if (multi) {
     groupsig_mgr_key_free(_mgkey2);
+    mem_free(_mgkey2_b);
+  }
 }
 
 void test_registration(char *_prefix, int _prefix_idx, groupsig_t *gsig, groupsig_key_t *gkey,
@@ -170,6 +174,7 @@ void test_registration(char *_prefix, int _prefix_idx, groupsig_t *gsig, groupsi
   if (msg2)
     message_free(msg2);
   groupsig_mem_key_free(_mkey);
+  mem_free(_mkey_b);
 }
 
 void test_gml(char *_prefix, int _prefix_idx, groupsig_key_t *gkey, gml_t **gml) {
@@ -185,6 +190,7 @@ void test_gml(char *_prefix, int _prefix_idx, groupsig_key_t *gkey, gml_t **gml)
   *gml = gml_import(gkey->scheme, _gml_b, _gml_sz);
   check_ptr(prefix, "gml_import", *gml);
   gml_free(_gml);
+  mem_free(_gml_b);
 }
 
 
@@ -231,6 +237,7 @@ void test_signing(char *scheme, char *prefix, groupsig_key_t *gkey, groupsig_key
   message_free(msg1);
   message_free(msg2);
   groupsig_signature_free(_sig1);
+  mem_free(_sig_b);
   groupsig_signature_free(sig1);
 }
 

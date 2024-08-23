@@ -146,8 +146,15 @@ int main(int argc, char **argv) {
       break;
     }
   }
-  if (!scheme)
+  if (!scheme) {
+    printf("Error: missing scheme\n\n");
     usage(argv[0], 1);
+  }
+
+  if (MEMBERS < 3) {
+    printf("Error: members must be greater than 3\n\n");
+    usage(argv[0], 1);
+  }
 
   setup_matrices();
 

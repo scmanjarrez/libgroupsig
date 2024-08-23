@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -41,11 +41,10 @@ int dl21seq_link(groupsig_proof_t **proof,
 		 groupsig_signature_t **sigs,
 		 message_t **msgs,
 		 uint32_t n) {
-  
+
   pbcext_element_G1_t *hscp, *hscp_, *nym_;
   dl21seq_signature_t *dl21seq_sig;
   dl21seq_mem_key_t *dl21seq_memkey;
-  groupsig_proof_t *_proof;
   spk_dlog_t *spk;
   hash_t *hc;
   char *msg_scp, *msg_msg;
@@ -65,7 +64,7 @@ int dl21seq_link(groupsig_proof_t **proof,
   hscp = NULL; hscp_ = NULL; nym_ = NULL;
   hc = NULL;
   msg_scp = NULL; msg_msg = NULL;
-  
+
   dl21seq_memkey = memkey->key;
 
   if(!(hscp = pbcext_element_G1_init())) GOTOENDRC(IERROR, dl21seq_link);
@@ -82,15 +81,15 @@ int dl21seq_link(groupsig_proof_t **proof,
     if (dl21seq_verify(&ok, sigs[i], msgs[i], grpkey) == IERROR)
       GOTOENDRC(IERROR, dl21seq_link);
     if (!ok) GOTOENDRC(IFAIL, dl21seq_link);
-    
+
     /* Check if it is a signature issued by memkey */
     if (dl21seq_identify(&ok, NULL, grpkey, memkey, sigs[i], msgs[i]) == IERROR)
       GOTOENDRC(IERROR, dl21seq_link);
-    
+
     if (!ok) {
       GOTOENDRC(IFAIL, dl21seq_link);
     }
-    
+
     /* "Accumulate" scp */
     if(message_json_get_key(&msg_scp, msgs[i], "$.scope") == IERROR)
       GOTOENDRC(IERROR, dl21seq_link);
@@ -102,7 +101,7 @@ int dl21seq_link(groupsig_proof_t **proof,
     pbcext_element_G1_from_hash(hscp, hc->hash, hc->length);
     hash_free(hc); hc = NULL;
     mem_free(msg_scp); msg_scp = NULL;
-    
+
     if(pbcext_element_G1_add(hscp_, hscp_, hscp) == IERROR)
       GOTOENDRC(IERROR, dl21seq_link);
 
@@ -117,20 +116,18 @@ int dl21seq_link(groupsig_proof_t **proof,
   // For now, we just use the .msg part of the msg JSON, but
   // the .scp part might come in handy in the future
   if(message_json_get_key(&msg_msg, msg, "$.message") == IERROR)
-    GOTOENDRC(IERROR, dl21seq_link);  
+    GOTOENDRC(IERROR, dl21seq_link);
 
-  if(!(_proof = dl21seq_proof_init())) GOTOENDRC(IERROR, dl21seq_link);
-  spk = ((dl21seq_proof_t *)_proof->proof)->spk;
+  spk = ((dl21seq_proof_t *)(*proof)->proof)->spk;
 
   if(spk_dlog_G1_sign(spk, nym_, hscp_, dl21seq_memkey->y, (byte_t *) msg_msg,
 		      strlen(msg_msg)) == IERROR) GOTOENDRC(IERROR, dl21seq_link);
-  *proof = _proof;
 
  dl21seq_link_end:
 
   if(msg_msg) { mem_free(msg_msg); msg_msg = NULL; }
   if(hscp) { pbcext_element_G1_free(hscp); hscp = NULL; }
-  if(hscp_) { pbcext_element_G1_free(hscp_); hscp_ = NULL; }  
+  if(hscp_) { pbcext_element_G1_free(hscp_); hscp_ = NULL; }
   if(nym_) { pbcext_element_G1_free(nym_); nym_ = NULL; }
   if(hc) { hash_free(hc); hc = NULL; }
 

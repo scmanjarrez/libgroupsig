@@ -356,13 +356,15 @@ void analyze_group4(groupsig_key_t *gkey, groupsig_key_t *mgkey,
 
   identity_t *nym1 = identity_init(gkey->scheme);
 
+  message_t *msg3 = message_init();
   START_T;
-  groupsig_unblind(nym1, sig1, csigs[0], gkey, bkey, msg1);
+  groupsig_unblind(nym1, sig1, csigs[0], gkey, bkey, msg3);
   END_T;
   SAVE_T(UNBLIND_T);
 
   message_free(msg1);
   message_free(msg2);
+  message_free(msg3);
   groupsig_signature_free(sig1);
   groupsig_signature_free(sig2);
   groupsig_blindsig_free(csigs[0]);
