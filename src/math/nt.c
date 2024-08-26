@@ -1680,7 +1680,7 @@ int nt_get_elem_order(bigz_t n, bigz_t a, factor_list_t *factors, bigz_t *order)
 
 }
 
-int nt_get_safe_prime(uint64_t k, bigz_t p, bigz_t *a) {
+int nt_get_safe_prime(uint64_t k, bigz_t p/* , bigz_t *a */) {
   bigz_t q, low, up, candidate;
   factor_list_t factors;
 
@@ -1693,119 +1693,136 @@ int nt_get_safe_prime(uint64_t k, bigz_t p, bigz_t *a) {
     return IERROR;
   }
 
-  if(!(q = bigz_init())) {
-    bigz_free(candidate);
-    return IERROR;
-  }
-
-  if(!(low = bigz_init())) {
-    bigz_free(candidate); bigz_free(q);
-    return IERROR;
-  }
-
-  if(!(up = bigz_init())) {
-    bigz_free(candidate); bigz_free(q); bigz_free(low);
-    return IERROR;
-  }
-
-  if(bigz_ui_pow_ui(low, 2, k-1) == IERROR) {
-    bigz_free(candidate); bigz_free(q);
-    bigz_free(low); bigz_free(up);
-    return IERROR;
-  }
-
-  if(bigz_ui_pow_ui(up, 2, k) == IERROR) {
-    bigz_free(candidate); bigz_free(q);
-    bigz_free(low); bigz_free(up);
-    return IERROR;
-  }
-
-  if(bigz_sub_ui(up, up, 1) == IERROR) {
-    bigz_free(candidate); bigz_free(q);
-    bigz_free(low); bigz_free(up);
-    return IERROR;
-  }
-
-  errno = 0;
   do {
-
-    if(errno) {
-      bigz_free(candidate); bigz_free(q);
-      bigz_free(low); bigz_free(up);
-    }
-
-    /* This generates a random prime of k-1 bits of length */
-    if(nt_genprime_random_interval(low, up, q) == IERROR) {
-      bigz_free(candidate); bigz_free(q);
-      bigz_free(low); bigz_free(up);
+    if (!BN_generate_prime_ex(candidate, k, 1, NULL, NULL, NULL)) { // hardcoded 1 to generate safe prime
+      bigz_free(candidate);
       return IERROR;
     }
+    printf_bn("candidate: ", candidate);
+    /* printf("candidate bits: %d\n", BN_num_bytes(candidate) * 8); */
+    /* printf("is prime? %d\n", BN_is_prime_ex(candidate, 10, NULL, NULL)); */
+  } while(!bigz_probab_prime_p(candidate, PRIMALITY_TEST_SEC));  // redundant? the openssl safe prime is already checked
 
-    if(bigz_mul_ui(candidate, q, 2) == IERROR) {
-      bigz_free(candidate); bigz_free(q);
-      bigz_free(low); bigz_free(up);
-    }
+  /* if (!BN_generate_prime_ex(candidate, k, 1, NULL, NULL, NULL)) { */
+  /*   bigz_free(candidate); */
+  /*   return IERROR; */
+  /* } */
 
-    if(bigz_add_ui(candidate, candidate, 1) == IERROR) {
-      bigz_free(candidate); bigz_free(q);
-      bigz_free(low); bigz_free(up);
-    }
+  /* if(!(q = bigz_init())) { */
+  /*   bigz_free(candidate); */
+  /*   return IERROR; */
+  /* } */
 
-    errno = 0;
+  /* if(!(low = bigz_init())) { */
+  /*   bigz_free(candidate); bigz_free(q); */
+  /*   return IERROR; */
+  /* } */
 
-  } while(!bigz_probab_prime_p(candidate, PRIMALITY_TEST_SEC));
+  /* if(!(up = bigz_init())) { */
+  /*   bigz_free(candidate); bigz_free(q); bigz_free(low); */
+  /*   return IERROR; */
+  /* } */
 
-  bigz_free(low);
-  bigz_free(up);
+  /* if(bigz_ui_pow_ui(low, 2, k-1) == IERROR) { // low: 2^(k-1) */
+  /*   bigz_free(candidate); bigz_free(q); */
+  /*   bigz_free(low); bigz_free(up); */
+  /*   return IERROR; */
+  /* } */
+
+  /* if(bigz_ui_pow_ui(up, 2, k) == IERROR) { */
+  /*   bigz_free(candidate); bigz_free(q); */
+  /*   bigz_free(low); bigz_free(up); */
+  /*   return IERROR; */
+  /* } */
+
+  /* if(bigz_sub_ui(up, up, 1) == IERROR) {  // up: (2^k)-1 */
+  /*   bigz_free(candidate); bigz_free(q); */
+  /*   bigz_free(low); bigz_free(up); */
+  /*   return IERROR; */
+  /* } */
+
+  /* errno = 0; */
+  /* do { */
+
+  /*   if(errno) { */
+  /*     bigz_free(candidate); bigz_free(q); */
+  /*     bigz_free(low); bigz_free(up); */
+  /*   } */
+
+  /*   /\* This generates a random prime of k-1 bits of length *\/ */
+  /*   if(nt_genprime_random_interval(low, up, q) == IERROR) { */
+  /*     bigz_free(candidate); bigz_free(q); */
+  /*     bigz_free(low); bigz_free(up); */
+  /*     return IERROR; */
+  /*   } */
+  /*   printf_bn("q: ", q); */
+
+  /*   if(bigz_mul_ui(candidate, q, 2) == IERROR) { */
+  /*     bigz_free(candidate); bigz_free(q); */
+  /*     bigz_free(low); bigz_free(up); */
+  /*   } */
+
+  /*   if(bigz_add_ui(candidate, candidate, 1) == IERROR) { // candidate: 2q + 1 */
+  /*     bigz_free(candidate); bigz_free(q); */
+  /*     bigz_free(low); bigz_free(up); */
+  /*   } */
+
+  /*   errno = 0; */
+
+  /* } while(!bigz_probab_prime_p(candidate, PRIMALITY_TEST_SEC)); */
+
+  /* bigz_free(low); */
+  /* bigz_free(up); */
   /* If a is not NULL, calculate a generator of Z_p**/
-  if(a) {
+  /* if(a) { */
 
-    /* The factors of the order of the group (i.e. candidate-1) are 2 and q */
-    if(nt_factor_list_init(&factors) == IERROR) {
-      bigz_free(q);
-      bigz_free(candidate);
-      return IERROR;
-    }
+  /*   /\* The factors of the order of the group (i.e. candidate-1) are 2 and q *\/ */
+  /*   if(nt_factor_list_init(&factors) == IERROR) { */
+  /*     bigz_free(q); */
+  /*     bigz_free(candidate); */
+  /*     return IERROR; */
+  /*   } */
 
-    if(nt_factor_list_insert_ui(&factors, 2) == IERROR) {
-      bigz_free(q);
-      bigz_free(candidate);
-      return IERROR;
-    }
+  /*   if(nt_factor_list_insert_ui(&factors, 2) == IERROR) { */
+  /*     bigz_free(q); */
+  /*     bigz_free(candidate); */
+  /*     return IERROR; */
+  /*   } */
 
-    if(nt_factor_list_insert(&factors, q) == IERROR) {
-      bigz_free(q);
-      bigz_free(candidate);
-      return IERROR;
-    }
+  /*   if(nt_factor_list_insert(&factors, q) == IERROR) { */
+  /*     bigz_free(q); */
+  /*     bigz_free(candidate); */
+  /*     return IERROR; */
+  /*   } */
 
-    /* Get a generator */
-    if(nt_get_generator(candidate, &factors, a) == IERROR) {
-      bigz_free(q);
-      bigz_free(candidate);
-      return IERROR;
-    }
+  /*   /\* Get a generator *\/ */
+  /*   if(nt_get_generator(candidate, &factors, a) == IERROR) { */
+  /*     bigz_free(q); */
+  /*     bigz_free(candidate); */
+  /*     return IERROR; */
+  /*   } */
 
-    /* Prepare the output */
-    if(bigz_set(p, candidate) == IERROR) {
-      bigz_free(candidate); bigz_free(q);
-      return IERROR;
-    }
+  /*   /\* Prepare the output *\/ */
+  /*   if(bigz_set(p, candidate) == IERROR) { */
+  /*     bigz_free(candidate); bigz_free(q); */
+  /*     return IERROR; */
+  /*   } */
 
-    bigz_free(q);
+  /*   bigz_free(q); */
+  /*   bigz_free(candidate); */
+
+  /*   if(nt_factor_list_free(&factors) == IERROR) { */
+  /*     return IERROR; */
+  /*   } */
+
+  /* } else { /\* If a is NULL, just return the generated safe prime *\/ */
+  if(bigz_set(p, candidate) == IERROR) {
     bigz_free(candidate);
-
-    if(nt_factor_list_free(&factors) == IERROR) {
-      return IERROR;
-    }
-
-  } else { /* If a is NULL, just return the generated safe prime */
-    if(bigz_set(p, candidate) == IERROR) {
-      bigz_free(candidate); bigz_free(q);
-    }
-    bigz_free(q);
-    bigz_free(candidate);
+    /* bigz_free(q); */
   }
+  /* bigz_free(q); */
+  bigz_free(candidate);
+  /* } */
   return IOK;
 
 }

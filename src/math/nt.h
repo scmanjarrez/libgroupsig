@@ -235,7 +235,7 @@ int nt_get_elem_order(bigz_t n, bigz_t a, factor_list_t *factors, bigz_t *order)
  *
  * @return IOK or IERROR
  */
-int nt_get_safe_prime(uint64_t k, bigz_t p, bigz_t *a);
+int nt_get_safe_prime(uint64_t k, bigz_t p/* , bigz_t *a */);
 
 /**
  * @fn int nt_get_germain_associate(bigz_t p, bigz_t g)

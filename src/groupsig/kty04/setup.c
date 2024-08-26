@@ -190,7 +190,7 @@ int kty04_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
     GOTOENDRC(IERROR, kty04_setup);
   }
 
-  if(nt_get_safe_prime(primesize*2, p, NULL) == IERROR) {
+  if(nt_get_safe_prime(primesize*2, p/* , NULL */) == IERROR) {
     GOTOENDRC(IERROR, kty04_setup);
   }
 
@@ -198,7 +198,7 @@ int kty04_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey, gml_t *gml) {
   if(!(p1 = bigz_init())) GOTOENDRC(IERROR, kty04_setup);
   if(nt_get_germain_associate(p, p1) == IERROR) GOTOENDRC(IERROR, kty04_setup);
   if(!(q = bigz_init())) GOTOENDRC(IERROR, kty04_setup);
-  if(nt_get_safe_prime(primesize*2, q, NULL) == IERROR) GOTOENDRC(IERROR, kty04_setup);
+  if(nt_get_safe_prime(primesize*2, q/* , NULL */) == IERROR) GOTOENDRC(IERROR, kty04_setup);
   /* q = 2*q1+1: q1 is q's associated Sophie Germain prime */
   if(!(q1 = bigz_init())) GOTOENDRC(IERROR, kty04_setup);
   if(nt_get_germain_associate(q, q1) == IERROR) GOTOENDRC(IERROR, kty04_setup);
