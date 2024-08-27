@@ -1693,20 +1693,10 @@ int nt_get_safe_prime(uint64_t k, bigz_t p/* , bigz_t *a */) {
     return IERROR;
   }
 
-  do {
-    if (!BN_generate_prime_ex(candidate, k, 1, NULL, NULL, NULL)) { // hardcoded 1 to generate safe prime
-      bigz_free(candidate);
-      return IERROR;
-    }
-    printf_bn("candidate: ", candidate);
-    /* printf("candidate bits: %d\n", BN_num_bytes(candidate) * 8); */
-    /* printf("is prime? %d\n", BN_is_prime_ex(candidate, 10, NULL, NULL)); */
-  } while(!bigz_probab_prime_p(candidate, PRIMALITY_TEST_SEC));  // redundant? the openssl safe prime is already checked
-
-  /* if (!BN_generate_prime_ex(candidate, k, 1, NULL, NULL, NULL)) { */
-  /*   bigz_free(candidate); */
-  /*   return IERROR; */
-  /* } */
+  if (!BN_generate_prime_ex(candidate, k, 1, NULL, NULL, NULL)) {
+    bigz_free(candidate);
+    return IERROR;
+  }
 
   /* if(!(q = bigz_init())) { */
   /*   bigz_free(candidate); */

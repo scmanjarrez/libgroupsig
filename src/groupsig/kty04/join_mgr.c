@@ -142,7 +142,7 @@ int kty04_join_mgr(message_t **mout, gml_t *gml,
 
     kty04_gml_entry_data_t *data = entry->data;
 
-    if(bigz_set(*(kty04_trapdoor_t *) data->trapdoor->trap, mkey->x) == IERROR) GOTOENDRC(IERROR, kty04_join_mgr);
+    if(bigz_set((kty04_trapdoor_t *)(data->trapdoor)->trap, mkey->x) == IERROR) GOTOENDRC(IERROR, kty04_join_mgr);
 
     if(bigz_set(data->A, mkey->A) == IERROR) GOTOENDRC(IERROR, kty04_join_mgr);
 

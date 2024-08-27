@@ -320,7 +320,8 @@ int kty04_gml_entry_get_size(gml_entry_t *entry) {
   size = strlen(bytes);
 
   if (size >= INT_MAX) return -1;
-  
+
+  mem_free(bytes);
   return (int) size;
 
 }
@@ -373,10 +374,13 @@ gml_entry_t* kty04_gml_entry_import(byte_t *bytes, uint32_t size) {
   sA = strtok(NULL, "\t");
   strapdoor = strtok(NULL, "\t");
 
+  identity_free(data->id); // from_string allocates memory
   data->id = identity_from_string(GROUPSIG_KTY04_CODE, sid);
   if ((bigz_set_str10(data->A, sA)) == IERROR) return NULL;
+  trapdoor_free(data->trapdoor); // from_string allocates memory
   data->trapdoor = trapdoor_from_string(GROUPSIG_KTY04_CODE, strapdoor);
 
+  mem_free(input);
   return entry;
 
 }
@@ -467,7 +471,7 @@ int kty04_gml_entry_cmp_trapdoors(gml_entry_t *entry1,
   d1 = (kty04_gml_entry_data_t *) entry1->data;
   d2 = (kty04_gml_entry_data_t *) entry2->data;
 
-  return bigz_cmp(*(kty04_trapdoor_t *) d1->trapdoor->trap,
-                  *(kty04_trapdoor_t *) d2->trapdoor->trap);
+  return bigz_cmp((kty04_trapdoor_t *)(d1->trapdoor)->trap,
+                  (kty04_trapdoor_t *)(d2->trapdoor)->trap);
 
 }

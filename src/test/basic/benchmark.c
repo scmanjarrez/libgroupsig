@@ -90,6 +90,7 @@ void analyze_registration(groupsig_t *gsig, groupsig_key_t *gkey,
     groupsig_join_mem(&msg2, _mkey, 0, msg, gkey);
     END_T;
     save_phase('m', phase, start_t, end_t, idx);
+    groupsig_mem_key_free(_mkey);  // the key is already exported in msg2
 
     START_T;
     groupsig_join_mgr(&msg, gml, mgkey, 1, msg2, gkey);

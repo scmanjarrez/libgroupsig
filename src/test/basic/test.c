@@ -104,12 +104,12 @@ void test_init(char *prefix, char *scheme, groupsig_t **gsig, groupsig_key_t **g
   }
 
   groupsig_grp_key_free(_gkey);
-  mem_free(_gkey_b);
+  free(_gkey_b);
   groupsig_mgr_key_free(_mgkey1);
-  mem_free(_mgkey1_b);
+  free(_mgkey1_b);
   if (multi) {
     groupsig_mgr_key_free(_mgkey2);
-    mem_free(_mgkey2_b);
+    free(_mgkey2_b);
   }
 }
 
@@ -132,6 +132,7 @@ void test_registration(char *_prefix, int _prefix_idx, groupsig_t *gsig, groupsi
   if (start == 1 && seq == 1) { // kty04
     rc = groupsig_join_mem(&msg2, _mkey, 0, msg1, gkey);
     check_rc(prefix, "join_mem", rc);
+    groupsig_mem_key_free(_mkey);  // the key is already exported in msg2
 
     rc = groupsig_join_mgr(&msg1, gml, mgkey, 1, msg2, gkey);
     check_rc(prefix, "join_mgr", rc);
@@ -174,23 +175,21 @@ void test_registration(char *_prefix, int _prefix_idx, groupsig_t *gsig, groupsi
   if (msg2)
     message_free(msg2);
   groupsig_mem_key_free(_mkey);
-  mem_free(_mkey_b);
+  free(_mkey_b);
 }
 
-void test_gml(char *_prefix, int _prefix_idx, groupsig_key_t *gkey, gml_t **gml) {
+void test_gml(char *prefix, groupsig_key_t *gkey, gml_t **gml) {
   gml_t *_gml = *gml;
   byte_t *_gml_b = NULL;
   uint32_t _gml_sz;
-  char prefix[20];
-  snprintf(prefix, 20, "%s%d", _prefix, _prefix_idx);
 
   int rc = gml_export(&_gml_b, &_gml_sz, _gml);
   check_rc(prefix, "gml_export", rc);
+  gml_free(_gml);
 
   *gml = gml_import(gkey->scheme, _gml_b, _gml_sz);
   check_ptr(prefix, "gml_import", *gml);
-  gml_free(_gml);
-  mem_free(_gml_b);
+  free(_gml_b);
 }
 
 
@@ -237,7 +236,7 @@ void test_signing(char *scheme, char *prefix, groupsig_key_t *gkey, groupsig_key
   message_free(msg1);
   message_free(msg2);
   groupsig_signature_free(_sig1);
-  mem_free(_sig_b);
+  free(_sig_b);
   groupsig_signature_free(sig1);
 }
 
@@ -511,15 +510,19 @@ void test_group4(char *prefix, groupsig_key_t *gkey, groupsig_key_t *mgkey,
   identity_t *nym2 = identity_init(gkey->scheme);
   check_ptr(prefix, "identity_init2", nym2);
 
-  rc = groupsig_unblind(nym1, sig1, csigs[0], gkey, bkey, msg1);
+  message_t *msg3 = message_init();
+  rc = groupsig_unblind(nym1, sig1, csigs[0], gkey, bkey, msg3);
   check_rc(prefix, "unblind1", rc);
-  rc = groupsig_unblind(nym2, sig2, csigs[1], gkey, bkey, msg2);
+  message_t *msg4 = message_init();
+  rc = groupsig_unblind(nym2, sig2, csigs[1], gkey, bkey, msg4);
   check_rc(prefix, "unblind2", rc);
 
   uint8_t ret = identity_cmp(nym1, nym2);
   check_ret(prefix, "identity_cmp1", ret, 0);
 
   // Test2: two signatures, one from another user: error
+  message_free(msg3);
+  message_free(msg4);
   groupsig_blindsig_free(csigs[0]);
   groupsig_blindsig_free(csigs[1]);
   identity_free(nym1);
@@ -540,9 +543,11 @@ void test_group4(char *prefix, groupsig_key_t *gkey, groupsig_key_t *mgkey,
   nym2 = identity_init(gkey->scheme);
   check_ptr(prefix, "identity_init4", nym2);
 
-  rc = groupsig_unblind(nym1, sig1, csigs[0], gkey, bkey, msg1);
+  msg3 = message_init();
+  rc = groupsig_unblind(nym1, sig1, csigs[0], gkey, bkey, msg3);
   check_rc(prefix, "unblind3", rc);
-  rc = groupsig_unblind(nym2, sig3, csigs[1], gkey, bkey, msg1);
+  msg4 = message_init();
+  rc = groupsig_unblind(nym2, sig3, csigs[1], gkey, bkey, msg4);
   check_rc(prefix, "unblind4", rc);
 
   ret = 255;
@@ -550,6 +555,8 @@ void test_group4(char *prefix, groupsig_key_t *gkey, groupsig_key_t *mgkey,
   check_ret(prefix, "identity_cmp2", ret, 1);
 
   // Test3: non transitivity of conversion
+  message_free(msg3);
+  message_free(msg4);
   groupsig_blindsig_free(csigs[0]);
   groupsig_blindsig_free(csigs[1]);
   identity_free(nym1);
@@ -572,9 +579,11 @@ void test_group4(char *prefix, groupsig_key_t *gkey, groupsig_key_t *mgkey,
   nym2 = identity_init(gkey->scheme);
   check_ptr(prefix, "identity_init6", nym2);
 
-  rc = groupsig_unblind(nym1, sig1, csigs[0], gkey, bkey, msg1);
+  msg3 = message_init();
+  rc = groupsig_unblind(nym1, sig1, csigs[0], gkey, bkey, msg3);
   check_rc(prefix, "unblind5", rc);
-  rc = groupsig_unblind(nym2, sig3, csigs[1], gkey, bkey, msg1);
+  msg4 = message_init();
+  rc = groupsig_unblind(nym2, sig3, csigs[1], gkey, bkey, msg4);
   check_rc(prefix, "unblind6", rc);
 
   ret = 255;
@@ -583,6 +592,8 @@ void test_group4(char *prefix, groupsig_key_t *gkey, groupsig_key_t *mgkey,
 
   message_free(msg1);
   message_free(msg2);
+  message_free(msg3);
+  message_free(msg4);
   groupsig_signature_free(sig1);
   groupsig_signature_free(sig2);
   groupsig_signature_free(sig3);
@@ -875,14 +886,14 @@ void test_libgroupsig(char *scheme) {
   } while (n2 == n1);
   do {
     n3 = rand() % MEMBERS;
-  } while (n3 == n2);
+  } while (n3 == n2 || n3 == n1);
 
   printf("# Testing registration...\n");
   for (int i = 0; i < MEMBERS; i++) {
     test_registration("registration", i, gsig, gkey, mgkey1, gml, &mkeys[i]);
-    if (gsig->desc->has_gml) {
-      test_gml("registration", i, gkey, &gml);
-    }
+  }
+  if (gsig->desc->has_gml) {
+    test_gml("registration", gkey, &gml);
   }
 
   printf("\n# Testing sign, verify...\n");

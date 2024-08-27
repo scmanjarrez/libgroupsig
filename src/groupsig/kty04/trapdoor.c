@@ -27,25 +27,22 @@
 trapdoor_t* kty04_trapdoor_init() {
 
   trapdoor_t *trap;
-  kty04_trapdoor_t *kty04_trap;
 
   if(!(trap = (trapdoor_t *) mem_malloc(sizeof(trapdoor_t)))) {
     LOG_ERRORCODE(&logger, __FILE__, "kty04_trapdoor_init", __LINE__, errno, LOGERROR);
     return NULL;
   }
 
-  if(!(kty04_trap = (kty04_trapdoor_t *) mem_malloc(sizeof(kty04_trapdoor_t)))) {
-    mem_free(trap); trap = NULL;
-    LOG_ERRORCODE(&logger, __FILE__, "kty04_trapdoor_init", __LINE__, errno, LOGERROR);
-    return NULL;
-  }
+  /* if(!(kty04_trap = (kty04_trapdoor_t *) mem_malloc(sizeof(kty04_trapdoor_t)))) { */
+  /*   mem_free(trap); trap = NULL; */
+  /*   LOG_ERRORCODE(&logger, __FILE__, "kty04_trapdoor_init", __LINE__, errno, LOGERROR); */
+  /*   return NULL; */
+  /* } */
 
   /* A KTY04 identity is the index pointing to an entry in the GML, we initialize
      it to UINT64_MAX */
-  *kty04_trap = bigz_init();
-
   trap->scheme = GROUPSIG_KTY04_CODE;
-  trap->trap = kty04_trap;
+  trap->trap = bigz_init();
 
   return trap;
 
@@ -65,8 +62,7 @@ int kty04_trapdoor_free(trapdoor_t *trap) {
   }
 
   /* Currently, it is just an uint64_t* */
-  bigz_free(*((kty04_trapdoor_t *) trap->trap));
-  mem_free((kty04_trapdoor_t *) trap->trap); trap->trap = NULL;
+  bigz_free(trap->trap);
   mem_free(trap);
 
   return IOK;
@@ -81,7 +77,7 @@ int kty04_trapdoor_copy(trapdoor_t *dst, trapdoor_t *src) {
     return IERROR;
   }
 
-  bigz_set(*((kty04_trapdoor_t *) dst->trap), *((kty04_trapdoor_t *) src->trap));
+  bigz_set(((kty04_trapdoor_t *)dst->trap), ((kty04_trapdoor_t *)src->trap));
 
   return IOK;
 
@@ -95,7 +91,7 @@ char* kty04_trapdoor_to_string(trapdoor_t *trap) {
   }
 
   /* Currently, the KTY04 trapdoors are bigz_t's */
-  return bigz_get_str10(*((kty04_trapdoor_t *)trap->trap));
+  return bigz_get_str10((kty04_trapdoor_t *)trap->trap);
 
 }
 
@@ -113,7 +109,7 @@ trapdoor_t* kty04_trapdoor_from_string(char *strap) {
   }
 
   /* Currently, KTY04 identities are bigz_t's */
-  if(bigz_set_str10(*(kty04_trapdoor_t *) trap->trap, strap) == IERROR) {
+  if(bigz_set_str10((kty04_trapdoor_t *)trap->trap, strap) == IERROR) {
     kty04_trapdoor_free(trap);
     return NULL;
   }

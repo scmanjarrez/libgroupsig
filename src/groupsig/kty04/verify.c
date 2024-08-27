@@ -512,6 +512,7 @@ int kty04_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg, groupsi
     if(errno) GOTOENDRC(IERROR, kty04_verify);
     fail = 1;
     *ok = !fail;
+    if (mdctx) EVP_MD_CTX_free(mdctx);
     bigz_free(c);
     return IOK;
   } else {

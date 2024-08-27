@@ -56,20 +56,20 @@ static int _grp_key_free_spheres(kty04_grp_key_t *key) {
     rc += sphere_free(key->lambda);
   }
 
-  if(key->M) {
-    rc += sphere_free(key->M);
-  }
-
-  if(key->gamma) {
-    rc += sphere_free(key->gamma);
-  }
-
   if(key->inner_lambda) {
     rc += sphere_free(key->inner_lambda);
   }
 
+  if(key->M) {
+    rc += sphere_free(key->M);
+  }
+
   if(key->inner_M) {
     rc += sphere_free(key->inner_M);
+  }
+
+  if(key->gamma) {
+    rc += sphere_free(key->gamma);
   }
 
   if(key->inner_gamma) {
@@ -116,10 +116,10 @@ groupsig_key_t* kty04_grp_key_init() {
   if(!(kty04_key->h = bigz_init())) goto init_err;
   if(!(kty04_key->y = bigz_init())) goto init_err;
   kty04_key->lambda = NULL;
-  kty04_key->M = NULL;
-  kty04_key->gamma = NULL;
   kty04_key->inner_lambda = NULL;
+  kty04_key->M = NULL;
   kty04_key->inner_M = NULL;
+  kty04_key->gamma = NULL;
   kty04_key->inner_gamma = NULL;
 
   key->scheme = GROUPSIG_KTY04_CODE;
@@ -754,36 +754,43 @@ groupsig_key_t* kty04_grp_key_import(byte_t *source, uint32_t size) {
 
   /* Get n */
   len = source[ctr++];
+  bigz_free(kty04_key->n); // We need to manually free each bigz already allocated
   kty04_key->n = bigz_import(&source[ctr], len);
   ctr += len;
 
   /* Get a */
   len = source[ctr++];
+  bigz_free(kty04_key->a);
   kty04_key->a = bigz_import(&source[ctr], len);
   ctr += len;
 
   /* Get a0 */
   len = source[ctr++];
+  bigz_free(kty04_key->a0);
   kty04_key->a0 = bigz_import(&source[ctr], len);
   ctr += len;
 
   /* Get b */
   len = source[ctr++];
+  bigz_free(kty04_key->b);
   kty04_key->b = bigz_import(&source[ctr], len);
   ctr += len;
 
   /* Get g */
   len = source[ctr++];
+  bigz_free(kty04_key->g);
   kty04_key->g = bigz_import(&source[ctr], len);
   ctr += len;
 
   /* Get h */
   len = source[ctr++];
+  bigz_free(kty04_key->h);
   kty04_key->h = bigz_import(&source[ctr], len);
   ctr += len;
 
   /* Get y */
   len = source[ctr++];
+  bigz_free(kty04_key->y);
   kty04_key->y = bigz_import(&source[ctr], len);
   ctr += len;
 
@@ -813,11 +820,14 @@ groupsig_key_t* kty04_grp_key_import(byte_t *source, uint32_t size) {
 
   /* Get lambda center */
   len = source[ctr++];
+  // We need to free it because bigz_import allocates memory
+  bigz_free(kty04_key->lambda->center);
   kty04_key->lambda->center = bigz_import(&source[ctr], len);
   ctr += len;
 
   /* Get lambda radius */
   len = source[ctr++];
+  bigz_free(kty04_key->lambda->radius);
   kty04_key->lambda->radius = bigz_import(&source[ctr], len);
   ctr += len;
 
@@ -826,11 +836,13 @@ groupsig_key_t* kty04_grp_key_import(byte_t *source, uint32_t size) {
 
   /* Get inner lambda center */
   len = source[ctr++];
+  bigz_free(kty04_key->inner_lambda->center);
   kty04_key->inner_lambda->center = bigz_import(&source[ctr], len);
   ctr += len;
 
   /* Get inner lambda radius */
   len = source[ctr++];
+  bigz_free(kty04_key->inner_lambda->radius);
   kty04_key->inner_lambda->radius = bigz_import(&source[ctr], len);
   ctr += len;
 
@@ -839,11 +851,13 @@ groupsig_key_t* kty04_grp_key_import(byte_t *source, uint32_t size) {
 
   /* Get M center */
   len = source[ctr++];
+  bigz_free(kty04_key->M->center);
   kty04_key->M->center = bigz_import(&source[ctr], len);
   ctr += len;
 
   /* Get M radius */
   len = source[ctr++];
+  bigz_free(kty04_key->M->radius);
   kty04_key->M->radius = bigz_import(&source[ctr], len);
   ctr += len;
 
@@ -852,11 +866,13 @@ groupsig_key_t* kty04_grp_key_import(byte_t *source, uint32_t size) {
 
   /* Get inner M center */
   len = source[ctr++];
+  bigz_free(kty04_key->inner_M->center);
   kty04_key->inner_M->center = bigz_import(&source[ctr], len);
   ctr += len;
 
   /* Get inner M radius */
   len = source[ctr++];
+  bigz_free(kty04_key->inner_M->radius);
   kty04_key->inner_M->radius = bigz_import(&source[ctr], len);
   ctr += len;
 
@@ -865,11 +881,13 @@ groupsig_key_t* kty04_grp_key_import(byte_t *source, uint32_t size) {
 
   /* Get gamma center */
   len = source[ctr++];
+  bigz_free(kty04_key->gamma->center);
   kty04_key->gamma->center = bigz_import(&source[ctr], len);
   ctr += len;
 
   /* Get gamma radius */
   len = source[ctr++];
+  bigz_free(kty04_key->gamma->radius);
   kty04_key->gamma->radius = bigz_import(&source[ctr], len);
   ctr += len;
 
@@ -878,11 +896,13 @@ groupsig_key_t* kty04_grp_key_import(byte_t *source, uint32_t size) {
 
   /* Get inner gamma center */
   len = source[ctr++];
+  bigz_free(kty04_key->inner_gamma->center);
   kty04_key->inner_gamma->center = bigz_import(&source[ctr], len);
   ctr += len;
 
-  /* Get gamma radius */
+  /* Get inner gamma radius */
   len = source[ctr++];
+  bigz_free(kty04_key->inner_gamma->radius);
   kty04_key->inner_gamma->radius = bigz_import(&source[ctr], len);
   ctr += len;
 

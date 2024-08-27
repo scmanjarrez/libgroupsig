@@ -351,16 +351,19 @@ groupsig_key_t* kty04_mgr_key_import(byte_t *source, uint32_t size) {
 
   /* Get p */
   len = source[ctr++];
+  bigz_free(kty04_key->p);
   kty04_key->p = bigz_import(&source[ctr], len);
   ctr += len;
 
   /* Get q */
   len = source[ctr++];
+  bigz_free(kty04_key->q);
   kty04_key->q = bigz_import(&source[ctr], len);
   ctr += len;
 
   /* Get x */
   len = source[ctr++];
+  bigz_free(kty04_key->x);
   kty04_key->x = bigz_import(&source[ctr], len);
   ctr += len;
 

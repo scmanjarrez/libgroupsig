@@ -563,7 +563,7 @@ int kty04_crl_trapdoor_exists(crl_t *crl, trapdoor_t *trap) {
     return IERROR;
   }
 
-  if(bigz_set(entry->trapdoor, *(kty04_trapdoor_t *) trap->trap) == IERROR) {
+  if(bigz_set(entry->trapdoor, (kty04_trapdoor_t *)trap->trap) == IERROR) {
     return IERROR;
   }
 

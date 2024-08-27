@@ -582,11 +582,13 @@ int bigz_probab_prime_p(bigz_t n, int reps) {
 void print_bn(bigz_t num) {
   char *ptr = BN_bn2dec(num);
   printf("BN: %s\n", ptr);
+  free(ptr);
 }
 
 void printf_bn(char *text, bigz_t num) {
   char *ptr = BN_bn2dec(num);
   printf("%s%s\n", text, ptr);
+  free(ptr);
 }
 
 int bigz_nextprime(bigz_t rop, bigz_t lower) {

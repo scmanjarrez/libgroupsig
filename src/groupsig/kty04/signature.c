@@ -500,12 +500,14 @@ groupsig_signature_t* kty04_signature_import(byte_t *source, uint32_t size) {
 
   /* Get c */
   len = source[ctr++];
+  bigz_free(kty04_signature->c); // avoid memory leak due to bigz_import re allocation
   kty04_signature->c = bigz_import(&source[ctr], len);
   ctr += len;
 
   /* Get A */
   for(i = 0; i < kty04_signature->m; i++) {
     len = source[ctr++];
+    bigz_free(kty04_signature->A[i]);
     kty04_signature->A[i] = bigz_import(&source[ctr], len);
     ctr += len;
   }
@@ -513,6 +515,7 @@ groupsig_signature_t* kty04_signature_import(byte_t *source, uint32_t size) {
   /* Get sw */
   for(i = 0; i < kty04_signature->r; i++) {
     len = source[ctr++];
+    bigz_free(kty04_signature->sw[i]);
     kty04_signature->sw[i] = bigz_import(&source[ctr], len);
     ctr += len;
   }
