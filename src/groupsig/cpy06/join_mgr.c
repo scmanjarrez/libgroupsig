@@ -53,7 +53,7 @@ int cpy06_join_mgr(message_t **mout,
 		   int seq,
 		   message_t *min,
 		   groupsig_key_t *grpkey) {
-  
+
   groupsig_key_t *memkey;
   cpy06_mem_key_t *cpy06_memkey;
   cpy06_mgr_key_t *cpy06_mgrkey;
@@ -110,7 +110,7 @@ int cpy06_join_mgr(message_t **mout,
     if (!(v = pbcext_element_Fr_init()))
       GOTOENDRC(IERROR, cpy06_join_mgr);
     if (pbcext_element_Fr_random(v) == IERROR)
-      GOTOENDRC(IERROR, cpy06_join_mgr);    
+      GOTOENDRC(IERROR, cpy06_join_mgr);
 
     /* Send u, v, I to member */
     if (pbcext_dump_element_Fr_bytes(&bu, &ulen, u) == IERROR)
@@ -118,29 +118,25 @@ int cpy06_join_mgr(message_t **mout,
     if (pbcext_dump_element_Fr_bytes(&bv, &vlen, v) == IERROR)
       GOTOENDRC(IERROR, cpy06_join_mgr);
     if (pbcext_dump_element_G1_bytes(&bI, &Ilen, I) == IERROR)
-      GOTOENDRC(IERROR, cpy06_join_mgr);    
+      GOTOENDRC(IERROR, cpy06_join_mgr);
     len = ulen + vlen + Ilen;
-    
+
     if (!(bmsg = (byte_t *) mem_malloc(sizeof(byte_t)*len)))
       GOTOENDRC(IERROR, cpy06_join_mgr);
     memcpy(bmsg, bu, ulen);
     memcpy(&bmsg[ulen], bv, vlen);
     memcpy(&bmsg[ulen+vlen], bI, Ilen);
-    
-    if(!*mout) {   
-      if(!(_mout = message_from_bytes(bmsg, len))) {
-	GOTOENDRC(IERROR, cpy06_join_mgr);
-      }
-      
-      *mout = _mout;
 
+    if(!*mout) {
+      if(!(_mout = message_from_bytes(bmsg, len))) {
+        GOTOENDRC(IERROR, cpy06_join_mgr);
+      }
+      *mout = _mout;
     } else {
-	
       _mout = *mout;
       if(message_set_bytes(*mout, bmsg, len) == IERROR)
-	GOTOENDRC(IERROR, cpy06_join_mgr);
-	
-    }    
+        GOTOENDRC(IERROR, cpy06_join_mgr);
+    }
 
   }
 
@@ -155,7 +151,7 @@ int cpy06_join_mgr(message_t **mout,
     if (pbcext_get_element_G1_bytes(I, &Ilen, min->bytes) == IERROR)
       GOTOENDRC(IERROR, cpy06_join_mgr);
     if (pbcext_get_element_G1_bytes(pi,  &pilen, min->bytes + Ilen) == IERROR)
-      GOTOENDRC(IERROR, cpy06_join_mgr);    
+      GOTOENDRC(IERROR, cpy06_join_mgr);
     if (!(spk = spk_rep_import(min->bytes + Ilen + pilen, &len)))
       GOTOENDRC(IERROR, cpy06_join_mgr);
 
@@ -163,7 +159,7 @@ int cpy06_join_mgr(message_t **mout,
       GOTOENDRC(IERROR, cpy06_join_mgr);
     if (!(g1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, cpy06_join_mgr);
     if (pbcext_element_G1_from_string(&g1, BLS12_381_P, 10) == IERROR)
-      GOTOENDRC(IERROR, cpy06_join_mgr);   
+      GOTOENDRC(IERROR, cpy06_join_mgr);
 
     /* Verify spk */
     Y[0] = pi;
@@ -180,7 +176,7 @@ int cpy06_join_mgr(message_t **mout,
 
     prods[0] = 1;
     prods[1] = 3;
-    
+
     if (spk_rep_verify(&ok,
 		       Y, 2,
 		       G, 3,
@@ -190,7 +186,7 @@ int cpy06_join_mgr(message_t **mout,
 		       bpi, pilen) == IERROR)
       GOTOENDRC(IERROR, cpy06_join_mgr);
 
-  
+
     if (!(memkey = cpy06_mem_key_init())) GOTOENDRC(IERROR, cpy06_join_mgr);
     cpy06_memkey = (cpy06_mem_key_t *) memkey->key;
 
@@ -199,18 +195,15 @@ int cpy06_join_mgr(message_t **mout,
     /*   GOTOENDRC(IERROR, cpy06_join_mgr); */
     /* if (pbcext_element_Fr_random(cpy06_memkey->x) == IERROR) */
     /*   GOTOENDRC(IERROR, cpy06_join_mgr); */
-    
+
     /* t \in_R Z^*_p */
     if (!(cpy06_memkey->t = pbcext_element_Fr_init()))
       GOTOENDRC(IERROR, cpy06_join_mgr);
     if (pbcext_element_Fr_random(cpy06_memkey->t) == IERROR)
       GOTOENDRC(IERROR, cpy06_join_mgr);
-    
+
     // /* A = (q*g_1^x)^(1/t+\gamma) */
     /* A = (q*pi)^(1/t+\gamma) */
-    if (!(g1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, cpy06_join_mgr);
-    if (pbcext_element_G1_from_string(&g1, BLS12_381_P, 10) == IERROR)
-      GOTOENDRC(IERROR, cpy06_join_mgr);
     if (!(gammat = pbcext_element_Fr_init())) GOTOENDRC(IERROR, cpy06_join_mgr);
     if (pbcext_element_Fr_add(gammat,
 			      cpy06_mgrkey->gamma,
@@ -232,65 +225,65 @@ int cpy06_join_mgr(message_t **mout,
 			      cpy06_memkey->A,
 			      gammat) == IERROR)
       GOTOENDRC(IERROR, cpy06_join_mgr);
-    
+
     /* Set memkey->x to 0 for export to work */
     if (!(cpy06_memkey->x = pbcext_element_Fr_init()))
       GOTOENDRC(IERROR, cpy06_join_mgr);
     if (pbcext_element_Fr_clear(cpy06_memkey->x) == IERROR)
       GOTOENDRC(IERROR, cpy06_join_mgr);
-    
+
     /* Write the memkey into mout */
     bkey = NULL;
     if (cpy06_mem_key_export(&bkey, &size, memkey) == IERROR)
       GOTOENDRC(IERROR, cpy06_join_mgr);
-    
+
     if(!*mout) {
       if(!(_mout = message_from_bytes(bkey, size)))
-	GOTOENDRC(IERROR, cpy06_join_mgr);
+        GOTOENDRC(IERROR, cpy06_join_mgr);
       *mout = _mout;
     } else {
       _mout = *mout;
       if(message_set_bytes(_mout, bkey, size) == IERROR)
-	GOTOENDRC(IERROR, cpy06_join_mgr);
+        GOTOENDRC(IERROR, cpy06_join_mgr);
     }
-    
+
     /* Update the gml, if any */
     if(gml) {
-      
+
       /* Initialize the GML entry */
       if(!(gml_entry = cpy06_gml_entry_init()))
-	GOTOENDRC(IERROR, cpy06_join_mgr);
-      
+        GOTOENDRC(IERROR, cpy06_join_mgr);
+
       cpy06_data = gml_entry->data;
       if (!(cpy06_data->trapdoor = trapdoor_init(GROUPSIG_CPY06_CODE)))
-	GOTOENDRC(IERROR, cpy06_join_mgr);
+        GOTOENDRC(IERROR, cpy06_join_mgr);
       cpy06_trap = (cpy06_trapdoor_t *) cpy06_data->trapdoor->trap;
-      
+
       /* Open trapdoor */
       if (!(cpy06_trap->open = pbcext_element_G1_init()))
-	GOTOENDRC(IERROR, cpy06_join_mgr);
+        GOTOENDRC(IERROR, cpy06_join_mgr);
       if (pbcext_element_G1_set(cpy06_trap->open, cpy06_memkey->A))
-	GOTOENDRC(IERROR, cpy06_join_mgr);
-      
+        GOTOENDRC(IERROR, cpy06_join_mgr);
+
       /* Trace trapdoor */
       if (!(cpy06_trap->trace = pbcext_element_G1_init()))
-	GOTOENDRC(IERROR, cpy06_join_mgr);
+        GOTOENDRC(IERROR, cpy06_join_mgr);
       if (pbcext_element_G1_set(cpy06_trap->trace, pi))
-	GOTOENDRC(IERROR, cpy06_join_mgr);
+        GOTOENDRC(IERROR, cpy06_join_mgr);
       /* if (pbcext_element_G1_mul(cpy06_trap->trace, */
       /* 				g1, */
       /* 				cpy06_memkey->x)) */
       /* 	GOTOENDRC(IERROR, cpy06_join_mgr); */
-      
+
       /* Currently, CPY06 identities are just uint64_t's */
       if (!(cpy06_data->id = identity_init(GROUPSIG_CPY06_CODE)))
-	GOTOENDRC(IERROR, cpy06_join_mgr);
+        GOTOENDRC(IERROR, cpy06_join_mgr);
       *(cpy06_identity_t *) cpy06_data->id->id = gml->n;
-      
+
       if(gml_insert(gml, gml_entry) == IERROR)
-	GOTOENDRC(IERROR, cpy06_join_mgr);
+        GOTOENDRC(IERROR, cpy06_join_mgr);
     }
-    
+
   }
 
   else {
@@ -316,9 +309,10 @@ int cpy06_join_mgr(message_t **mout,
   if (v) { pbcext_element_Fr_free(v); v = NULL; }
   if (g1) { pbcext_element_G1_free(g1); g1 = NULL; }
   if (I) { pbcext_element_G1_free(I); I = NULL; }
-  if (pi) { pbcext_element_G1_free(pi); pi = NULL; }  
+  if (pi) { pbcext_element_G1_free(pi); pi = NULL; }
   if (memkey) { cpy06_mem_key_free(memkey); memkey = NULL; }
   if (bkey) { mem_free(bkey); bkey = NULL; }
+  if (spk) { spk_rep_free(spk); spk = NULL; }
   if (bpi) { mem_free(bpi); bpi = NULL; }
   if (bmsg) { mem_free(bmsg); bmsg = NULL; }
   if (bu) { mem_free(bu); bu = NULL; }

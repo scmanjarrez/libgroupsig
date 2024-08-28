@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -35,7 +35,7 @@
 #include "sys/mem.h"
 
 groupsig_key_t* cpy06_mem_key_init() {
-  
+
   groupsig_key_t *key;
   cpy06_mem_key_t *cpy06_key;
 
@@ -63,14 +63,14 @@ int cpy06_mem_key_free(groupsig_key_t *key) {
   cpy06_mem_key_t *cpy06_key;
 
   if(!key) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "cpy06_mem_key_free", __LINE__, 
+    LOG_EINVAL_MSG(&logger, __FILE__, "cpy06_mem_key_free", __LINE__,
 		   "Nothing to free.", LOGWARN);
-    return IOK;  
+    return IOK;
   }
 
   if(key->scheme != GROUPSIG_CPY06_CODE) {
     LOG_EINVAL(&logger, __FILE__, "cpy06_mem_key_free", __LINE__, LOGERROR);
-    return IERROR;	       
+    return IERROR;
   }
 
   if(key->key) {
@@ -84,10 +84,16 @@ int cpy06_mem_key_free(groupsig_key_t *key) {
     if (cpy06_key->A) {
       pbcext_element_G1_free(cpy06_key->A); cpy06_key->A = NULL;
     }
+    if (cpy06_key->_y) {
+      pbcext_element_Fr_free(cpy06_key->_y); cpy06_key->_y = NULL;
+    }
+    if (cpy06_key->_r) {
+      pbcext_element_Fr_free(cpy06_key->_r); cpy06_key->_r = NULL;
+    }
     mem_free(key->key);
     key->key = NULL;
   }
-  
+
   mem_free(key);
 
   return IOK;
@@ -134,7 +140,7 @@ int cpy06_mem_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
     }
     if (cpy06_dst->A) {
       pbcext_element_G1_free(cpy06_dst->A); cpy06_dst->A = NULL;
-    }    
+    }
   }
 
   return rc;
@@ -214,7 +220,7 @@ char* cpy06_mem_key_to_string(groupsig_key_t *key) {
   if (A) { mem_free(A); A = NULL; }
 
   if (rc == IERROR && skey) { mem_free(skey); skey = NULL; }
-  
+
   return skey;
 
 }
@@ -270,7 +276,7 @@ int cpy06_mem_key_export(byte_t **bytes,
   __bytes = &_bytes[ctr];
   if(pbcext_dump_element_G1_bytes(&__bytes, &len, cpy06_key->A) == IERROR)
     GOTOENDRC(IERROR, cpy06_mem_key_export);
-  ctr += len;  
+  ctr += len;
 
   /* Prepare the return */
   if(!*bytes) {
@@ -279,7 +285,7 @@ int cpy06_mem_key_export(byte_t **bytes,
     memcpy(*bytes, _bytes, ctr);
     mem_free(_bytes); _bytes = NULL;
   }
-  
+
   /* Sanity check */
   if (ctr != _size) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "cpy06_mem_key_export", __LINE__,
@@ -295,8 +301,8 @@ int cpy06_mem_key_export(byte_t **bytes,
     if(_bytes) { mem_free(_bytes); _bytes = NULL; }
   }
 
-  return rc;  
-  
+  return rc;
+
 }
 
 groupsig_key_t* cpy06_mem_key_import(byte_t *source, uint32_t size) {
@@ -356,10 +362,10 @@ groupsig_key_t* cpy06_mem_key_import(byte_t *source, uint32_t size) {
     GOTOENDRC(IERROR, cpy06_mem_key_import);
   if(pbcext_get_element_G1_bytes(cpy06_key->A, &len, &source[ctr]) == IERROR)
     GOTOENDRC(IERROR, cpy06_mem_key_import);
-  ctr += len; 
+  ctr += len;
 
  cpy06_mem_key_import_end:
-  
+
   if(rc == IERROR && key) { cpy06_mem_key_free(key); key = NULL; }
   if(rc == IOK) return key;
 

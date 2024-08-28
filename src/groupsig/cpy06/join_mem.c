@@ -32,7 +32,7 @@
  * Note: cpy06_join_mem and cpy06_join_mgr compose an interactive protocol,
  * as described in the CPY06 paper. Here, as in the paper, we assume that
  * this protocol is run in a confidential and authenticated channel, with
- * protection against replays. The  user of this protocol should make sure of 
+ * protection against replays. The  user of this protocol should make sure of
  * that.
  */
 int cpy06_join_mem(message_t **mout,
@@ -84,7 +84,7 @@ int cpy06_join_mem(message_t **mout,
     if (!(r = pbcext_element_Fr_init()))
       GOTOENDRC(IERROR, cpy06_join_mem);
     if (pbcext_element_Fr_random(r) == IERROR)
-      GOTOENDRC(IERROR, cpy06_join_mem);    
+      GOTOENDRC(IERROR, cpy06_join_mem);
 
     /* I = yG1 + rQ */
     if (!(g1 = pbcext_element_G1_init()))
@@ -110,30 +110,30 @@ int cpy06_join_mem(message_t **mout,
       GOTOENDRC(IERROR, cpy06_join_mem);
     if (pbcext_element_Fr_set(cpy06_memkey->_r, r) == IERROR)
       GOTOENDRC(IERROR, cpy06_join_mem);
-    
+
     /* First message is I */
     if (pbcext_dump_element_G1_bytes(&bmsg, &len, I) == IERROR)
       GOTOENDRC(IERROR, cpy06_join_mem)
 
     if(!*mout) {
       if(!(_mout = message_from_bytes(bmsg, len)))
-	GOTOENDRC(IERROR, cpy06_join_mem);
+        GOTOENDRC(IERROR, cpy06_join_mem);
       *mout = _mout;
     } else {
       _mout = *mout;
       if(message_set_bytes(*mout, bmsg, len) == IERROR)
-	GOTOENDRC(IERROR, cpy06_join_mem);
+        GOTOENDRC(IERROR, cpy06_join_mem);
     }
-    
+
   }
-  
-  /* 2nd step by member (seq 2/4): generate non-adaptive random xi with member 
+
+  /* 2nd step by member (seq 2/4): generate non-adaptive random xi with member
      committed randomness, and manager provided randomness */
   else if (seq == 2) {
-    
+
     /* y and r values from seq = 0 are fetched from the memkey */
 
-    /* min = <u,v,I> 
+    /* min = <u,v,I>
        Read u, v and I values from input message */
     if (!(u = pbcext_element_Fr_init()))
       GOTOENDRC(IERROR, cpy06_join_mem);
@@ -190,7 +190,7 @@ int cpy06_join_mem(message_t **mout,
     x[0] = cpy06_memkey->x;
     x[1] = v;
     x[2] = u;
-    x[3] = rr; 
+    x[3] = rr;
 
     i[0][0] = 0; i[0][1] = 0; // x*g1 (g[0],x[0])
     i[1][0] = 1; i[1][1] = 0; // v*g1 (g[0],x[1])
@@ -219,9 +219,9 @@ int cpy06_join_mem(message_t **mout,
     /* Output message is <I,pi,spk> */
     if (pbcext_dump_element_G1_bytes(&bI, &Ilen, I) == IERROR)
       GOTOENDRC(IERROR, cpy06_join_mem);
-    
+
     len = Ilen + pilen + spklen;
-    
+
     if (!(bmsg = (byte_t *) mem_malloc(sizeof(byte_t)*len)))
       GOTOENDRC(IERROR, cpy06_join_mem);
     memcpy(bmsg, bI, Ilen);
@@ -230,14 +230,14 @@ int cpy06_join_mem(message_t **mout,
 
     if(!*mout) {
       if(!(_mout = message_from_bytes(bmsg, len)))
-	GOTOENDRC(IERROR, cpy06_join_mem);
+        GOTOENDRC(IERROR, cpy06_join_mem);
       *mout = _mout;
     } else {
       _mout = *mout;
       if(message_set_bytes(*mout, bmsg, len) == IERROR)
-	GOTOENDRC(IERROR, cpy06_join_mem);
+        GOTOENDRC(IERROR, cpy06_join_mem);
     }
-        
+
   }
 
   /* 3rd step by member (seq 4/4): check cert */
@@ -292,6 +292,7 @@ int cpy06_join_mem(message_t **mout,
     if (pbcext_element_Fr_set(cpy06_memkey->t, _cpy06_memkey->t) == IERROR)
       GOTOENDRC(IERROR, cpy06_join_mem);
 
+    if (_memkey) { cpy06_mem_key_free(_memkey); _memkey = NULL; }
   }
 
   else {
@@ -347,28 +348,28 @@ int cpy06_join_mem(message_t **mout,
       pbcext_element_G1_free(cpy06_memkey->A); cpy06_memkey->A = NULL;
     }
   }
-
   if (bkey) { mem_free(bkey); bkey = NULL; }
   if (bmsg) { mem_free(bmsg); bmsg = NULL; }
   if (bpi) { mem_free(bpi); bpi = NULL; }
   if (bspk) { mem_free(bspk); bspk = NULL; }
+  if (spk) { spk_rep_free(spk); spk = NULL; }
   if (bI) { mem_free(bI); bI = NULL; }
   if (y) { pbcext_element_Fr_free(y); y = NULL; }
   if (r) { pbcext_element_Fr_free(r); r = NULL; }
   if (u) { pbcext_element_Fr_free(u); u = NULL; }
   if (v) { pbcext_element_Fr_free(v); v = NULL; }
   if (rr) { pbcext_element_Fr_free(rr); rr = NULL; }
-  if (g1) { pbcext_element_G1_free(g1); g1 = NULL; }  
+  if (g1) { pbcext_element_G1_free(g1); g1 = NULL; }
   if (I) { pbcext_element_G1_free(I); I = NULL; }
   if (pi) { pbcext_element_G1_free(pi); pi = NULL; }
-  if (aux_g1) { pbcext_element_G1_free(aux_g1); aux_g1 = NULL; }  
+  if (aux_g1) { pbcext_element_G1_free(aux_g1); aux_g1 = NULL; }
   if (g2) { pbcext_element_G2_free(g2); g2 = NULL; }
-  if (aux_g2) { pbcext_element_G2_free(aux_g2); aux_g2 = NULL; }  
+  if (aux_g2) { pbcext_element_G2_free(aux_g2); aux_g2 = NULL; }
   if (aux_gt1) { pbcext_element_GT_free(aux_gt1); aux_gt1 = NULL; }
-  if (aux_gt2) { pbcext_element_GT_free(aux_gt2); aux_gt2 = NULL; }  
+  if (aux_gt2) { pbcext_element_GT_free(aux_gt2); aux_gt2 = NULL; }
 
   return rc;
-  
+
 }
 
 /* join.c ends here */

@@ -159,7 +159,7 @@ int main(int argc, char **argv) {
   setup_matrices();
 
   if (!benchmark_flag) {
-    if (!strcmp(argv[1], "all"))
+    if (!strcmp(scheme, "all"))
       for (int i = 0; i < N_SCHEMES; i++) {
         printf("#### Testing %s\n", SCHEMES[i]);
         test_libgroupsig(SCHEMES[i]);
