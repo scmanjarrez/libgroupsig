@@ -1,0 +1,14 @@
+FROM python:slim-bullseye AS build
+
+RUN apt update && apt install -y --no-install-recommends build-essential cmake \
+    libssl-dev git ca-certificates && apt clean && rm -rf /var/lib/apt/lists/*
+RUN git clone https://gitlab.gicp.es/spirs/libgroupsig \
+    && cd libgroupsig && cmake -B build && make -C build
+RUN cd libgroupsig/src/wrappers/python && pip install --root-user-action ignore setuptools \
+    && python3 setup.py bdist_wheel
+
+FROM python:slim-bullseye AS final
+COPY --from=build /libgroupsig /libgroupsig/
+RUN cd /libgroupsig/src/wrappers/python && pip install --root-user-action ignore opentimestamps-client dist/*whl
+
+ENTRYPOINT [ "python3", "/libgroupsig/demos/opentimestamp.py" ]
