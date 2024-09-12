@@ -10,5 +10,6 @@ RUN cd libgroupsig/src/wrappers/python && pip install --root-user-action ignore 
 FROM python:slim-bullseye AS final
 COPY --from=build /libgroupsig /libgroupsig/
 RUN cd /libgroupsig/src/wrappers/python && pip install --root-user-action ignore opentimestamps-client dist/*whl
+COPY demos/opentimestamp.py /libgroupsig/demos
 
 ENTRYPOINT [ "python3", "/libgroupsig/demos/opentimestamp.py" ]

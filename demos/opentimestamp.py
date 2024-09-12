@@ -1,9 +1,10 @@
 import argparse
+from base64 import b64encode
 from hashlib import sha256
 
 from _groupsig import ffi
 from otsclient.args import parse_ots_args
-from pygroupsig import constants, groupsig, signature
+from pygroupsig import constants, groupsig, memkey, signature
 
 
 SCHEMES = {
@@ -27,15 +28,23 @@ class GroupSig:
         self.scheme = scheme
         self.code = SCHEMES[scheme]
         self.multi = scheme in ["klap20", "gl19"]
+        self.req_json = scheme in ["dl21", "dl21seq"]
         self.memkeys = []
 
     def setup(self):
         groupsig.init(self.code)
         self.group = groupsig.setup(self.code)
+        if self.multi:
+            group2 = groupsig.setup(self.code, self.group["grpkey"])
+            self.mgrkey2 = group2[
+                "mgrkey"
+            ]  # only used in specific functions
         self.mgrkey = self.group["mgrkey"]
         self.grpkey = self.group["grpkey"]
         if self.has_gml():
             self.gml = self.group["gml"]
+        else:
+            self.gml = ffi.NULL
 
     def register(self):
         start = groupsig.get_joinstart(self.code)
@@ -64,9 +73,7 @@ class GroupSig:
             msg2 = ffi.NULL
             usk = ffi.NULL
             if start:
-                msg2 = groupsig.join_mem(
-                    phase, self.mgrkey, self.grpkey, gml=self.gml
-                )
+                msg2 = groupsig.join_mem(phase, self.grpkey)
                 usk = msg2["memkey"]
                 phase += 1
             while phase < seq:
@@ -89,17 +96,21 @@ class GroupSig:
 
     def sign(self, file, identity=0):
         assert identity < len(self.memkeys)
+        msg = self._digest(file)
+        if self.req_json:
+            msg = f'{{ "scope": "scp", "message": "{msg}" }}'
         return groupsig.sign(
-            self._digest(file),
+            msg,
             self.memkeys[identity],
             self.grpkey,
             UINT_MAX,
         )
 
     def verify(self, file, signature):
-        return groupsig.verify(
-            signature, self._digest(file), self.grpkey
-        )
+        msg = self._digest(file)
+        if self.req_json:
+            msg = f'{{ "scope": "scp", "message": "{msg}" }}'
+        return groupsig.verify(signature, msg, self.grpkey)
 
     def export(self, sig, output):
         exp = signature.signature_export(sig)
