@@ -47,6 +47,8 @@
 #define JOIN_MEM3_T 8
 // Total join metrics
 #define N_JOIN 9
+#define BILLION 1000000000L
+#define CLOCK_FREQ 50000000L
 
 
 void test_libgroupsig(char *scheme);
@@ -59,9 +61,15 @@ int group4_implemented(char *scheme);
 int group5_implemented(char *scheme);
 int group6_implemented(char *scheme);
 void random_seed();
+/* #define RISCV */
+#if defined(RISCV)
+void save_join(const unsigned char, int, unsigned long, unsigned long, int);
+#else
+void save_join(const unsigned char, int, struct timespec, struct timespec, int);
+#endif
 
-extern clock_t TIMES[];
-extern clock_t **TIMES_JOIN;
+extern uint64_t TIMES[];
+extern uint64_t **TIMES_JOIN;
 extern int MEMBERS;
 extern int ITER;
 extern char *PATH;

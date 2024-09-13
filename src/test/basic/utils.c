@@ -4,8 +4,8 @@
 #include "utils.h"
 
 
-clock_t TIMES[N_BENCH];
-clock_t **TIMES_JOIN;
+uint64_t TIMES[N_BENCH];
+uint64_t **TIMES_JOIN;
 int MEMBERS = 10;
 int ITER = 5;
 char *PATH = ".";

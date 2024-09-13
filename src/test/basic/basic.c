@@ -72,13 +72,13 @@ void usage(char *name, int ret) {
 }
 
 void setup_matrices() {
-  TIMES_JOIN = (clock_t **)calloc(N_JOIN, sizeof(clock_t *));
+  TIMES_JOIN = (uint64_t **)calloc(N_JOIN, sizeof(uint64_t *));
   if (!TIMES_JOIN) {
     fprintf(stderr, "TIMES_JOIN: Memory allocation failed\n");
     exit(1);
   }
   for (int i = 0; i < N_JOIN; i++) {
-    TIMES_JOIN[i] = (clock_t *)calloc(MEMBERS, sizeof(clock_t));
+    TIMES_JOIN[i] = (uint64_t *)calloc(MEMBERS, sizeof(uint64_t));
     if (!TIMES_JOIN[i]) {
       fprintf(stderr, "TIMES_JOIN[%d]: Memory allocation failed\n", i);
       exit(1);
@@ -87,9 +87,9 @@ void setup_matrices() {
 }
 
 void reset_matrices() {
-  memset(TIMES, 0, N_BENCH * sizeof(clock_t));
+  memset(TIMES, 0, N_BENCH * sizeof(uint64_t));
   for (int i = 0; i < N_JOIN; i++) {
-    memset(TIMES_JOIN[i], 0, MEMBERS * sizeof(clock_t));
+    memset(TIMES_JOIN[i], 0, MEMBERS * sizeof(uint64_t));
   }
 }
 

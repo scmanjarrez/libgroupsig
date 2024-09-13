@@ -1,11 +1,25 @@
+#include <inttypes.h>
+#include <stdint.h>
+
 #include "utils.h"
 
-#define START_T start_t = clock()
-#define END_T end_t = clock()
+#if defined(RISCV)
+#define START_T asm volatile("rdtime %0" : "=r"(start_t))
+#define END_T asm volatile("rdtime %0" : "=r"(end_t))
+// Genesys clock is 50 MHz
 #define SAVE_T(type) TIMES[type] = end_t - start_t
+#else
+#define START_T clock_gettime(CLOCK_MONOTONIC, &start_t)
+#define END_T clock_gettime(CLOCK_MONOTONIC, &end_t)
+#define SAVE_T(type) TIMES[type] = BILLION * (end_t.tv_sec - start_t.tv_sec) + end_t.tv_nsec - start_t.tv_nsec
+#endif
 
-
-void save_phase(unsigned char type, int phase, clock_t start_t, clock_t end_t, int idx) {
+void save_join(const unsigned char type, int phase,
+#if defined(RISCV)
+               unsigned long start, unsigned long end, int idx) {
+#else
+               struct timespec start, struct timespec end, int idx) {
+#endif
   int time = -1;
   switch (type) {
   case 'm':
@@ -31,7 +45,11 @@ void save_phase(unsigned char type, int phase, clock_t start_t, clock_t end_t, i
       time = JOIN_MGR3_T;
     break;
   }
-  TIMES_JOIN[time][idx] = end_t - start_t;
+#if defined(RISCV)
+  TIMES_JOIN[time][idx] = end - start;
+#else
+  TIMES_JOIN[time][idx] = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
+#endif
 }
 
 void analyze_init(char *scheme, groupsig_t **gsig, groupsig_key_t **gkey,
@@ -54,11 +72,23 @@ void analyze_init(char *scheme, groupsig_t **gsig, groupsig_key_t **gkey,
   if ((*gsig)->desc->has_crl)
     *crl = crl_init(code);
 
-  clock_t start_t, end_t;
+#if defined(RISCV)
+  unsigned long start_t, end_t;
+#else
+  struct timespec start_t = {0, 0}, end_t = {0, 0};
+#endif
   START_T;
   groupsig_setup(code, _gkey, _mgkey1, *gml);
   END_T;
   SAVE_T(SETUP1_T);
+/* #if defined(RISCV) */
+/*   printf("Setup time (cycles): %"PRIu64" (%Lf)\n", end_t - start_t, */
+/*          (end_t - start_t) / (long double)CLOCK_FREQ); */
+/* #else */
+/*   uint64_t diff = BILLION * (end_t.tv_sec - start_t.tv_sec) + end_t.tv_nsec - start_t.tv_nsec; */
+/*   printf("Setup time (ns): %"PRIu64" (%Lf)\n", diff, diff / (long double)BILLION); */
+/* #endif */
+
   if (multi) {
     START_T;
     groupsig_setup(code, _gkey, _mgkey2, *gml);
@@ -84,18 +114,22 @@ void analyze_registration(groupsig_t *gsig, groupsig_key_t *gkey,
   message_t *msg = message_init();
   message_t *msg2 = message_init();
   int phase = 0;
-  clock_t start_t, end_t;
+#if defined(RISCV)
+  unsigned long start_t, end_t;
+#else
+  struct timespec start_t = {0, 0}, end_t = {0, 0};
+#endif
   if (start == 1 && seq == 1) { // kty04
     START_T;
     groupsig_join_mem(&msg2, _mkey, 0, msg, gkey);
     END_T;
-    save_phase('m', phase, start_t, end_t, idx);
+    save_join('m', phase, start_t, end_t, idx);
     groupsig_mem_key_free(_mkey);  // the key is already exported in msg2
 
     START_T;
     groupsig_join_mgr(&msg, gml, mgkey, 1, msg2, gkey);
     END_T;
-    save_phase('g', phase, start_t, end_t, idx);
+    save_join('g', phase, start_t, end_t, idx);
     message_free(msg2); msg2 = message_init();
 
     _mkey = groupsig_mem_key_import(code, msg->bytes, msg->length);
@@ -104,14 +138,14 @@ void analyze_registration(groupsig_t *gsig, groupsig_key_t *gkey,
       START_T;
       groupsig_join_mem(&msg2, _mkey, phase, msg, gkey);
       END_T;
-      save_phase('m', phase, start_t, end_t, idx);
+      save_join('m', phase, start_t, end_t, idx);
       phase++;
     }
     while (phase < seq) {
       START_T;
       groupsig_join_mgr(&msg, gml, mgkey, phase, msg2, gkey);
       END_T;
-      save_phase('g', phase, start_t, end_t, idx);
+      save_join('g', phase, start_t, end_t, idx);
 
       if (msg2) {
         message_free(msg2); msg2 = message_init();
@@ -121,7 +155,8 @@ void analyze_registration(groupsig_t *gsig, groupsig_key_t *gkey,
       START_T;
       groupsig_join_mem(&msg2, _mkey, phase, msg, gkey);
       END_T;
-      save_phase('m', phase, start_t, end_t, idx);
+      save_join('m', phase, start_t, end_t, idx);
+
       if (msg) {
         message_free(msg); msg = message_init();
       }
@@ -147,7 +182,11 @@ void analyze_signing(char *scheme, groupsig_key_t *gkey, groupsig_key_t *mkey) {
 
   groupsig_signature_t *sig = groupsig_signature_init(gkey->scheme);
 
-  clock_t start_t, end_t;
+#if defined(RISCV)
+  unsigned long start_t, end_t;
+#else
+  struct timespec start_t = {0, 0}, end_t = {0, 0};
+#endif
   START_T;
   groupsig_sign(sig, msg, mkey, gkey, UINT_MAX);
   END_T;
@@ -172,7 +211,11 @@ void analyze_group1(char *scheme, groupsig_key_t *gkey, groupsig_key_t *mgkey,
 
   uint64_t index;
   groupsig_proof_t *proof;
-  clock_t start_t, end_t;
+#if defined(RISCV)
+  unsigned long start_t, end_t;
+#else
+  struct timespec start_t = {0, 0}, end_t = {0, 0};
+#endif
   if (strcmp(scheme, "bbs04")) {
     proof = groupsig_proof_init(gkey->scheme);
 
@@ -205,7 +248,11 @@ void analyze_group2(groupsig_key_t *gkey, groupsig_key_t *mgkey,
   uint64_t index;
   groupsig_open(&index, proof, NULL, sig, gkey, mgkey, gml);
 
-  clock_t start_t, end_t;
+#if defined(RISCV)
+  unsigned long start_t, end_t;
+#else
+  struct timespec start_t = {0, 0}, end_t = {0, 0};
+#endif
   uint8_t ret;
   START_T;
   groupsig_open_verify(&ret, proof, sig, gkey);
@@ -227,7 +274,11 @@ void analyze_group3_reveal(groupsig_key_t *gkey, groupsig_key_t *mgkey,
 
   groupsig_sign(sig, msg, mkey, gkey, UINT_MAX);
 
-  clock_t start_t, end_t;
+#if defined(RISCV)
+  unsigned long start_t, end_t;
+#else
+  struct timespec start_t = {0, 0}, end_t = {0, 0};
+#endif
   uint8_t ret;
   if (!idx) {
     START_T;
@@ -254,12 +305,15 @@ void analyze_group3_trace(groupsig_key_t *gkey, groupsig_key_t *mgkey,
   message_t *msg = message_from_string((char *) "Hello, World!");
   groupsig_signature_t *sig = groupsig_signature_init(gkey->scheme);
   groupsig_proof_t *proof = groupsig_proof_init(gkey->scheme);
-  uint64_t index;
   trapdoor_t *trap = trapdoor_init(gkey->scheme);
 
   groupsig_sign(sig, msg, mkey, gkey, UINT_MAX);
 
-  clock_t start_t, end_t;
+#if defined(RISCV)
+  unsigned long start_t, end_t;
+#else
+  struct timespec start_t = {0, 0}, end_t = {0, 0};
+#endif
   START_T;
   groupsig_reveal(trap, crl, gml, MEMBERS - 1);
   END_T;
@@ -292,7 +346,11 @@ void analyze_group3(groupsig_key_t *gkey, groupsig_key_t *mgkey,
 
   groupsig_proof_t *proof = groupsig_proof_init(gkey->scheme);
 
-  clock_t start_t, end_t;
+#if defined(RISCV)
+  unsigned long start_t, end_t;
+#else
+  struct timespec start_t = {0, 0}, end_t = {0, 0};
+#endif
   START_T;
   groupsig_claim(proof, mkey, gkey, sig1);
   END_T;
@@ -349,7 +407,11 @@ void analyze_group4(groupsig_key_t *gkey, groupsig_key_t *mgkey,
   csigs[0] = groupsig_blindsig_init(gkey->scheme);
   csigs[1] = groupsig_blindsig_init(gkey->scheme);
 
-  clock_t start_t, end_t;
+#if defined(RISCV)
+  unsigned long start_t, end_t;
+#else
+  struct timespec start_t = {0, 0}, end_t = {0, 0};
+#endif
   START_T;
   groupsig_convert(csigs, bsigs, 2, gkey, mgkey, pkey, NULL);
   END_T;
@@ -396,7 +458,11 @@ void analyze_group5(groupsig_key_t *gkey, groupsig_key_t *mgkey,
   sigs[0] = sig1;
   sigs[1] = sig2;
 
-  clock_t start_t, end_t;
+#if defined(RISCV)
+  unsigned long start_t, end_t;
+#else
+  struct timespec start_t = {0, 0}, end_t = {0, 0};
+#endif
   START_T;
   groupsig_link(&proof, gkey, mkey, msg, sigs, msgs, 2);
   END_T;
@@ -429,7 +495,11 @@ void analyze_group6(groupsig_key_t *gkey, groupsig_key_t *mgkey,
   message_t *msgs[2];
   groupsig_signature_t *sigs[2];
 
-  clock_t start_t, end_t;
+#if defined(RISCV)
+  unsigned long start_t, end_t;
+#else
+  struct timespec start_t = {0, 0}, end_t = {0, 0};
+#endif
   // Test1 (seqlink+verify_seqlink): two signatures, same message: ok
   // In order to validate a signature as sequential they must be consecutives
   msgs[0] = msg;
@@ -457,9 +527,14 @@ void analyze_group6(groupsig_key_t *gkey, groupsig_key_t *mgkey,
 void dump_times(char *scheme, int iter) {
   FILE *fp1, *fp2;
   char name1_f[50];
-  snprintf(name1_f, 50, "%s/%s_%d" "m_%d" "i.csv", PATH, scheme, MEMBERS, ITER);
   char name2_f[50];
+#if defined(RISCV)
+  snprintf(name1_f, 50, "%s/%s_%d" "m_%d" "i_riscv.csv", PATH, scheme, MEMBERS, ITER);
+  snprintf(name2_f, 50, "%s/%s_join_%d" "m_%d" "i_riscv.csv", PATH, scheme, MEMBERS, ITER);
+#else
+  snprintf(name1_f, 50, "%s/%s_%d" "m_%d" "i.csv", PATH, scheme, MEMBERS, ITER);
   snprintf(name2_f, 50, "%s/%s_join_%d" "m_%d" "i.csv", PATH, scheme, MEMBERS, ITER);
+#endif
   char *mode;
   if (!iter)
     mode = "w";
@@ -478,7 +553,7 @@ void dump_times(char *scheme, int iter) {
     exit(1);
   } else {
     for (int i = 0; i < N_BENCH; i++) {
-      fprintf(fp1, "%f", (double) TIMES[i] / CLOCKS_PER_SEC);
+      fprintf(fp1, "%"PRIu64, TIMES[i]);
       if (i < N_BENCH - 1)
         fprintf(fp1, ",");
       else
@@ -487,7 +562,7 @@ void dump_times(char *scheme, int iter) {
     fclose(fp1);
     for (int i = 0; i < N_JOIN; i++) {
       for (int j = 0; j < MEMBERS; j++) {
-        fprintf(fp2, "%f", (double) TIMES_JOIN[i][j] / CLOCKS_PER_SEC);
+        fprintf(fp2, "%"PRIu64, TIMES_JOIN[i][j]);
         if (j < MEMBERS - 1)
           fprintf(fp2, ";");
         else
@@ -516,7 +591,7 @@ void benchmark_libgroupsig(char *scheme, int iter) {
 
   analyze_signing(scheme, gkey, mkeys[0]);
 
-  if (group1_implemented(scheme))
+  if (group1_implemented(scheme)) {
     if (multi_mgrkey(scheme)) {
       analyze_group1(scheme, gkey, mgkey2, gml, mkeys[0]);
       analyze_group1(scheme, gkey, mgkey2, gml, mkeys[MEMBERS - 1]);
@@ -524,12 +599,14 @@ void benchmark_libgroupsig(char *scheme, int iter) {
       analyze_group1(scheme, gkey, mgkey1, gml, mkeys[0]);
       analyze_group1(scheme, gkey, mgkey1, gml, mkeys[MEMBERS - 1]);
     }
+  }
 
-  if (group2_implemented(scheme))
+  if (group2_implemented(scheme)) {
     if (multi_mgrkey(scheme))
       analyze_group2(gkey, mgkey2, gml, mkeys[0]);
     else
       analyze_group2(gkey, mgkey1, gml, mkeys[0]);
+  }
 
   if (group3_implemented(scheme)) {
     for (int i = 0; i < MEMBERS - 1; i++)
