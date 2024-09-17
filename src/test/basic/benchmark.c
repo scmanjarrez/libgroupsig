@@ -396,8 +396,17 @@ void analyze_group4(groupsig_key_t *gkey, groupsig_key_t *mgkey,
   groupsig_key_t* pkey;
   groupsig_bld_key_pub(bkey, &pkey);
 
+#if defined(RISCV)
+  unsigned long start_t, end_t;
+#else
+  struct timespec start_t = {0, 0}, end_t = {0, 0};
+#endif
+
   groupsig_blindsig_t *bsig1 = groupsig_blindsig_init(gkey->scheme);
+  START_T;
   groupsig_blind(bsig1, &bkey, gkey, sig1, msg1);
+  END_T;
+  SAVE_T(BLIND_T);
   groupsig_blindsig_t *bsig2 = groupsig_blindsig_init(gkey->scheme);
   groupsig_blind(bsig2, &bkey, gkey, sig2, msg2);
 
@@ -407,11 +416,6 @@ void analyze_group4(groupsig_key_t *gkey, groupsig_key_t *mgkey,
   csigs[0] = groupsig_blindsig_init(gkey->scheme);
   csigs[1] = groupsig_blindsig_init(gkey->scheme);
 
-#if defined(RISCV)
-  unsigned long start_t, end_t;
-#else
-  struct timespec start_t = {0, 0}, end_t = {0, 0};
-#endif
   START_T;
   groupsig_convert(csigs, bsigs, 2, gkey, mgkey, pkey, NULL);
   END_T;

@@ -48,7 +48,7 @@
 // Total join metrics
 #define N_JOIN 9
 #define BILLION 1000000000L
-#define CLOCK_FREQ 50000000L
+#define CLOCK_FREQ 25000000L
 
 
 void test_libgroupsig(char *scheme);
